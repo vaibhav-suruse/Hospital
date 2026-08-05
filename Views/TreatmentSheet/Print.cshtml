@@ -1,0 +1,306 @@
+﻿@* Views/TreatmentSheet/Print.cshtml *@
+@model WebApplicationSampleTest2.Models.TreatmentSheetVM
+@{
+    Layout = null;
+    var marByDay = (Dictionary<int, List<WebApplicationSampleTest2.Models.MARRowModel>>)ViewBag.MarByDay;
+    var ordersByDay = (Dictionary<int, List<WebApplicationSampleTest2.Models.GeneralOrderModel>>)ViewBag.OrdersByDay;
+    var medsByDay = (Dictionary<int, List<WebApplicationSampleTest2.Models.TreatmentMedicineVM>>)ViewBag.MedsByDay;
+    var investigationsByDay = (Dictionary<int, List<WebApplicationSampleTest2.Models.TreatmentInvestigationVM>>)ViewBag.InvestigationsByDay;
+    int? singleDay = ViewBag.SingleDay as int?;
+    var hospital = ViewBag.Hospital as WebApplicationSampleTest2.Models.Hospital;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Treatment Sheet - @Model.Admission.PatientName</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            color: #000;
+            margin: 24px;
+        }
+
+        h2, h3, h4 {
+            margin: 4px 0;
+        }
+
+        .letterhead {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 8px;
+        }
+
+            .letterhead img {
+                height: 60px;
+                width: auto;
+            }
+
+            .letterhead .hosp-name {
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+            .letterhead .hosp-meta {
+                font-size: 12px;
+                color: #333;
+            }
+
+        .header {
+            text-align: center;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #999;
+        }
+
+        .patient-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        th, td {
+            border: 1px solid #666;
+            padding: 4px 6px;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .day-block {
+            border: 2px solid #333;
+            padding: 10px;
+            margin-bottom: 24px;
+            page-break-inside: avoid;
+        }
+
+        .day-heading {
+            background: #333;
+            color: #fff;
+            padding: 6px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
+        }
+
+        .section-title {
+            background: #ddd;
+            font-weight: bold;
+            padding: 4px 6px;
+            margin-top: 14px;
+        }
+
+        .allergy-banner {
+            border: 2px solid #c00;
+            color: #c00;
+            padding: 6px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .signature-box {
+            width: 45%;
+            border-top: 1px solid #000;
+            text-align: center;
+            padding-top: 4px;
+        }
+
+        @@media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align:right; margin-bottom:10px;">
+        <button onclick="window.print()">Print</button>
+    </div>
+
+    @if (hospital != null)
+    {
+        <div class="letterhead">
+            @if (!string.IsNullOrWhiteSpace(hospital.Logo))
+            {
+                <img src="@hospital.Logo" alt="Logo" />
+            }
+            <div>
+                <div class="hosp-name">@hospital.Name</div>
+                <div class="hosp-meta">
+                    @hospital.Address
+                    @(!string.IsNullOrWhiteSpace(hospital.PhoneNumber) ? " • Ph: " + hospital.PhoneNumber : "")
+                    @(!string.IsNullOrWhiteSpace(hospital.RegistrationNumber) ? " • Reg No: " + hospital.RegistrationNumber : "")
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="header">
+        <h2>Inpatient Treatment Sheet</h2>
+        <div>@(singleDay.HasValue ? "Day " + singleDay.Value : "Full Stay Summary - Day by Day")</div>
+    </div>
+
+    <div class="patient-info">
+        <div>
+            <strong>Patient:</strong> @Model.Admission.PatientName<br />
+            <strong>Admission #:</strong> @Model.Admission.AdmissionNumber<br />
+        </div>
+        <div>
+            <strong>Admitted:</strong> @Model.Admission.AdmissionDateTime.ToString("dd MMM yyyy hh:mm tt")<br />
+            <strong>Attending Doctor:</strong> @Model.Admission.DoctorName<br />
+        </div>
+        <div>
+            <strong>Printed:</strong> @DateTime.Now.ToString("dd MMM yyyy hh:mm tt")
+        </div>
+    </div>
+
+    @if (Model.Allergies != null && Model.Allergies.Count > 0)
+    {
+        <div class="allergy-banner">
+            ⚠ KNOWN ALLERGIES: @string.Join("  |  ", Model.Allergies.Select(a => $"{a.AllergyName} ({a.AllergyType}, {a.Severity})"))
+        </div>
+    }
+
+    @foreach (var day in ordersByDay.Keys.OrderBy(d => d))
+    {
+        var dayDate = Model.Admission.AdmissionDateTime.Date.AddDays(day - 1);
+        var dayOrders = ordersByDay[day];
+        var dayMeds = medsByDay[day];
+        var dayInvestigations = investigationsByDay[day];
+        var dayMar = marByDay[day];
+
+        <div class="day-block">
+            <div class="day-heading">Day @day &ndash; @dayDate.ToString("dd MMM yyyy")</div>
+
+            <div class="section-title">General Orders</div>
+            <table>
+                <thead><tr><th>Details</th><th>Priority</th><th>Status</th><th>Ordered By</th></tr></thead>
+                <tbody>
+                    @if (dayOrders.Count == 0)
+                    {
+                        <tr><td colspan="4">No orders logged on this day</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var go in dayOrders)
+                        {
+                            <tr><td>@go.OrderDetails</td><td>@go.Priority</td><td>@(go.Status == "Active" ? "On Going" : go.Status)</td><td>@go.OrderByName</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <div class="section-title">Medications</div>
+            <table>
+                <thead><tr><th>Medicine</th><th>Dose</th><th>Frequency</th><th>Route</th><th>Food</th><th>Duration</th><th>Status</th><th>Ordered By</th></tr></thead>
+                <tbody>
+                    @if (dayMeds.Count == 0)
+                    {
+                        <tr><td colspan="8">No medications logged on this day</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var med in dayMeds)
+                        {
+                            <tr>
+                                <td>@med.MedicineName</td>
+                                <td>@med.Dosage</td>
+                                <td>@med.FrequencySummary</td>
+                                <td>@med.Route</td>
+                                <td>@med.FoodInstruction</td>
+                                <td>@(med.DurationType == "Duration" ? (med.Days.HasValue ? med.Days + " day(s)" : "-") : med.DurationType)</td>
+                                <td>@(med.Status == "Active" ? "On Going" : med.Status)</td>
+                                <td>@med.OrderByName</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <div class="section-title">Investigations</div>
+            <table>
+                <thead><tr><th>Investigation</th><th>Type</th><th>Priority</th><th>Remarks</th><th>Status</th><th>Ordered By</th></tr></thead>
+                <tbody>
+                    @if (dayInvestigations.Count == 0)
+                    {
+                        <tr><td colspan="6">No investigations logged on this day</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var inv in dayInvestigations)
+                        {
+                            <tr><td>@inv.TestName</td><td>@inv.InvestigationType</td><td>@inv.Priority</td><td>@inv.Instructions</td><td>@inv.Status</td><td>@inv.OrderByName</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <div class="section-title">Medication Administration Record (MAR)</div>
+            @if (dayMar == null || dayMar.Count == 0)
+            {
+                <p><em>No scheduled doses.</em></p>
+            }
+            else
+            {
+                var groups = dayMar.GroupBy(m => new { m.MedicineName, m.Dosage });
+                <table>
+                    <thead><tr><th>Medicine</th><th>Morning</th><th>Afternoon</th><th>Evening</th></tr></thead>
+                    <tbody>
+                        @foreach (var g in groups)
+                        {
+                            <tr>
+                                <td>@g.Key.MedicineName <br /><small>@g.Key.Dosage</small></td>
+                                @foreach (var slot in new[] { "Morning", "Afternoon", "Evening" })
+                                {
+                                    var row = g.FirstOrDefault(x => x.ScheduledSlot == slot);
+                                    <td>
+                                        @if (row == null)
+                                        {
+                                            <span>&mdash;</span>
+                                        }
+                                        else
+                                        {
+                                            @row.Status
+                                            if (row.GivenAt.HasValue)
+                                            {
+
+                                                <br />
+                                                <small>@row.GivenAt.Value.ToString("hh:mm tt") @row.GivenByName</small>
+                     }
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+
+    <div class="signature-row">
+        <div class="signature-box">Doctor's Signature</div>
+        <div class="signature-box">Nurse-in-Charge Signature</div>
+    </div>
+</body>
+</html>
+

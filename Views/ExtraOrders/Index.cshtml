@@ -1,0 +1,389 @@
+﻿@model WebApplicationSampleTest2.Models.ExtraOrdersVM
+@{
+    ViewData["Title"] = "Extra Orders";
+    int ipdId = Model.Admission.IPDId;
+    ViewBag.IPDId = ipdId;
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-clipboard-list me-1"></i>
+                <strong>Extra Orders</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.Admission.PatientName
+                    <small>(Adm# @Model.Admission.AdmissionNumber)</small>
+                </span>
+            </div>
+            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+
+            <ul class="nav nav-tabs" id="dayTabs" role="tablist">
+                @for (int day = 1; day <= Model.TotalDays; day++)
+                {
+                    var dayDate = Model.Admission.AdmissionDateTime.Date.AddDays(day - 1);
+                    bool isActive = day == Model.ActiveDay;
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(isActive ? "active" : "") day-tab-btn" data-day="@day" type="button">
+                            Day @day
+                            <div class="small @(isActive ? "text-white-50" : "text-muted")">@dayDate.ToString("dd MMM")</div>
+                        </button>
+                    </li>
+                }
+            </ul>
+            <div class="border border-top-0 rounded-bottom p-3">
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0"><i class="fas fa-pills me-1 text-success"></i> Extra Medication</h6>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addExtraMedicationModal">
+                        <i class="fas fa-plus me-1"></i> Add Extra Medication
+                    </button>
+                </div>
+                <div id="extraMedicationContainer" class="mb-4">
+                    @await Html.PartialAsync("_ExtraMedicationPartial", Model.ExtraMedications)
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0"><i class="fas fa-clipboard-list me-1 text-primary"></i> Extra Orders</h6>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addExtraOrderModal">
+                        <i class="fas fa-plus me-1"></i> Add Extra Orders
+                    </button>
+                </div>
+                <div id="extraOrdersContainer">
+                    @await Html.PartialAsync("_ExtraOrdersListPartial", Model.ExtraOrders)
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================= ADD MODALS ============================= *@
+
+<div class="modal fade" id="addExtraMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addExtraMedicationForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IPDId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" id="emDayNumber" value="@Model.ActiveDay" />
+                <div class="modal-header"><h5 class="modal-title">Add Extra Medication</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-light border py-1 px-2 mb-3 small" id="emAddingForDayLabel">Adding for <strong>Day @Model.ActiveDay</strong></div>
+                    <label class="form-label">Medicine Name</label>
+                    <input type="text" id="emMedicineSearch" name="MedicineName" class="form-control mb-1" placeholder="Search or type medicine name..." autocomplete="off" required>
+                    <div id="emMedicineSearchResults" class="list-group position-relative" style="max-height:150px; overflow-y:auto; z-index:1056;"></div>
+                    <input type="hidden" name="MedicineId" id="emMedicineId">
+
+                    <label class="form-label mt-2">Reason</label>
+                    <input type="text" name="Reason" class="form-control mb-2" placeholder="e.g. Sudden fever spike">
+                    <label class="form-label">Remark</label>
+                    <input type="text" name="Remark" class="form-control mb-2" placeholder="e.g. Temp was 101F at time of dose">
+                    <label class="form-label">Entered By (Doctor)</label>
+                    <select name="EnteredByDoctorId" class="form-select" asp-items="ViewBag.Doctors"><option value="">-- Select Doctor --</option></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="emSubmitAddBtn" class="btn btn-outline-success"><i class="fas fa-plus me-1"></i> Submit &amp; Add</button>
+                    <button type="button" id="emSubmitBtn" class="btn btn-success"><i class="fas fa-check me-1"></i> Submit</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addExtraOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addExtraOrderForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IPDId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" id="eoDayNumber" value="@Model.ActiveDay" />
+                <div class="modal-header"><h5 class="modal-title">Add Extra Order</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-light border py-1 px-2 mb-3 small" id="eoAddingForDayLabel">Adding for <strong>Day @Model.ActiveDay</strong></div>
+                    <label class="form-label">Order Details</label>
+                    <textarea name="OrderDetails" id="eoDetails" class="form-control mb-2" rows="3" placeholder="e.g. Apply ice pack to forehead; call doctor if BP drops below 90/60" required></textarea>
+                    <label class="form-label">Remark</label>
+                    <input type="text" name="Remark" class="form-control mb-2" placeholder="Optional remark">
+                    <label class="form-label">Entered By (Doctor)</label>
+                    <select name="EnteredByDoctorId" class="form-select" asp-items="ViewBag.Doctors"><option value="">-- Select Doctor --</option></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="eoSubmitAddBtn" class="btn btn-outline-primary"><i class="fas fa-plus me-1"></i> Submit &amp; Add</button>
+                    <button type="button" id="eoSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Submit</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= EDIT MODALS ============================= *@
+
+<div class="modal fade" id="editExtraMedicationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editExtraMedicationForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editEmId" />
+                <div class="modal-header"><h5 class="modal-title">Edit Extra Medication</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label">Medicine Name</label>
+                    <input type="text" name="MedicineName" id="editEmMedicineName" class="form-control mb-2" required>
+                    <label class="form-label">Reason</label>
+                    <input type="text" name="Reason" id="editEmReason" class="form-control mb-2">
+                    <label class="form-label">Remark</label>
+                    <input type="text" name="Remark" id="editEmRemark" class="form-control mb-2">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="editEmSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editExtraOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editExtraOrderForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editEoId" />
+                <div class="modal-header"><h5 class="modal-title">Edit Extra Order</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label">Order Details</label>
+                    <textarea name="OrderDetails" id="editEoDetails" class="form-control mb-2" rows="3" required></textarea>
+                    <label class="form-label">Remark</label>
+                    <input type="text" name="Remark" id="editEoRemark" class="form-control mb-2">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="editEoSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+        var currentDay = @Model.ActiveDay;
+
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 4000);
+        }
+        function ajaxSubmitForm(url, formEl, callback) {
+            var fd = new FormData(formEl);
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function ajaxPost(url, dataObj, callback) {
+            var fd = new FormData();
+            for (var k in dataObj) fd.append(k, dataObj[k]);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            var inst = bootstrap.Modal.getInstance(el);
+            if (inst) { inst.hide(); }
+            cleanupStrayModalBackdrops();
+        }
+        function cleanupStrayModalBackdrops() {
+            setTimeout(function () {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function (bd) { bd.remove(); });
+                }
+            }, 350);
+        }
+        document.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrops);
+
+        var extraMedicationPartialUrl = '@Url.Action("ExtraMedicationPartial", "ExtraOrders")';
+        var extraOrdersListPartialUrl = '@Url.Action("ExtraOrdersListPartial", "ExtraOrders")';
+
+        function reloadExtraMedications() {
+            fetch(extraMedicationPartialUrl + '?ipdId=' + ipdId + '&dayNumber=' + currentDay, { cache: 'no-store' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { document.getElementById('extraMedicationContainer').innerHTML = html; })
+                .catch(function () { showAlert('Could not refresh Extra Medication. Please reload the page.', 'danger'); });
+        }
+        function reloadExtraOrders() {
+            fetch(extraOrdersListPartialUrl + '?ipdId=' + ipdId + '&dayNumber=' + currentDay, { cache: 'no-store' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { document.getElementById('extraOrdersContainer').innerHTML = html; })
+                .catch(function () { showAlert('Could not refresh Extra Orders. Please reload the page.', 'danger'); });
+        }
+
+        function syncDayLabelsAndHiddenFields() {
+            document.getElementById('emDayNumber').value = currentDay;
+            document.getElementById('eoDayNumber').value = currentDay;
+            var label = 'Adding for <strong>Day ' + currentDay + '</strong>';
+            document.getElementById('emAddingForDayLabel').innerHTML = label;
+            document.getElementById('eoAddingForDayLabel').innerHTML = label;
+        }
+
+        function loadDay(day) {
+            currentDay = day;
+            document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+                btn.classList.toggle('active', parseInt(btn.dataset.day) === day);
+            });
+            syncDayLabelsAndHiddenFields();
+            reloadExtraMedications();
+            reloadExtraOrders();
+        }
+        document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { loadDay(parseInt(btn.dataset.day)); });
+        });
+
+        // =====================================================================
+        // EXTRA MEDICATION - search, add (+ Submit & Add), edit, delete
+        // =====================================================================
+        var emMedicineSearch = document.getElementById('emMedicineSearch');
+        var emMedicineSearchResults = document.getElementById('emMedicineSearchResults');
+        var emMedicineId = document.getElementById('emMedicineId');
+
+        emMedicineSearch.addEventListener('input', function () {
+            var term = this.value;
+            emMedicineId.value = '';
+            if (!term || term.length < 2) { emMedicineSearchResults.innerHTML = ''; return; }
+            fetch('@Url.Action("SearchMedicine", "ExtraOrders")?term=' + encodeURIComponent(term), { cache: 'no-store' })
+                .then(r => r.json())
+                .then(data => {
+                    emMedicineSearchResults.innerHTML = '';
+                    (data || []).slice(0, 10).forEach(function (m) {
+                        var a = document.createElement('a');
+                        a.href = '#'; a.className = 'list-group-item list-group-item-action py-1';
+                        a.textContent = m.medicineName;
+                        a.onclick = function (e) {
+                            e.preventDefault();
+                            emMedicineSearch.value = m.medicineName;
+                            emMedicineId.value = m.medicineId;
+                            emMedicineSearchResults.innerHTML = '';
+                        };
+                        emMedicineSearchResults.appendChild(a);
+                    });
+                });
+        });
+
+        function resetAddExtraMedicationForm() {
+            var keepDoctor = document.querySelector('#addExtraMedicationForm select[name="EnteredByDoctorId"]').value;
+            document.getElementById('addExtraMedicationForm').reset();
+            emMedicineSearchResults.innerHTML = '';
+            emMedicineId.value = '';
+            document.querySelector('#addExtraMedicationForm select[name="EnteredByDoctorId"]').value = keepDoctor;
+        }
+
+        document.getElementById('emSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("AddExtraMedication", "ExtraOrders")', document.getElementById('addExtraMedicationForm'), function () {
+                reloadExtraMedications(); showAlert('Extra medication logged.'); closeModal('addExtraMedicationModal'); resetAddExtraMedicationForm();
+            });
+        });
+        document.getElementById('emSubmitAddBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("AddExtraMedication", "ExtraOrders")', document.getElementById('addExtraMedicationForm'), function () {
+                reloadExtraMedications(); showAlert('Extra medication logged - add another below.');
+                resetAddExtraMedicationForm(); emMedicineSearch.focus();
+            });
+        });
+        document.getElementById('editEmSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("EditExtraMedication", "ExtraOrders")', document.getElementById('editExtraMedicationForm'), function () {
+                reloadExtraMedications(); showAlert('Extra medication updated.'); closeModal('editExtraMedicationModal');
+            });
+        });
+
+        document.getElementById('extraMedicationContainer').addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.em-edit-btn');
+            if (editBtn) {
+                document.getElementById('editEmId').value = editBtn.dataset.id;
+                document.getElementById('editEmMedicineName').value = editBtn.dataset.medicineName;
+                document.getElementById('editEmReason').value = editBtn.dataset.reason || '';
+                document.getElementById('editEmRemark').value = editBtn.dataset.remark || '';
+                new bootstrap.Modal(document.getElementById('editExtraMedicationModal')).show();
+                return;
+            }
+            var delBtn = e.target.closest('.em-delete-btn');
+            if (delBtn) {
+                if (!confirm('Remove this extra medication entry?')) return;
+                ajaxPost('@Url.Action("DeleteExtraMedication", "ExtraOrders")',
+                    { id: delBtn.dataset.id, ipdId: ipdId },
+                    function () { reloadExtraMedications(); showAlert('Extra medication removed.'); });
+            }
+        });
+
+        // =====================================================================
+        // EXTRA ORDERS - add (+ Submit & Add), edit, delete
+        // =====================================================================
+        function resetAddExtraOrderForm() {
+            var keepDoctor = document.querySelector('#addExtraOrderForm select[name="EnteredByDoctorId"]').value;
+            document.getElementById('addExtraOrderForm').reset();
+            document.querySelector('#addExtraOrderForm select[name="EnteredByDoctorId"]').value = keepDoctor;
+        }
+
+        document.getElementById('eoSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("AddExtraOrder", "ExtraOrders")', document.getElementById('addExtraOrderForm'), function () {
+                reloadExtraOrders(); showAlert('Extra order added.'); closeModal('addExtraOrderModal'); resetAddExtraOrderForm();
+            });
+        });
+        document.getElementById('eoSubmitAddBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("AddExtraOrder", "ExtraOrders")', document.getElementById('addExtraOrderForm'), function () {
+                reloadExtraOrders(); showAlert('Extra order added - add another below.');
+                resetAddExtraOrderForm(); document.getElementById('eoDetails').focus();
+            });
+        });
+        document.getElementById('editEoSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("EditExtraOrder", "ExtraOrders")', document.getElementById('editExtraOrderForm'), function () {
+                reloadExtraOrders(); showAlert('Extra order updated.'); closeModal('editExtraOrderModal');
+            });
+        });
+
+        document.getElementById('extraOrdersContainer').addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.eo-edit-btn');
+            if (editBtn) {
+                document.getElementById('editEoId').value = editBtn.dataset.id;
+                document.getElementById('editEoDetails').value = editBtn.dataset.orderDetails;
+                document.getElementById('editEoRemark').value = editBtn.dataset.remark || '';
+                new bootstrap.Modal(document.getElementById('editExtraOrderModal')).show();
+                return;
+            }
+            var delBtn = e.target.closest('.eo-delete-btn');
+            if (delBtn) {
+                if (!confirm('Remove this extra order?')) return;
+                ajaxPost('@Url.Action("DeleteExtraOrder", "ExtraOrders")',
+                    { id: delBtn.dataset.id, ipdId: ipdId },
+                    function () { reloadExtraOrders(); showAlert('Extra order removed.'); });
+            }
+        });
+    </script>
+}

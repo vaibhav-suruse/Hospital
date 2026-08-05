@@ -1,0 +1,907 @@
+﻿@model WebApplicationSampleTest2.Models.IPDBillVM
+@{
+    ViewData["Title"] = "IPD Billing Sheet";
+    Layout = "_Layout";
+    var masterItems = ViewBag.BillingMasterItems as List<WebApplicationSampleTest2.Models.BillingMaster> ?? new List<WebApplicationSampleTest2.Models.BillingMaster>();
+    bool billLocked = Model.BillStatus == "Cancelled";
+}
+
+<style>
+    :root {
+        --ipb-primary: #2c6ecb;
+        --ipb-primary-dark: #1d4f99;
+        --ipb-green: #1f9d55;
+        --ipb-red: #d64545;
+        --ipb-amber: #c98a12;
+        --ipb-bg: #f4f6fa;
+        --ipb-border: #e1e6ef;
+    }
+
+    .ipb-wrap {
+        background: var(--ipb-bg);
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .ipb-card {
+        background: #fff;
+        border: 1px solid var(--ipb-border);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+    }
+
+        .ipb-card h6 {
+            font-weight: 700;
+            color: #33415c;
+            margin-bottom: 12px;
+            letter-spacing: .02em;
+        }
+
+    .ipb-header-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px 20px;
+    }
+
+        .ipb-header-grid .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #8891a5;
+            letter-spacing: .04em;
+        }
+
+        .ipb-header-grid .val {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #1c2333;
+        }
+
+    .ipb-status-pill {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .ipb-status-Unpaid {
+        background: #fdeaea;
+        color: var(--ipb-red);
+    }
+
+    .ipb-status-Partial {
+        background: #fff3da;
+        color: var(--ipb-amber);
+    }
+
+    .ipb-status-Paid {
+        background: #e6f6ea;
+        color: var(--ipb-green);
+    }
+
+    .ipb-billstatus-Draft {
+        background: #e9ecf3;
+        color: #55617a;
+    }
+
+    .ipb-billstatus-Finalized {
+        background: #e1ecfb;
+        color: var(--ipb-primary-dark);
+    }
+
+    .ipb-billstatus-Cancelled {
+        background: #fdeaea;
+        color: var(--ipb-red);
+    }
+
+    table.ipb-grid {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+    }
+
+        table.ipb-grid th {
+            background: #eef2f9;
+            color: #4c5972;
+            text-align: left;
+            padding: 8px 8px;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        table.ipb-grid td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eef1f6;
+            vertical-align: middle;
+        }
+
+        table.ipb-grid tr:hover td {
+            background: #fafbfd;
+        }
+
+        table.ipb-grid input[type=number], table.ipb-grid input[type=text] {
+            border: 1px solid #dde2ec;
+            border-radius: 5px;
+            padding: 4px 6px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+    .ipb-type-badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 5px;
+        text-transform: uppercase;
+    }
+
+    .ipb-type-Bed {
+        background: #e3f0ff;
+        color: #1868c7;
+    }
+
+    .ipb-type-DoctorVisit {
+        background: #eee6fb;
+        color: #6c37c9;
+    }
+
+    .ipb-type-Medicine {
+        background: #e6f6ea;
+        color: var(--ipb-green);
+    }
+
+    .ipb-type-DischargeMedicine {
+        background: #e6f6ea;
+        color: #157a41;
+    }
+
+    .ipb-type-Investigation {
+        background: #fbe9ec;
+        color: #b0294a;
+    }
+
+    .ipb-type-Procedure {
+        background: #e6eefc;
+        color: #2952a3;
+    }
+
+    .ipb-type-Other, .ipb-type-Manual {
+        background: #fdf1e0;
+        color: #a1650b;
+    }
+
+    .ipb-remove-btn {
+        color: var(--ipb-red);
+        background: none;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+        .ipb-remove-btn:hover {
+            opacity: .7;
+        }
+
+    .ipb-add-panel {
+        border: 1px dashed #c7d0e0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+        background: #fafbfe;
+    }
+
+    .ipb-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .ipb-tab-btn {
+        border: 1px solid var(--ipb-border);
+        background: #fff;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #55617a;
+    }
+
+        .ipb-tab-btn.active {
+            background: var(--ipb-primary);
+            color: #fff;
+            border-color: var(--ipb-primary);
+        }
+
+    .ipb-suggest-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff;
+        border: 1px solid var(--ipb-border);
+        border-radius: 20px;
+        padding: 4px 10px 4px 12px;
+        font-size: 12.5px;
+        margin: 3px 4px 3px 0;
+        cursor: pointer;
+    }
+
+        .ipb-suggest-chip:hover {
+            border-color: var(--ipb-primary);
+            color: var(--ipb-primary);
+        }
+
+        .ipb-suggest-chip .add-ic {
+            color: var(--ipb-green);
+            font-weight: 700;
+        }
+
+    .ipb-summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        font-size: 13.5px;
+    }
+
+        .ipb-summary-row.total {
+            font-size: 17px;
+            font-weight: 800;
+            border-top: 2px solid #1c2333;
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+
+        .ipb-summary-row.due {
+            color: var(--ipb-red);
+            font-weight: 700;
+        }
+
+    .ipb-btn {
+        border: none;
+        border-radius: 7px;
+        padding: 9px 16px;
+        font-weight: 600;
+        font-size: 13.5px;
+        cursor: pointer;
+    }
+
+    .ipb-btn-primary {
+        background: var(--ipb-primary);
+        color: #fff;
+    }
+
+        .ipb-btn-primary:hover {
+            background: var(--ipb-primary-dark);
+        }
+
+    .ipb-btn-outline {
+        background: #fff;
+        border: 1px solid var(--ipb-border);
+        color: #33415c;
+    }
+
+    .ipb-btn-green {
+        background: var(--ipb-green);
+        color: #fff;
+    }
+
+    .ipb-btn-red-outline {
+        background: #fff;
+        border: 1px solid var(--ipb-red);
+        color: var(--ipb-red);
+    }
+
+    .ipb-btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .ipb-sticky {
+        position: sticky;
+        top: 16px;
+    }
+
+    .ipb-readonly-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 13px;
+        color: #55617a;
+    }
+
+    .ipb-warn {
+        font-size: 12px;
+        color: var(--ipb-amber);
+        background: #fff8ea;
+        border: 1px solid #f2debb;
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin-top: 6px;
+    }
+</style>
+
+@await Html.PartialAsync("_IPDTabs", "BillingSheet")
+
+<div class="ipb-wrap">
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <!-- ── Patient / Admission header ─────────────────────────────────── -->
+    <div class="ipb-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+            <div>
+                <h5 style="margin:0;font-weight:800;color:#1c2333;">@Model.PatientName</h5>
+                <div style="color:#8891a5;font-size:13px;">
+                    Admission #@Model.AdmissionNumber &nbsp;·&nbsp; @Model.Age Y / @Model.Gender &nbsp;·&nbsp; @Model.PhoneNumber
+                </div>
+            </div>
+            <div style="text-align:right;">
+                @if (Model.BillId.HasValue)
+                {
+                    <div style="font-weight:700;">Bill No: @Model.BillNumber</div>
+                    <span class="ipb-status-pill ipb-status-@Model.PaymentStatus">@Model.PaymentStatus</span>
+                    <span class="ipb-status-pill ipb-billstatus-@Model.BillStatus">@Model.BillStatus</span>
+                }
+                else
+                {
+                    <span class="ipb-status-pill ipb-billstatus-Draft">Not generated yet</span>
+                }
+            </div>
+        </div>
+        <hr style="margin:12px 0;" />
+        <div class="ipb-header-grid">
+            <div><div class="lbl">Admitted On</div><div class="val">@Model.AdmissionDateTime.ToString("dd-MM-yyyy hh:mm tt")</div></div>
+            <div><div class="lbl">Days Admitted</div><div class="val">@Model.TotalDays day@(Model.TotalDays == 1 ? "" : "s")</div></div>
+            <div><div class="lbl">Primary Doctor</div><div class="val">@(Model.DoctorName ?? "-")</div></div>
+            <div><div class="lbl">Status</div><div class="val">@(Model.ActualDischargeDateTime.HasValue ? "Discharged" : "Admitted")</div></div>
+        </div>
+    </div>
+
+    @if (billLocked)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-ban me-1"></i> This bill was cancelled@(string.IsNullOrEmpty(Model.CancelledReason) ? "." : $": {Model.CancelledReason}") It can no longer be edited.
+        </div>
+    }
+
+    <div class="row">
+        <!-- ── LEFT: Real-time item grid ──────────────────────────────── -->
+        <div class="col-lg-8">
+
+            <div class="ipb-card">
+                <h6><i class="fas fa-list-ul me-1"></i> Billing Items</h6>
+                <table class="ipb-grid" id="ipbGridTable">
+                    <thead>
+                        <tr>
+                            <th style="width:14%;">Type</th>
+                            <th>Item</th>
+                            <th style="width:8%;">Qty</th>
+                            <th style="width:12%;">Unit Price (₹)</th>
+                            <th style="width:10%;">Disc</th>
+                            <th style="width:8%;">GST %</th>
+                            <th style="width:12%;text-align:right;">Total (₹)</th>
+                            <th style="width:4%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipbGridBody"><!-- rows injected by JS --></tbody>
+                </table>
+                <div id="ipbEmptyMsg" style="display:none;text-align:center;color:#9aa3b5;padding:16px;font-size:13px;">
+                    No items yet — add a bed/doctor charge, or use "Add Other Charge" below.
+                </div>
+
+                @if (!billLocked)
+                {
+                    <!-- ── Add Other Charge panel ─────────────────────────── -->
+                    <div class="ipb-add-panel">
+                        <div class="ipb-tabs">
+                            <button type="button" class="ipb-tab-btn active" id="ipbTabMaster" onclick="ipbSwitchTab('master')">From Billing Master</button>
+                            <button type="button" class="ipb-tab-btn" id="ipbTabManual" onclick="ipbSwitchTab('manual')">Manual Item</button>
+                        </div>
+
+                        <div id="ipbPanelMaster">
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <select id="ipbMasterSelect" class="form-select form-select-sm" style="flex:1;min-width:220px;">
+                                    <option value="">— Select a billing item —</option>
+                                    @foreach (var grp in masterItems.GroupBy(m => m.Category))
+                                    {
+                                        <optgroup label="@grp.Key">
+                                            @foreach (var m in grp)
+                                            {
+                                                <option value="@m.Id"
+                                                        data-name="@m.Name"
+                                                        data-amount="@m.Amount"
+                                                        data-gst="@m.GstPercent"
+                                                        data-discount="@m.DefaultDiscountPercent">
+                                                    @m.Name — ₹@m.Amount.ToString("0.00")
+                                                </option>
+                                            }
+                                        </optgroup>
+                                    }
+                                </select>
+                                <input type="number" id="ipbMasterQty" class="form-control form-control-sm" value="1" min="1" style="width:70px;" placeholder="Qty" />
+                                <button type="button" class="ipb-btn ipb-btn-primary" onclick="ipbAddFromMaster()">+ Add</button>
+                            </div>
+                            @if (!masterItems.Any())
+                            {
+                                <div class="ipb-warn mt-2">No Billing Master items configured yet for this hospital. Add some under Billing Master, or use "Manual Item" below.</div>
+                            }
+                        </div>
+
+                        <div id="ipbPanelManual" style="display:none;">
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <input type="text" id="ipbManualName" class="form-control form-control-sm" placeholder="Item / service name" style="flex:1;min-width:180px;" />
+                                <input type="number" id="ipbManualQty" class="form-control form-control-sm" value="1" min="1" style="width:65px;" placeholder="Qty" />
+                                <input type="number" id="ipbManualPrice" class="form-control form-control-sm" value="0" min="0" step="0.01" style="width:100px;" placeholder="Price" />
+                                <input type="number" id="ipbManualGst" class="form-control form-control-sm" value="0" min="0" step="0.01" style="width:80px;" placeholder="GST %" />
+                                <button type="button" class="ipb-btn ipb-btn-primary" onclick="ipbAddManual()">+ Add</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.Medicines.Any() || Model.DischargeMedicines.Any())
+                {
+                    <div style="margin-top:14px;">
+                        <div class="lbl" style="font-size:11px;text-transform:uppercase;color:#8891a5;margin-bottom:6px;">Quick-add prescribed / discharge medicines</div>
+                        @foreach (var m in Model.Medicines)
+                        {
+                            <span class="ipb-suggest-chip" onclick='ipbAddSuggested("Medicine", @m.Id, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(m.MedicineName)), @((m.Days ?? 1)), @m.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture))'>
+                                <span class="add-ic">＋</span> @m.MedicineName <span style="color:#9aa3b5;">(₹@m.UnitPrice.ToString("0.00")/day × @(m.Days ?? 1))</span>
+                            </span>
+                        }
+                        @foreach (var m in Model.DischargeMedicines)
+                        {
+                            <span class="ipb-suggest-chip" onclick='ipbAddSuggested("DischargeMedicine", @m.Id, @Html.Raw(System.Text.Json.JsonSerializer.Serialize("Discharge: " + m.MedicineName)), @((m.Days ?? 1)), @m.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture))'>
+                                <span class="add-ic">＋</span> Discharge: @m.MedicineName <span style="color:#9aa3b5;">(₹@m.UnitPrice.ToString("0.00")/day × @(m.Days ?? 1))</span>
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (Model.Investigations.Any())
+            {
+                <div class="ipb-card">
+                    <h6><i class="fas fa-flask me-1"></i> Investigations Ordered <span style="font-weight:400;color:#9aa3b5;font-size:12px;">(not auto-priced — set a price and add if billable)</span></h6>
+                    <table class="ipb-grid">
+                        <thead><tr><th>Type</th><th>Test</th><th>Priority</th><th>Status</th><th style="width:110px;">Price (₹)</th><th style="width:60px;"></th></tr></thead>
+                        <tbody>
+                            @foreach (var inv in Model.Investigations)
+                            {
+                                <tr>
+                                    <td>@inv.InvestigationType</td>
+                                    <td>@inv.TestName</td>
+                                    <td>@inv.Priority</td>
+                                    <td>@inv.Status</td>
+                                    <td><input type="number" min="0" step="0.01" id="ipbInvPrice_@inv.Id" value="@inv.SuggestedCharge.ToString("0.00")" style="width:90px;border:1px solid #dde2ec;border-radius:5px;padding:4px 6px;" /></td>
+                                    <td>
+                                        <button type="button" class="ipb-btn ipb-btn-primary" style="padding:4px 10px;font-size:12px;"
+                                                onclick='ipbAddInvestigation(@inv.Id, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(inv.InvestigationType + " — " + inv.TestName)))'>
+                                            + Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (Model.Investigations.All(i => i.SuggestedCharge == 0))
+                    {
+                        <div class="ipb-warn mt-2">No Billing Master "Lab" item matched these test names automatically — prices default to ₹0, enter them manually before adding.</div>
+                    }
+                </div>
+            }
+
+            @if (Model.Procedures.Any())
+            {
+                <div class="ipb-card">
+                    <h6><i class="fas fa-syringe me-1"></i> Procedures Performed <span style="font-weight:400;color:#9aa3b5;font-size:12px;">(not auto-priced — set a price and add if billable)</span></h6>
+                    <table class="ipb-grid">
+                        <thead><tr><th>Procedure</th><th>Category</th><th>Status</th><th>Date</th><th style="width:110px;">Price (₹)</th><th style="width:60px;"></th></tr></thead>
+                        <tbody>
+                            @foreach (var proc in Model.Procedures)
+                            {
+                                <tr>
+                                    <td>@proc.ProcedureName</td>
+                                    <td>@proc.ProcedureCategory</td>
+                                    <td>@proc.Status</td>
+                                    <td>@(proc.ProcedureDate?.ToString("dd-MM-yyyy") ?? "-")</td>
+                                    <td><input type="number" min="0" step="0.01" id="ipbProcPrice_@proc.ProcedureId" value="@proc.SuggestedCharge.ToString("0.00")" style="width:90px;border:1px solid #dde2ec;border-radius:5px;padding:4px 6px;" /></td>
+                                    <td>
+                                        <button type="button" class="ipb-btn ipb-btn-primary" style="padding:4px 10px;font-size:12px;"
+                                                onclick='ipbAddProcedure(@proc.ProcedureId, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(proc.ProcedureName)))'>
+                                            + Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (Model.Procedures.All(p => p.SuggestedCharge == 0))
+                    {
+                        <div class="ipb-warn mt-2">No Billing Master "Procedure" item matched these procedure names automatically — prices default to ₹0, enter them manually before adding.</div>
+                    }
+                </div>
+            }
+
+            @if (Model.NursingCharges.Any() || Model.Operations.Any())
+            {
+                <div class="ipb-card">
+                    <h6><i class="fas fa-notes-medical me-1"></i> Nursing &amp; Operation Charges <span style="font-weight:400;color:#9aa3b5;font-size:12px;">(read-only — managed from their own screens, included in the total automatically)</span></h6>
+                    @foreach (var n in Model.NursingCharges)
+                    {
+                        <div class="ipb-readonly-line">
+                            <span>🩺 @n.ChargeName @(string.IsNullOrEmpty(n.NurseName) ? "" : $"— {n.NurseName}") ({n.ChargeDate:dd-MM-yyyy})</span>
+                            <span>₹@n.TotalCharge.ToString("0.00")</span>
+                        </div>
+                    }
+                    @foreach (var op in Model.Operations)
+                    {
+                        var opTotal = op.ActualCharge + op.AnesthesiaCharge + op.SurgeonCharge + op.OTCharge + op.TotalStaffCharge;
+                        <div class="ipb-readonly-line">
+                            <span>🏥 @op.OperationName (@op.OperationDate.ToString("dd-MM-yyyy"))</span>
+                            <span>₹@opTotal.ToString("0.00")</span>
+                        </div>
+                    }
+                    <div class="ipb-readonly-line" style="font-weight:700;border-top:1px solid #eef1f6;padding-top:6px;margin-top:4px;">
+                        <span>Subtotal</span>
+                        <span>₹@((Model.TotalNursingCharges + Model.TotalOperationCharges).ToString("0.00"))</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ── RIGHT: Live summary + payment panel ────────────────────── -->
+        <div class="col-lg-4">
+            <div class="ipb-card ipb-sticky">
+                <h6><i class="fas fa-calculator me-1"></i> Bill Summary</h6>
+
+                <div class="ipb-readonly-line"><span>Nursing charges</span><span id="ipbNursingLine">₹@Model.TotalNursingCharges.ToString("0.00")</span></div>
+                <div class="ipb-readonly-line"><span>Operation charges</span><span id="ipbOperationLine">₹@Model.TotalOperationCharges.ToString("0.00")</span></div>
+
+                <div class="ipb-summary-row"><span>Items Subtotal</span><span id="ipbItemsSubtotal">₹0.00</span></div>
+                <div class="ipb-summary-row"><span>Item-level discount</span><span id="ipbLineDiscount">-₹0.00</span></div>
+                <div class="ipb-summary-row"><span>GST</span><span id="ipbGstAmount">₹0.00</span></div>
+                <div class="ipb-summary-row" style="align-items:center;">
+                    <span>Overall Discount</span>
+                    <span>
+                        <input type="number" id="ipbDiscountPct" value="@Model.DiscountPercent" min="0" max="100" step="0.5"
+                               style="width:55px;border:1px solid #dde2ec;border-radius:5px;padding:3px 5px;" @(billLocked ? "disabled" : "") /> %
+                    </span>
+                </div>
+                <div class="ipb-summary-row"><span></span><span id="ipbDiscountAmt" style="color:var(--ipb-red);">-₹0.00</span></div>
+                <div class="ipb-summary-row total"><span>Grand Total</span><span id="ipbGrandTotal">₹0.00</span></div>
+
+                @if (Model.BillId.HasValue)
+                {
+                    <div class="ipb-summary-row"><span>Paid</span><span style="color:var(--ipb-green);font-weight:700;">₹@Model.PaidAmount.ToString("0.00")</span></div>
+                    <div class="ipb-summary-row due"><span>Due</span><span id="ipbDueAmount">₹@Model.DueAmount.ToString("0.00")</span></div>
+                }
+
+                <textarea id="ipbNotes" class="form-control form-control-sm mt-2" rows="2" placeholder="Notes (optional)" @(billLocked ? "disabled" : "")>@Model.Notes</textarea>
+
+                @if (!billLocked)
+                {
+                    <div style="display:flex;gap:8px;margin-top:12px;">
+                        <button type="button" class="ipb-btn ipb-btn-outline" style="flex:1;" onclick="ipbSaveBill(true)">Save Draft</button>
+                        <button type="button" class="ipb-btn ipb-btn-primary" style="flex:1;" onclick="ipbSaveBill(false)">
+                            @(Model.BillId.HasValue ? "Update & Finalize" : "Generate Bill")
+                        </button>
+                    </div>
+                }
+
+                @if (Model.BillId.HasValue && !billLocked)
+                {
+                    <hr />
+                    <h6 style="font-size:13px;">Collect Payment</h6>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <input type="number" id="ipbPayAmount" class="form-control form-control-sm" placeholder="Amount" min="0.01" step="0.01" style="flex:1;min-width:100px;" />
+                        <select id="ipbPayMode" class="form-select form-select-sm" style="width:120px;">
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="NetBanking">Net Banking</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Insurance">Insurance</option>
+                        </select>
+                    </div>
+                    <input type="text" id="ipbPayRef" class="form-control form-control-sm mt-1" placeholder="Transaction Ref (optional)" />
+                    <button type="button" class="ipb-btn ipb-btn-green mt-2" style="width:100%;" onclick="ipbCollectPayment()">💰 Collect Payment</button>
+
+                    @if (Model.Payments.Any())
+                    {
+                        <div style="margin-top:10px;max-height:160px;overflow-y:auto;">
+                            @foreach (var p in Model.Payments)
+                            {
+                                <div class="ipb-readonly-line">
+                                    <span>@p.PaymentDate.ToString("dd-MM-yy") · @p.PaymentMode</span>
+                                    <span>₹@p.Amount.ToString("0.00")</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.PaidAmount == 0)
+                    {
+                        <button type="button" class="ipb-btn ipb-btn-red-outline mt-2" style="width:100%;" onclick="ipbCancelBill()">Cancel Bill</button>
+                    }
+                }
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <a class="ipb-btn ipb-btn-outline" style="flex:1;text-align:center;text-decoration:none;" href="@Url.Action("Details", "IPDAdmission", new { id = Model.IPDId })">← Back</a>
+                    @if (Model.BillId.HasValue)
+                    {
+                        <a class="ipb-btn ipb-btn-outline" style="flex:1;text-align:center;text-decoration:none;" target="_blank" href="@Url.Action("PrintBill", new { ipdId = Model.IPDId })">🖨 Print</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const IPB_IPD_ID = @Model.IPDId;
+        const IPB_BILL_ID = @(Model.BillId?.ToString() ?? "null");
+        const IPB_BILL_LOCKED = @(billLocked ? "true" : "false");
+        const IPB_NURSING_TOTAL = @Model.TotalNursingCharges.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const IPB_OPERATION_TOTAL = @Model.TotalOperationCharges.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        // In-memory item grid — the single source of truth for the real-time bill.
+        let ipbItems = [];
+
+        // ── Seed the grid ────────────────────────────────────────────────────
+        // If a bill already exists, hydrate from its saved items (so nothing is
+        // ever lost on reopen). Otherwise, auto-seed Bed + Doctor Round charges
+        // (the two "auto calculate" pieces) so staff aren't retyping numbers
+        // that already live in the system.
+        @if (Model.OtherItems.Any())
+        {
+                @:ipbItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OtherItems.Select(i => new {
+                    itemType = i.ItemType, billingMasterId = i.BillingMasterId, itemName = i.ItemName,
+                        qty = i.Quantity, unitPrice = i.UnitPrice, discountValue = i.DiscountValue,
+                        discountIsPercent = i.DiscountIsPercent, gstPercent = i.GstPercent
+                })));
+        }
+        else
+    {
+            @:ipbItems = [];
+            @foreach (var b in Model.BedCharges)
+            {
+                    @:ipbItems.push({ itemType: "Bed", billingMasterId: null, itemName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize($"Bed — {b.WardName} / {b.RoomNumber} / {b.BedNumber} ({b.Days} day{(b.Days == 1 ? "" : "s")})")), qty: 1, unitPrice: @b.BedCharge.ToString(System.Globalization.CultureInfo.InvariantCulture), discountValue: 0, discountIsPercent: true, gstPercent: 0 });
+            }
+            @foreach (var d in Model.DoctorVisits)
+            {
+                    @:ipbItems.push({ itemType: "DoctorVisit", billingMasterId: null, itemName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize($"Doctor Round — {d.DoctorName} ({d.RoundType}, {d.RoundDateTime:dd-MM-yyyy hh:mm tt})")), qty: 1, unitPrice: @d.VisitCharge.ToString(System.Globalization.CultureInfo.InvariantCulture), discountValue: 0, discountIsPercent: true, gstPercent: 0 });
+            }
+    }
+
+    function ipbFmt(n) { return '₹' + (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2); }
+
+    function ipbRowTotal(item) {
+        let base = (item.qty || 0) * (item.unitPrice || 0);
+        let disc = item.discountIsPercent ? base * (item.discountValue || 0) / 100 : (item.discountValue || 0);
+        disc = Math.min(disc, base);
+        let afterDisc = base - disc;
+        let gst = afterDisc * (item.gstPercent || 0) / 100;
+        return { base, disc, total: afterDisc + gst };
+    }
+
+    function ipbRender() {
+        const body = document.getElementById('ipbGridBody');
+        body.innerHTML = '';
+        document.getElementById('ipbEmptyMsg').style.display = ipbItems.length === 0 ? 'block' : 'none';
+
+        ipbItems.forEach((item, idx) => {
+            const r = ipbRowTotal(item);
+            const tr = document.createElement('tr');
+            const editable = !IPB_BILL_LOCKED;
+            tr.innerHTML = `
+                <td><span class="ipb-type-badge ipb-type-${item.itemType}">${item.itemType.replace('DoctorVisit','Doctor').replace('DischargeMedicine','Disch.Med')}</span></td>
+                <td>${item.itemName}</td>
+                <td><input type="number" min="1" value="${item.qty}" ${editable ? '' : 'disabled'} onchange="ipbUpdate(${idx},'qty',this.value)" /></td>
+                <td><input type="number" min="0" step="0.01" value="${item.unitPrice}" ${editable ? '' : 'disabled'} onchange="ipbUpdate(${idx},'unitPrice',this.value)" /></td>
+                <td><input type="number" min="0" step="0.01" value="${item.discountValue}" ${editable ? '' : 'disabled'} onchange="ipbUpdate(${idx},'discountValue',this.value)" title="${item.discountIsPercent ? '%' : '₹'}" /></td>
+                <td><input type="number" min="0" step="0.01" value="${item.gstPercent}" ${editable ? '' : 'disabled'} onchange="ipbUpdate(${idx},'gstPercent',this.value)" /></td>
+                <td style="text-align:right;font-weight:600;">${ipbFmt(r.total)}</td>
+                <td>${editable ? `<button class="ipb-remove-btn" onclick="ipbRemove(${idx})" title="Remove">✕</button>` : ''}</td>
+            `;
+            body.appendChild(tr);
+        });
+
+        ipbRecalcSummary();
+    }
+
+    function ipbUpdate(idx, field, value) {
+        ipbItems[idx][field] = parseFloat(value) || 0;
+        ipbRender();
+    }
+
+    function ipbRemove(idx) {
+        ipbItems.splice(idx, 1);
+        ipbRender();
+    }
+
+    function ipbAddFromMaster() {
+        const sel = document.getElementById('ipbMasterSelect');
+        const opt = sel.options[sel.selectedIndex];
+        if (!sel.value) { alert('Pick a billing item first.'); return; }
+        const qty = parseInt(document.getElementById('ipbMasterQty').value) || 1;
+        ipbItems.push({
+            itemType: 'Other', billingMasterId: parseInt(sel.value), itemName: opt.dataset.name,
+            qty: qty, unitPrice: parseFloat(opt.dataset.amount) || 0,
+            discountValue: parseFloat(opt.dataset.discount) || 0, discountIsPercent: true,
+            gstPercent: parseFloat(opt.dataset.gst) || 0
+        });
+        sel.value = '';
+        document.getElementById('ipbMasterQty').value = 1;
+        ipbRender();
+    }
+
+    function ipbAddManual() {
+        const name = document.getElementById('ipbManualName').value.trim();
+        if (!name) { alert('Enter an item name.'); return; }
+        ipbItems.push({
+            itemType: 'Other', billingMasterId: null, itemName: name,
+            qty: parseInt(document.getElementById('ipbManualQty').value) || 1,
+            unitPrice: parseFloat(document.getElementById('ipbManualPrice').value) || 0,
+            discountValue: 0, discountIsPercent: true,
+            gstPercent: parseFloat(document.getElementById('ipbManualGst').value) || 0
+        });
+        document.getElementById('ipbManualName').value = '';
+        document.getElementById('ipbManualQty').value = 1;
+        document.getElementById('ipbManualPrice').value = 0;
+        document.getElementById('ipbManualGst').value = 0;
+        ipbRender();
+    }
+
+    function ipbAddSuggested(type, refId, name, days, unitPrice) {
+        ipbItems.push({ itemType: type, billingMasterId: null, itemName: name, qty: days || 1, unitPrice: unitPrice || 0, discountValue: 0, discountIsPercent: true, gstPercent: 0 });
+        ipbRender();
+    }
+
+    function ipbAddInvestigation(id, name) {
+        const priceInput = document.getElementById('ipbInvPrice_' + id);
+        const price = parseFloat(priceInput.value) || 0;
+        if (price <= 0 && !confirm('Price is ₹0 — add anyway?')) return;
+        ipbItems.push({ itemType: 'Investigation', billingMasterId: null, itemName: name, qty: 1, unitPrice: price, discountValue: 0, discountIsPercent: true, gstPercent: 0 });
+        ipbRender();
+    }
+
+    function ipbAddProcedure(id, name) {
+        const priceInput = document.getElementById('ipbProcPrice_' + id);
+        const price = parseFloat(priceInput.value) || 0;
+        if (price <= 0 && !confirm('Price is ₹0 — add anyway?')) return;
+        ipbItems.push({ itemType: 'Procedure', billingMasterId: null, itemName: name, qty: 1, unitPrice: price, discountValue: 0, discountIsPercent: true, gstPercent: 0 });
+        ipbRender();
+    }
+
+    function ipbSwitchTab(which) {
+        document.getElementById('ipbTabMaster').classList.toggle('active', which === 'master');
+        document.getElementById('ipbTabManual').classList.toggle('active', which === 'manual');
+        document.getElementById('ipbPanelMaster').style.display = which === 'master' ? 'block' : 'none';
+        document.getElementById('ipbPanelManual').style.display = which === 'manual' ? 'block' : 'none';
+    }
+
+    function ipbRecalcSummary() {
+        let subtotal = 0, lineDiscount = 0, gstTotal = 0;
+        ipbItems.forEach(item => {
+            const r = ipbRowTotal(item);
+            subtotal += r.base;
+            lineDiscount += r.disc;
+            gstTotal += (r.total - (r.base - r.disc));
+        });
+
+        const itemsNet = subtotal - lineDiscount + gstTotal;
+        const readOnlyTotal = IPB_NURSING_TOTAL + IPB_OPERATION_TOTAL;
+        const preDiscountGrand = itemsNet + readOnlyTotal;
+
+        const discPct = parseFloat(document.getElementById('ipbDiscountPct').value) || 0;
+        const discAmt = preDiscountGrand * discPct / 100;
+        const grandTotal = preDiscountGrand - discAmt;
+
+        document.getElementById('ipbItemsSubtotal').textContent = ipbFmt(subtotal);
+        document.getElementById('ipbLineDiscount').textContent = '-' + ipbFmt(lineDiscount);
+        document.getElementById('ipbGstAmount').textContent = ipbFmt(gstTotal);
+        document.getElementById('ipbDiscountAmt').textContent = '-' + ipbFmt(discAmt);
+        document.getElementById('ipbGrandTotal').textContent = ipbFmt(grandTotal);
+
+        return { subtotal, lineDiscount, gstTotal, discPct, discAmt, grandTotal };
+    }
+
+    document.getElementById('ipbDiscountPct')?.addEventListener('input', ipbRecalcSummary);
+
+    function ipbCollectItems() {
+        return ipbItems.map(item => {
+            const r = ipbRowTotal(item);
+            return {
+                itemType: item.itemType, billingMasterId: item.billingMasterId, itemName: item.itemName,
+                quantity: item.qty, unitPrice: item.unitPrice, discountValue: item.discountValue,
+                discountIsPercent: item.discountIsPercent, gstPercent: item.gstPercent, totalPrice: r.total
+            };
+        });
+    }
+
+    function ipbSaveBill(isDraft) {
+        const totals = ipbRecalcSummary();
+        const payload = {
+            ipdId: IPB_IPD_ID,
+            subTotal: totals.subtotal,
+            lineDiscountAmt: totals.lineDiscount,
+            taxAmount: totals.gstTotal,
+            discountPercent: totals.discPct,
+            discountAmount: totals.discAmt,
+            totalAmount: totals.grandTotal,
+            notes: document.getElementById('ipbNotes').value,
+            isDraft: isDraft,
+            items: ipbCollectItems()
+        };
+
+        fetch('/IPDBilling/SaveBill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                window.location.href = '/IPDBilling/GenerateBill?ipdId=' + IPB_IPD_ID;
+            } else {
+                alert('Could not save the bill: ' + res.message);
+            }
+        })
+        .catch(() => alert('Network error while saving the bill.'));
+    }
+
+    function ipbCollectPayment() {
+        const amount = parseFloat(document.getElementById('ipbPayAmount').value);
+        if (!amount || amount <= 0) { alert('Enter a valid payment amount.'); return; }
+
+        fetch('/IPDBilling/CollectPayment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                billId: IPB_BILL_ID, ipdId: IPB_IPD_ID, amount: amount,
+                paymentMode: document.getElementById('ipbPayMode').value,
+                transactionRef: document.getElementById('ipbPayRef').value,
+                notes: ''
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                window.location.href = '/IPDBilling/GenerateBill?ipdId=' + IPB_IPD_ID;
+            } else {
+                alert('Could not collect payment: ' + res.message);
+            }
+        })
+        .catch(() => alert('Network error while collecting payment.'));
+    }
+
+    function ipbCancelBill() {
+        const reason = prompt('Reason for cancelling this bill:');
+        if (reason === null) return;
+        fetch('/IPDBilling/CancelBill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ billId: IPB_BILL_ID, reason: reason })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                window.location.href = '/IPDBilling/GenerateBill?ipdId=' + IPB_IPD_ID;
+            } else {
+                alert('Could not cancel the bill: ' + res.message);
+            }
+        })
+        .catch(() => alert('Network error while cancelling the bill.'));
+    }
+
+    // Initial paint
+    ipbRender();
+</script>
+}

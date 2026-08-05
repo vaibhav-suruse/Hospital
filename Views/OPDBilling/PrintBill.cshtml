@@ -1,0 +1,961 @@
+@model WebApplicationSampleTest2.Models.OPDBillVM
+@{
+    Layout = null;
+    var backUrl = ViewBag.IsWalkIn == true
+        ? Url.Action("Index", "WalkInConsultation")
+        : Url.Action("Index", "OPDAppointment");
+    var editUrl = Url.Action("GenerateBill", "OPDBilling", new { appointmentId = Model.AppointmentId });
+    string hospitalName = ViewBag.HospitalName ?? "";
+    string hospitalAddress = ViewBag.HospitalAddress ?? "";
+    string hospitalLogo = ViewBag.HospitalLogo ?? "";
+    string hospitalEmail = ViewBag.HospitalEmail ?? "";
+    string hospitalPhone = ViewBag.HospitalPhone ?? "";
+    string hospitalRegNo = ViewBag.HospitalRegNo ?? "";
+
+    bool isCancelled = Model.BillStatus == "Cancelled";
+    bool hasItems = Model.OtherItems != null && Model.OtherItems.Count > 0;
+    bool hasPayments = Model.Payments != null && Model.Payments.Count > 0;
+
+    // Summary values — fall back to deriving from items if header is 0/unset.
+    decimal subTotal = Model.SubTotal > 0 ? Model.SubTotal : (hasItems ? Model.OtherItems.Sum(i => i.Quantity * i.UnitPrice) : 0);
+    decimal discount = Model.LineDiscountAmount + Model.ExtraDiscountAmount;
+    decimal gst = Model.GstAmount;
+    decimal grandTotal = Model.TotalAmount > 0 ? Model.TotalAmount : (subTotal - discount + gst);
+    decimal paidAmount = Model.PaidAmount;
+    decimal dueAmount = Model.DueAmount;
+    string billNumber = string.IsNullOrEmpty(Model.BillNumber) ? "—" : Model.BillNumber;
+
+    string paymentStatusText = isCancelled ? "Cancelled"
+        : Model.PaymentStatus == "Paid" ? "Paid"
+        : Model.PaymentStatus == "Partial" ? "Partially Paid"
+        : "Unpaid";
+    string paymentStatusClass = isCancelled ? "st-cancelled"
+        : Model.PaymentStatus == "Paid" ? "st-paid"
+        : Model.PaymentStatus == "Partial" ? "st-partial"
+        : "st-unpaid";
+
+    Func<decimal, string> money = (m) => m.ToString("N2");
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tax Invoice / Bill</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+            color: #2b2b2b;
+            background: #eef0f4;
+            padding: 20px;
+        }
+
+        /* ── TOP ACTION PANEL (left side, hidden on print) ── */
+        .action-panel {
+            width: 320px;
+            position: fixed;
+            left: 20px;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            color: #3b4cbf;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .action-btn svg {
+            flex-shrink: 0;
+        }
+
+        .action-btn.dim {
+            color: #555;
+        }
+
+        /* ── LANGUAGE SELECTOR ── */
+        .lang-bar {
+            width: 820px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .lang-bar label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .lang-select {
+            padding: 6px 32px 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        /* ── BILL DOCUMENT ── */
+        .bill-wrap {
+            width: 820px;
+            margin: 0 auto;
+        }
+
+        .bill-card {
+            background: #fff;
+            border: 1px solid #d9dde3;
+            border-radius: 10px;
+            padding: 26px 30px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+        }
+
+        /* ── HEADER ── */
+        .bill-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            border-bottom: 2px solid #3b4cbf;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+        }
+
+        .bill-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .bill-header-left img {
+            height: 64px;
+            max-width: 140px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .hosp-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #3b4cbf;
+            letter-spacing: .2px;
+        }
+
+        .hosp-addr {
+            font-size: 12px;
+            color: #555;
+            margin-top: 3px;
+            line-height: 1.45;
+        }
+
+        .hosp-contact {
+            font-size: 11.5px;
+            color: #777;
+            margin-top: 3px;
+        }
+
+        .bill-header-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .bill-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1f2937;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .bill-meta {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .bill-meta strong {
+            color: #1f2937;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .st-paid {
+            background: #e8f7ee;
+            color: #1d7a43;
+        }
+
+        .st-partial {
+            background: #fff4e0;
+            color: #b26a00;
+        }
+
+        .st-unpaid {
+            background: #fdeaea;
+            color: #b3261e;
+        }
+
+        .st-cancelled {
+            background: #ececec;
+            color: #555;
+        }
+
+        /* ── INFO GRID ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 24px;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .info-grid .lbl {
+            color: #6b7280;
+        }
+
+        .info-grid strong {
+            color: #1f2937;
+        }
+
+        .info-box {
+            border: 1px solid #eceef2;
+            border-radius: 8px;
+            padding: 10px 14px;
+            background: #fafbfc;
+        }
+
+        .info-box-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: #9ca3af;
+            margin-bottom: 2px;
+        }
+
+        /* ── SECTION TITLE ── */
+        .sec-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin: 16px 0 8px;
+            color: #1f2937;
+        }
+
+        hr.sec-hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 10px 0;
+        }
+
+        /* ── ITEMS TABLE ── */
+        .bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        .bill-table th {
+            background: #f3f4f6;
+            border: 1px solid #e2e5ea;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #374151;
+        }
+
+        .bill-table td {
+            border: 1px solid #e2e5ea;
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+
+        .bill-table tr:nth-child(even) td {
+            background: #fafbfc;
+        }
+
+        .bill-table .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bill-table .ctr {
+            text-align: center;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .item-cat {
+            font-size: 11px;
+            color: #8a8f98;
+            margin-top: 1px;
+        }
+
+        .empty-note {
+            text-align: center;
+            color: #aaa;
+            padding: 14px;
+            font-size: 13px;
+        }
+
+        /* ── SUMMARY ── */
+        .summary-wrap {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .summary-left {
+            flex: 1 1 auto;
+        }
+
+        .amount-in-words {
+            background: #fafbfc;
+            border: 1px dashed #c9ced6;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #1f2937;
+        }
+
+        .amount-in-words .aw-lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: #9ca3af;
+            font-weight: 700;
+        }
+
+        .amount-in-words .aw-val {
+            font-weight: 700;
+            color: #3b4cbf;
+            margin-top: 3px;
+            font-size: 14px;
+        }
+
+        .payments-list {
+            margin-top: 12px;
+            font-size: 12.5px;
+        }
+
+        .payments-list .pl-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: #9ca3af;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #e5e7eb;
+            padding: 5px 2px;
+        }
+
+        .payment-item:last-child {
+            border-bottom: none;
+        }
+
+        .payment-item .pmt-meta {
+            color: #6b7280;
+            font-size: 11.5px;
+        }
+
+        .payment-item .pmt-amt {
+            font-weight: 700;
+            color: #1d7a43;
+        }
+
+        .totals {
+            width: 320px;
+            flex-shrink: 0;
+            border: 1px solid #e2e5ea;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f1f4;
+        }
+
+        .totals-row:last-child {
+            border-bottom: none;
+        }
+
+        .totals-row .t-lbl {
+            color: #6b7280;
+        }
+
+        .totals-row .t-val {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .totals-row.grand {
+            background: #3b4cbf;
+        }
+
+        .totals-row.grand .t-lbl,
+        .totals-row.grand .t-val {
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .totals-row.paid .t-val {
+            color: #1d7a43;
+        }
+
+        .totals-row.due .t-val {
+            color: #b3261e;
+        }
+
+        /* ── SIGNATURE ── */
+        .sig-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 34px;
+            padding-top: 14px;
+            border-top: 1px dashed #d5d9e0;
+        }
+
+        .sig-box {
+            text-align: center;
+            min-width: 170px;
+        }
+
+        .sig-line {
+            border-bottom: 1px solid #c3c8d1;
+            padding-bottom: 26px;
+            margin-bottom: 6px;
+        }
+
+        .sig-name {
+            font-weight: 700;
+            color: #3b4cbf;
+            font-size: 14px;
+        }
+
+        .sig-sub {
+            font-size: 11.5px;
+            color: #8a8f98;
+            margin-top: 2px;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 16px;
+            border-top: 1px dashed #ddd;
+            padding-top: 10px;
+            line-height: 1.5;
+        }
+
+        .cancelled-watermark {
+            position: relative;
+        }
+
+        /* ── PRINT ── */
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .action-panel, .lang-bar, .no-print {
+                display: none !important;
+            }
+
+            .bill-wrap {
+                width: 100%;
+            }
+
+            .bill-card {
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+                padding: 10px 6px;
+            }
+
+            .bill-header {
+                border-bottom: 2px solid #3b4cbf;
+            }
+
+            .totals {
+                page-break-inside: avoid;
+            }
+
+            .bill-table {
+                page-break-inside: auto;
+            }
+
+            .bill-table tr {
+                page-break-inside: avoid;
+            }
+        }
+
+        @@page {
+            size: A4;
+            margin: 12mm 10mm;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT ACTION PANEL -->
+    <div class="action-panel no-print">
+        <a href="#" class="action-btn" onclick="window.print(); return false;">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                Print Bill
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="#" class="action-btn" onclick="downloadPDF(); return false;">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Download PDF
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="@editUrl" class="action-btn dim">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                Edit Bill
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="@backUrl" class="action-btn dim">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
+                Back to List
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+    </div>
+
+    <!-- BILL DOCUMENT -->
+    <div class="bill-wrap">
+
+        <!-- LANGUAGE BAR -->
+        <div class="lang-bar no-print">
+            <label id="lbl-lang">Select Language</label>
+            <select class="lang-select" id="langSelect" onchange="applyLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="mr">मराठी</option>
+                <option value="hi">हिंदी</option>
+            </select>
+        </div>
+
+        <div class="bill-card" id="billContent">
+
+            <!-- HEADER -->
+            <div class="bill-header">
+                <div class="bill-header-left">
+                    @if (!string.IsNullOrEmpty(hospitalLogo))
+                    {
+                        <img src="@Url.Content("~/uploads/hospitals/" + hospitalLogo)" alt="Logo" />
+                    }
+                    <div>
+                        <div class="hosp-name">@hospitalName</div>
+                        <div class="hosp-addr">@hospitalAddress</div>
+                        <div class="hosp-contact">
+                            @if (!string.IsNullOrEmpty(hospitalPhone)) { <text>Ph: @hospitalPhone</text> }
+                            @if (!string.IsNullOrEmpty(hospitalPhone) && !string.IsNullOrEmpty(hospitalEmail)) { <text>&nbsp;|&nbsp;</text> }
+                            @if (!string.IsNullOrEmpty(hospitalEmail)) { <text>@hospitalEmail</text> }
+                        </div>
+                        @if (!string.IsNullOrEmpty(hospitalRegNo))
+                        {
+                            <div class="hosp-contact">Reg. No: @hospitalRegNo</div>
+                        }
+                    </div>
+                </div>
+                <div class="bill-header-right">
+                    <div class="bill-title" data-key="title">Tax Invoice / Bill</div>
+                    <div class="bill-meta">
+                        <span data-key="billno">Bill No:</span> <strong>@billNumber</strong>
+                    </div>
+                    <div class="bill-meta">
+                        <span data-key="billdate">Date:</span> <strong>@((Model.BillDate ?? Model.AppointmentDate).ToString("dd-MMM-yyyy hh:mm tt"))</strong>
+                    </div>
+                    <span class="status-badge @paymentStatusClass">@paymentStatusText</span>
+                </div>
+            </div>
+
+            @if (isCancelled)
+            {
+                <div style="background:#fdeaea;border:1px solid #f3c1c1;color:#b3261e;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;">
+                    <strong>⚠ This bill was cancelled</strong>@(Model.CancelledDate.HasValue ? " on " + Model.CancelledDate.Value.ToString("dd-MMM-yyyy HH:mm") : "").
+                    @if (!string.IsNullOrEmpty(Model.CancelledReason))
+                    {
+                        <text> Reason: @Model.CancelledReason</text>
+                    }
+                </div>
+            }
+
+            <!-- PATIENT & DOCTOR INFO -->
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-box-title" data-key="billedto">Billed To / Patient</div>
+                    <div style="font-weight:700;font-size:14px;color:#111827;margin-top:2px;">@Model.PatientName</div>
+                    <div style="color:#555;margin-top:2px;">
+                        Patient ID: <strong>@Model.PatientId</strong>
+                        @if (Model.Age.HasValue) { <text>&nbsp;•&nbsp; Age: @Model.Age.Value Y</text> }
+                        @if (!string.IsNullOrEmpty(Model.Gender)) { <text>&nbsp;•&nbsp; @Model.Gender</text> }
+                    </div>
+                    <div style="color:#555;">Mobile: <strong>@(string.IsNullOrEmpty(Model.PhoneNumber) ? "—" : Model.PhoneNumber)</strong></div>
+                </div>
+                <div class="info-box">
+                    <div class="info-box-title" data-key="doctor">Attending Doctor</div>
+                    <div style="font-weight:700;font-size:14px;color:#111827;margin-top:2px;">Dr. @Model.DoctorName</div>
+                    @if (!string.IsNullOrEmpty(Model.Specialization))
+                    {
+                        <div style="color:#555;">@Model.Specialization</div>
+                    }
+                    <div style="color:#555;">Appointment: <strong>@Model.AppointmentDate.ToString("dd-MMM-yyyy hh:mm tt")</strong></div>
+                </div>
+            </div>
+
+            <!-- ITEMS -->
+            <div class="sec-title" data-key="items-title">Bill Items</div>
+            <table class="bill-table">
+                <thead>
+                    <tr>
+                        <th style="width:34px;" data-key="th-sr">#</th>
+                        <th data-key="th-item">Item</th>
+                        <th class="ctr" style="width:56px;" data-key="th-qty">Qty</th>
+                        <th class="num" style="width:90px;" data-key="th-rate">Rate</th>
+                        <th class="num" style="width:92px;" data-key="th-disc">Discount</th>
+                        <th class="ctr" style="width:56px;" data-key="th-gst">GST</th>
+                        <th class="num" style="width:100px;" data-key="th-amt">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (hasItems)
+                    {
+                        int idx = 1;
+                        foreach (var it in Model.OtherItems)
+                        {
+                            var discStr = it.DiscountValue > 0
+                                ? (it.DiscountIsPercent ? it.DiscountValue.ToString("0.##") + "%" : "₹" + money(it.DiscountValue))
+                                : "—";
+                            var gstStr = it.GstPercent > 0 ? it.GstPercent.ToString("0.##") + "%" : "—";
+                            <tr>
+                                <td>@idx</td>
+                                <td>
+                                    <div class="item-name">@it.ItemName</div>
+                                    <div class="item-cat">@it.ItemType</div>
+                                </td>
+                                <td class="ctr">@it.Quantity</td>
+                                <td class="num">₹@money(it.UnitPrice)</td>
+                                <td class="num">@discStr</td>
+                                <td class="ctr">@gstStr</td>
+                                <td class="num"><strong>₹@money(it.TotalPrice)</strong></td>
+                            </tr>
+                            idx++;
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="7" class="empty-note">No items on this bill.</td></tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- SUMMARY -->
+            <div class="summary-wrap">
+                <div class="summary-left">
+                    <div class="amount-in-words">
+                        <div class="aw-lbl" data-key="amountwords">Amount In Words</div>
+                        <div class="aw-val">Rupees @NumberToWords(grandTotal) Only</div>
+                    </div>
+
+                    @if (hasPayments)
+                    {
+                        <div class="payments-list">
+                            <div class="pl-title" data-key="payhist">Payment History</div>
+                            @foreach (var p in Model.Payments)
+                            {
+                                <div class="payment-item">
+                                    <span>
+                                        <strong>@p.PaymentMode</strong>
+                                        <span class="pmt-meta"> • @p.PaymentDate.ToString("dd-MMM-yyyy hh:mm tt") @if (!string.IsNullOrEmpty(p.ReceiptNumber)) { <text>• @p.ReceiptNumber</text> }</span>
+                                    </span>
+                                    <span class="pmt-amt">₹@money(p.Amount)</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div style="margin-top:12px;font-size:12.5px;color:#6b7280;">
+                            <span class="pmt-meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#9ca3af;font-weight:700;" data-key="notes">Notes</span>
+                            <div style="margin-top:3px;">@Model.Notes</div>
+                        </div>
+                    }
+                </div>
+
+                <div class="totals">
+                    <div class="totals-row">
+                        <span class="t-lbl" data-key="subtotal">Subtotal</span>
+                        <span class="t-val">₹@money(subTotal)</span>
+                    </div>
+                    <div class="totals-row">
+                        <span class="t-lbl" data-key="discount">Discount</span>
+                        <span class="t-val">- ₹@money(discount)</span>
+                    </div>
+                    <div class="totals-row">
+                        <span class="t-lbl" data-key="gst">GST</span>
+                        <span class="t-val">₹@money(gst)</span>
+                    </div>
+                    <div class="totals-row grand">
+                        <span class="t-lbl" data-key="grandtotal">Total Payable</span>
+                        <span class="t-val">₹@money(grandTotal)</span>
+                    </div>
+                    <div class="totals-row paid">
+                        <span class="t-lbl" data-key="paid">Paid</span>
+                        <span class="t-val">₹@money(paidAmount)</span>
+                    </div>
+                    <div class="totals-row due">
+                        <span class="t-lbl" data-key="due">Balance Due</span>
+                        <span class="t-val">₹@money(dueAmount)</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.PaymentMode))
+                    {
+                        <div class="totals-row">
+                            <span class="t-lbl" data-key="paymode">Payment Mode</span>
+                            <span class="t-val">@Model.PaymentMode</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- SIGNATURE -->
+            <div class="sig-row">
+                <div class="sig-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-name">@Model.PatientName</div>
+                    <div class="sig-sub" data-key="sig-pat">Patient Signature</div>
+                </div>
+                <div class="sig-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" data-key="sig-auth">Authorized Signatory</div>
+                    <div class="sig-sub">@hospitalName</div>
+                </div>
+            </div>
+
+            <div class="footer-note" data-key="footer">
+                This is a computer generated bill and does not require a signature.<br />
+                @if (!string.IsNullOrEmpty(hospitalRegNo)) { <text>Reg. No: @hospitalRegNo</text> }
+                @if (!string.IsNullOrEmpty(hospitalPhone)) { <text> &nbsp;|&nbsp; Ph: @hospitalPhone</text> }
+            </div>
+
+        </div><!-- /.bill-card -->
+    </div><!-- /.bill-wrap -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        /* ── LANGUAGE TRANSLATIONS ── */
+        var T = {
+            en: {
+                'lbl-lang': 'Select Language',
+                'title': 'Tax Invoice / Bill',
+                'billno': 'Bill No:',
+                'billdate': 'Date:',
+                'billedto': 'Billed To / Patient',
+                'doctor': 'Attending Doctor',
+                'items-title': 'Bill Items',
+                'th-sr': '#', 'th-item': 'Item', 'th-qty': 'Qty',
+                'th-rate': 'Rate', 'th-disc': 'Discount', 'th-gst': 'GST', 'th-amt': 'Amount',
+                'amountwords': 'Amount In Words',
+                'payhist': 'Payment History',
+                'notes': 'Notes',
+                'subtotal': 'Subtotal', 'discount': 'Discount', 'gst': 'GST',
+                'grandtotal': 'Total Payable', 'paid': 'Paid', 'due': 'Balance Due',
+                'paymode': 'Payment Mode',
+                'sig-pat': 'Patient Signature',
+                'sig-auth': 'Authorized Signatory',
+                'footer': 'This is a computer generated bill and does not require a signature.'
+            },
+            mr: {
+                'lbl-lang': 'भाषा निवडा',
+                'title': 'कर बीजक / बिल',
+                'billno': 'बिल क्र:', 'billdate': 'दिनांक:',
+                'billedto': 'रुग्णाचे नाव', 'doctor': 'उपस्थित डॉक्टर',
+                'items-title': 'बिल आयटम',
+                'th-sr': 'क्र', 'th-item': 'आयटम', 'th-qty': 'प्रमाण',
+                'th-rate': 'दर', 'th-disc': 'सूट', 'th-gst': 'जीएसटी', 'th-amt': 'रक्कम',
+                'amountwords': 'रक्कम शब्दांत',
+                'payhist': 'पेमेंट इतिहास', 'notes': 'टिप्पणी',
+                'subtotal': 'एकूण', 'discount': 'सूट', 'gst': 'जीएसटी',
+                'grandtotal': 'एकूण देय रक्कम', 'paid': 'भरले', 'due': 'थकीत',
+                'paymode': 'पेमेंट पद्धत',
+                'sig-pat': 'रुग्णाची सही', 'sig-auth': 'अधिकृत स्वाक्षरी',
+                'footer': 'हे संगणक-निर्मित बिल आहे, त्यासाठी स्वाक्षरी आवश्यक नाही.'
+            },
+            hi: {
+                'lbl-lang': 'भाषा चुनें',
+                'title': 'टैक्स इनवॉइस / बिल',
+                'billno': 'बिल नं:', 'billdate': 'दिनांक:',
+                'billedto': 'मरीज़ का नाम', 'doctor': 'उपस्थित डॉक्टर',
+                'items-title': 'बिल आइटम',
+                'th-sr': 'क्र', 'th-item': 'आइटम', 'th-qty': 'मात्रा',
+                'th-rate': 'दर', 'th-disc': 'छूट', 'th-gst': 'जीएसटी', 'th-amt': 'राशि',
+                'amountwords': 'राशि शब्दों में',
+                'payhist': 'भुगतान इतिहास', 'notes': 'नोट',
+                'subtotal': 'उप-योग', 'discount': 'छूट', 'gst': 'जीएसटी',
+                'grandtotal': 'कुल देय राशि', 'paid': 'भुगतान', 'due': 'बकाया',
+                'paymode': 'भुगतान माध्यम',
+                'sig-pat': 'मरीज़ के हस्ताक्षर', 'sig-auth': 'अधिकृत हस्ताक्षर',
+                'footer': 'यह कंप्यूटर जनरेटेड बिल है, इसके लिए हस्ताक्षर की आवश्यकता नहीं है।'
+            }
+        };
+
+        function applyLanguage(lang) {
+            var dict = T[lang] || T['en'];
+            document.getElementById('lbl-lang').textContent = dict['lbl-lang'];
+            document.querySelectorAll('[data-key]').forEach(function (el) {
+                var k = el.getAttribute('data-key');
+                if (dict[k]) el.textContent = dict[k];
+            });
+        }
+
+        /* ── PDF DOWNLOAD ── */
+        function downloadPDF() {
+            var el = document.getElementById('billContent');
+            html2canvas(el, { scale: 2 }).then(function (canvas) {
+                var { jsPDF } = window.jspdf;
+                var pdf = new jsPDF('p', 'mm', 'a4');
+                var pw = pdf.internal.pageSize.getWidth();
+                var ph = pdf.internal.pageSize.getHeight();
+                var imgData = canvas.toDataURL('image/png');
+                var imgH = (canvas.height * pw) / canvas.width;
+                var pos = 0;
+                pdf.addImage(imgData, 'PNG', 0, pos, pw, imgH);
+                var left = imgH - ph;
+                while (left > 0) {
+                    pos = left - imgH;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, pos, pw, imgH);
+                    left -= ph;
+                }
+                pdf.save('Bill_' + '@billNumber' + '.pdf');
+            });
+        }
+    </script>
+
+    @functions {
+        // ── Number to Words (Indian numbering system: Lakh / Crore) ────────
+        public static string NumberToWords(decimal amount)
+        {
+            if (amount == 0) return "Zero";
+
+            long rupees = (long)Math.Floor(amount);
+            int paise = (int)Math.Round((amount - rupees) * 100);
+
+            string words = IndianNumberToWords(rupees);
+            if (paise > 0)
+                words += " and " + IndianNumberToWords(paise) + " Paise";
+            return words;
+        }
+
+        public static string IndianNumberToWords(long number)
+        {
+            if (number == 0) return "Zero";
+
+            if (number < 0) return "Minus " + IndianNumberToWords(-number);
+
+            string words = "";
+
+            if ((number / 10000000) > 0)
+            {
+                words += IndianNumberToWords(number / 10000000) + " Crore ";
+                number %= 10000000;
+            }
+
+            if ((number / 100000) > 0)
+            {
+                words += IndianNumberToWords(number / 100000) + " Lakh ";
+                number %= 100000;
+            }
+
+            if ((number / 1000) > 0)
+            {
+                words += IndianNumberToWords(number / 1000) + " Thousand ";
+                number %= 1000;
+            }
+
+            if ((number / 100) > 0)
+            {
+                words += IndianNumberToWords(number / 100) + " Hundred ";
+                number %= 100;
+            }
+
+            if (number > 0)
+            {
+                if (words != "")
+                    words += "and ";
+
+                var unitsMap = new[] { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+                var tensMap = new[] { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+
+                if (number < 20)
+                    words += unitsMap[number];
+                else
+                {
+                    words += tensMap[number / 10];
+                    if ((number % 10) > 0)
+                        words += "-" + unitsMap[number % 10];
+                }
+            }
+
+            return words.Trim();
+        }
+    }
+</body>
+</html>
+

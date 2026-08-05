@@ -1,0 +1,38 @@
+﻿@model int
+@{
+    int ipdId = Model;
+}
+
+<div class="dropdown d-inline-block">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="clinicalDetailsBtn"
+            data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-notes-medical me-1"></i> Clinical Details
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="clinicalDetailsBtn">
+        <li>
+            <a class="dropdown-item" asp-controller="NurseVitals" asp-action="Timeline" asp-route-ipdId="@ipdId">
+                <i class="fas fa-heartbeat me-2 text-danger"></i> Vital Parameters
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="TreatmentSheet" asp-action="Index" asp-route-ipdId="@ipdId">
+                <i class="fas fa-file-medical me-2 text-primary"></i> Treatment Sheet
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="ExtraOrders" asp-action="Index" asp-route-ipdId="@ipdId">
+                <i class="fas fa-clipboard-list me-2 text-primary"></i> Extra Orders
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="LabReports" asp-action="Index" asp-route-ipdId="@ipdId">
+                <i class="fas fa-flask me-2 text-primary"></i> Lab Reports
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="Radiology" asp-action="Index" asp-route-ipdId="@ipdId">
+                <i class="fas fa-x-ray me-2 text-primary"></i> Radiology Reports
+            </a>
+        </li>
+    </ul>
+</div>

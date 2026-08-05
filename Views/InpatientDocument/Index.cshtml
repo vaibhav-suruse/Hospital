@@ -1,0 +1,149 @@
+﻿@model WebApplicationSampleTest2.Models.OtherDocumentsVM
+
+<input type="hidden" id="hdnIpdId" value="@Model.IpdId" />
+<input type="hidden" id="hdnPatientId" value="@Model.PatientId" />
+
+<div class="container-fluid">
+
+    <!-- Top Tab Bar -->
+    @await Html.PartialAsync("_IPDTabs", "OtherDocuments")
+
+    <div class="card mt-3">
+
+        <div class="card-header">
+            <h5 class="mb-0">Manage Inpatient Documents</h5>
+        </div>
+
+        <div class="card-body">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+
+            <form asp-action="Upload"
+                  asp-controller="InpatientDocument"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <input type="hidden" name="IP_ID" value="@Model.IpdId" />
+                <input type="hidden" name="PatientId" value="@Model.PatientId" />
+
+                <div class="row">
+
+                    <div class="col-md-5">
+                        <input type="file"
+                               name="DocumentFile"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">
+                            Upload Documents
+                        </button>
+                    </div>
+
+                </div>
+
+            </form>
+
+            <hr />
+
+            <table class="table table-bordered table-striped">
+
+                <thead>
+                    <tr>
+                        <th>Sr.No</th>
+                        <th>File Name</th>
+                        <th>Uploaded Date</th>
+                        <th width="220">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @{
+                        int i = 1;
+                    }
+
+                    @if (Model.Documents != null && Model.Documents.Count > 0)
+                    {
+                        @foreach (var item in Model.Documents)
+                        {
+                            <tr>
+
+                                <td>@i</td>
+
+                                <td>@item.FileName</td>
+
+                                <td>@item.UploadedDate.ToString("dd-MM-yyyy hh:mm tt")</td>
+
+                                <td>
+
+                                    <a asp-action="Download"
+                                       asp-controller="InpatientDocument"
+                                       asp-route-id="@item.DocumentId"
+                                       class="btn btn-success btn-sm">
+                                        Download
+                                    </a>
+
+                                    <form asp-action="Delete"
+                                          asp-controller="InpatientDocument"
+                                          method="post"
+                                          style="display:inline;">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.DocumentId" />
+
+                                        <input type="hidden"
+                                               name="ipId"
+                                               value="@item.IP_ID" />
+
+                                        <input type="hidden"
+                                               name="patientId"
+                                               value="@Model.PatientId" />
+
+                                        <button type="submit"
+                                                class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Delete this document?');">
+                                            Delete
+                                        </button>
+
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                No Documents Found.
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>

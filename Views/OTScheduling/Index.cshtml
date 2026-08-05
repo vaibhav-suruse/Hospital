@@ -1,0 +1,966 @@
+﻿@model WebApplicationSampleTest2.Models.OTBoardVM
+@{
+    ViewData["Title"] = "OT Management";
+    int ipdId = Model.IPDId ?? 0;
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-hospital-user me-1"></i>
+                <strong>OT Management</strong>
+                <span class="ms-2 opacity-75">Theatre Scheduling Board</span>
+            </div>
+            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.PatientId" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="prevDayBtn"><i class="fas fa-chevron-left"></i></button>
+                    <input type="date" id="boardDate" class="form-control form-control-sm" style="width:160px" value="@Model.BoardDate.ToString("yyyy-MM-dd")">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="nextDayBtn"><i class="fas fa-chevron-right"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="todayBtn">Today</button>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Register" asp-controller="OTScheduling" target="_blank" class="btn btn-sm btn-outline-dark">
+                        <i class="fas fa-book me-1"></i> OT Register
+                    </a>
+                    <button class="btn btn-sm btn-outline-dark" id="manageTheatresBtn">
+                        <i class="fas fa-door-open me-1"></i> Theatres
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="openBookCaseBtn">
+                        <i class="fas fa-calendar-plus me-1"></i> Book New Case
+                    </button>
+                </div>
+            </div>
+
+            <div id="otBoardContainer">
+                @await Html.PartialAsync("_OTBoardPartial", Model)
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@* ============================= BOOK NEW CASE MODAL ============================= *@
+
+<div class="modal fade" id="bookCaseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="bookCaseForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProcedureId" id="bookProcedureId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-calendar-plus me-1"></i> Book New Case</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div id="procedureSearchStep">
+                        <label class="form-label">Find a procedure awaiting OT scheduling</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="procedureSearchBox" class="form-control" placeholder="Search by procedure or patient name...">
+                            <button type="button" class="btn btn-outline-secondary" id="searchThisPatientBtn" title="Show only this patient's pending procedures">
+                                <i class="fas fa-user"></i> This Patient
+                            </button>
+                        </div>
+                        <div id="procedureSearchResults" class="list-group mb-2" style="max-height:220px; overflow-y:auto;"></div>
+
+                        <div id="noProcedureFoundBox" style="display:none" class="text-center border rounded p-3 bg-light">
+                            <p class="text-muted mb-2">No procedures awaiting OT scheduling found.</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="showQuickRequestBtn">
+                                <i class="fas fa-plus me-1"></i> Raise a new procedure request
+                            </button>
+                        </div>
+
+                        <div id="quickRequestBox" style="display:none" class="border rounded p-3 mt-2">
+                            <h6 class="mb-2">Raise New Procedure Request</h6>
+                            <div class="mb-2">
+                                <label class="form-label">Procedure Name <span class="text-danger">*</span></label>
+                                <input type="text" id="qrProcedureName" class="form-control form-control-sm" placeholder="e.g. Appendectomy">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select id="qrCategory" class="form-select form-select-sm">
+                                        <option value="Surgical">Surgical</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Priority</label>
+                                    <select id="qrPriority" class="form-select form-select-sm">
+                                        <option value="Routine">Routine</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Clinical Indication</label>
+                                <textarea id="qrClinicalIndication" class="form-control form-control-sm" rows="2" placeholder="Why this procedure is needed"></textarea>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" id="submitQuickRequestBtn">
+                                <i class="fas fa-check me-1"></i> Raise Request
+                            </button>
+                            <button type="button" class="btn btn-sm btn-link" id="cancelQuickRequestBtn">Cancel</button>
+                        </div>
+                    </div>
+
+                    <div id="bookingDetailsStep" style="display:none">
+                        <div class="alert alert-light border py-2 mb-3" id="selectedProcedureSummary"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Theatre <span class="text-danger">*</span></label>
+                                <select name="TheatreId" id="bookTheatreSelect" class="form-select" required>
+                                    <option value="">-- Select Theatre --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Duration (minutes) <span class="text-danger">*</span></label>
+                                <input type="number" name="DurationMinutes" id="bookDuration" class="form-control" min="15" max="1440" value="60" required>
+                            </div>
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label">Scheduled Start <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="ScheduledStart" id="bookStart" class="form-control" required>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link p-0" id="changeProcedureBtn"><i class="fas fa-undo me-1"></i>Choose a different procedure</button>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="bookCaseSubmitBtn" class="btn btn-primary" style="display:none">
+                        <i class="fas fa-check me-1"></i> Confirm Booking
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= THEATRES MODAL ============================= *@
+
+<div class="modal fade" id="theatresModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-door-open me-1"></i> Operation Theatres</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="theatreListBody" class="mb-3"></div>
+                <hr>
+                <form id="theatreForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="TheatreId" id="theatreFormId" value="0">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <input type="text" name="TheatreName" id="theatreFormName" class="form-control form-control-sm" placeholder="Theatre name (e.g. OT-1)" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" name="TheatreNumber" id="theatreFormNumber" class="form-control form-control-sm" placeholder="Number">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="Status" id="theatreFormStatus" class="form-select form-select-sm">
+                                <option value="Active">Active</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-primary w-100" id="theatreFormSaveBtn"><i class="fas fa-check"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================= CANCEL REASON MODAL ============================= *@
+
+<div class="modal fade" id="cancelBookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="cancelBookingForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BookingId" id="cancelBookingId">
+                <input type="hidden" name="ProcedureId" id="cancelProcedureId">
+                <input type="hidden" name="Status" value="Cancelled">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea name="CancelReason" class="form-control" rows="2" required placeholder="e.g. Patient not fit, Surgeon unavailable, Equipment issue..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="cancelBookingSubmitBtn"><i class="fas fa-ban me-1"></i> Cancel Booking</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= CONSENT MODAL ============================= *@
+
+<div class="modal fade" id="consentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="consentForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BookingId" id="consentBookingId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-signature me-1"></i> Record Informed Consent</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Confirms the patient (or authorized relative) has signed informed consent for this procedure. Required before the case can be started.</p>
+                    <label class="form-label">Witness Name <span class="text-danger">*</span></label>
+                    <input type="text" name="ConsentWitnessName" class="form-control" required placeholder="Nurse / staff witnessing consent">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="consentSubmitBtn"><i class="fas fa-check me-1"></i> Record Consent</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= CHECKLIST MODAL (WHO 3-phase) ============================= *@
+
+<div class="modal fade" id="checklistModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-clipboard-check me-1"></i> WHO Surgical Safety Checklist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="checklistModalBody" style="max-height:60vh; overflow-y:auto;">
+                <div class="text-center text-muted py-3">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================= CONSUMABLES MODAL ============================= *@
+
+<div class="modal fade" id="consumablesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-boxes me-1"></i> Consumables & Implants</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="consumablesListBody" class="mb-3"><div class="text-center text-muted py-3">Loading...</div></div>
+                <hr>
+                <form id="consumableForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProcedureId" id="consumableProcedureId">
+                    <input type="hidden" name="MedicineId" id="consumableMedicineId">
+                    <input type="hidden" name="BatchId" id="consumableBatchId">
+                    <label class="form-label">Search Inventory (medicine / disposable / implant)</label>
+                    <input type="text" id="consumableSearchBox" class="form-control form-control-sm mb-1" placeholder="Type to search...">
+                    <div id="consumableSearchResults" class="list-group mb-2" style="max-height:150px; overflow-y:auto;"></div>
+
+                    <div id="consumableSelectedBox" class="alert alert-light border py-1 mb-2" style="display:none"></div>
+
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label small">Quantity</label>
+                            <input type="number" name="Quantity" id="consumableQty" class="form-control form-control-sm" value="1" min="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Charge (₹)</label>
+                            <input type="number" name="Charge" id="consumableCharge" class="form-control form-control-sm" min="0" step="0.01" value="0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Lot / Serial No.</label>
+                            <input type="text" name="LotOrSerialNumber" id="consumableLot" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check me-2">
+                                <input class="form-check-input" type="checkbox" name="IsImplant" id="consumableIsImplant">
+                                <label class="form-check-label small" for="consumableIsImplant">Implant</label>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary ms-auto" id="addConsumableBtn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================= COMPLETE CASE MODAL ============================= *@
+
+<div class="modal fade" id="completeCaseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="completeCaseForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BookingId" id="completeBookingId">
+                <input type="hidden" name="ProcedureId" id="completeProcedureId">
+                <div class="modal-header">
+                    <h5 class="modal-title">Complete Case</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Outcome <span class="text-danger">*</span></label>
+                    <select name="Outcome" class="form-select mb-2" required>
+                        <option value="Successful">Successful</option>
+                        <option value="Partial">Partial</option>
+                        <option value="StoppedDueToComplication">Stopped due to complication</option>
+                        <option value="Failed">Failed</option>
+                    </select>
+                    <label class="form-label">Final Remarks</label>
+                    <textarea name="FinalRemarks" class="form-control" rows="3" placeholder="Operative summary / remarks"></textarea>
+                    <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle"></i> If the Procedures tab requires an operative note or primary doctor that isn't recorded yet, this will ask you to complete that there first.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="completeCaseSubmitBtn"><i class="fas fa-check me-1"></i> Mark Completed</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= RECORD OT CHARGES MODAL ============================= *@
+
+<div class="modal fade" id="chargesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="chargesForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="BookingId" id="chargesBookingId">
+                <input type="hidden" name="ProcedureId" id="chargesProcedureId">
+                <input type="hidden" name="IPDId" id="chargesIPDId">
+                <input type="hidden" name="SurgeonId" id="chargesSurgeonId">
+                <input type="hidden" name="AnesthesistId" id="chargesAnesthesistId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-rupee-sign me-1"></i> Record OT Charges</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chargesContextBox" class="alert alert-light border py-2 mb-3 small"></div>
+
+                    <label class="form-label">Operation Type <span class="text-danger">*</span></label>
+                    <select name="OperationId" id="chargesOperationSelect" class="form-select mb-2" required>
+                        <option value="">-- Select Operation Type --</option>
+                    </select>
+
+                    <label class="form-label">Operation Date <span class="text-danger">*</span></label>
+                    <input type="date" name="OperationDate" id="chargesOperationDate" class="form-control mb-2" required>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small">Surgeon Charge (₹)</label>
+                            <input type="number" name="SurgeonCharge" id="chargesSurgeonCharge" class="form-control" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small">Anaesthesia Charge (₹)</label>
+                            <input type="number" name="AnesthesiaCharge" id="chargesAnesthesiaCharge" class="form-control" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small">OT / Theatre Charge (₹)</label>
+                            <input type="number" name="OTCharge" id="chargesOTCharge" class="form-control" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small">Actual/Other Charge (₹) <small class="text-muted">(includes consumables total)</small></label>
+                            <input type="number" name="ActualCharge" id="chargesActualCharge" class="form-control" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <label class="form-label">Notes</label>
+                    <textarea name="Notes" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="chargesSubmitBtn"><i class="fas fa-check me-1"></i> Save & Add to Bill</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+        var currentPatientId = @(Model.PatientId ?? 0);
+        var searchThisPatientOnly = false;
+
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 6000);
+        }
+        function ajaxSubmitForm(url, formEl, callback) {
+            var fd = new FormData(formEl);
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function ajaxPost(url, dataObj, callback) {
+            var fd = new FormData();
+            for (var k in dataObj) fd.append(k, dataObj[k]);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+
+        // ── Modal defensive cleanup ──────────────────────────────────────
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            var inst = bootstrap.Modal.getInstance(el);
+            if (inst) { inst.hide(); }
+            cleanupStrayModalBackdrops();
+        }
+        function cleanupStrayModalBackdrops() {
+            setTimeout(function () {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function (bd) { bd.remove(); });
+                }
+            }, 350);
+        }
+        document.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrops);
+
+        // ── Board date navigation ────────────────────────────────────────
+        var boardPartialUrl = '@Url.Action("BoardPartial", "OTScheduling")';
+        function reloadBoard() {
+            var d = document.getElementById('boardDate').value;
+            fetch(boardPartialUrl + '?ipdId=' + ipdId + '&date=' + d, { cache: 'no-store' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { document.getElementById('otBoardContainer').innerHTML = html; wireBoardActions(); })
+                .catch(function () { showAlert('Could not refresh the OT board. Please reload the page.', 'danger'); });
+        }
+        document.getElementById('boardDate').addEventListener('change', reloadBoard);
+        document.getElementById('prevDayBtn').addEventListener('click', function () { shiftDate(-1); });
+        document.getElementById('nextDayBtn').addEventListener('click', function () { shiftDate(1); });
+        document.getElementById('todayBtn').addEventListener('click', function () {
+            var t = new Date();
+            document.getElementById('boardDate').value = t.toISOString().slice(0, 10);
+            reloadBoard();
+        });
+        function shiftDate(days) {
+            var el = document.getElementById('boardDate');
+            var d = new Date(el.value + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            el.value = d.toISOString().slice(0, 10);
+            reloadBoard();
+        }
+
+        // ── Book New Case: search ────────────────────────────────────────
+        var searchUrl = '@Url.Action("SchedulableProcedures", "OTScheduling")';
+        var theatresUrl = '@Url.Action("Theatres", "OTScheduling")';
+
+        function runProcedureSearch() {
+            var term = document.getElementById('procedureSearchBox').value;
+            var pid = searchThisPatientOnly ? currentPatientId : 0;
+            fetch(searchUrl + '?search=' + encodeURIComponent(term) + '&patientId=' + pid, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var box = document.getElementById('procedureSearchResults');
+                    box.innerHTML = '';
+                    document.getElementById('noProcedureFoundBox').style.display = 'none';
+                    document.getElementById('quickRequestBox').style.display = 'none';
+                    if (!res.success || !res.data || res.data.length === 0) {
+                        document.getElementById('noProcedureFoundBox').style.display = 'block';
+                        return;
+                    }
+                    res.data.forEach(function (p) {
+                        var badge = p.priority === 'Emergency' ? 'danger' : (p.priority === 'Urgent' ? 'warning' : 'secondary');
+                        var item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = '<div class="d-flex justify-content-between"><strong>' + p.procedureName + '</strong>' +
+                            '<span class="badge bg-' + badge + '">' + p.priority + '</span></div>' +
+                            '<small class="text-muted">' + p.patientName + ' &middot; ' + p.procedureCategory +
+                            (p.primarySurgeonName ? ' &middot; ' + p.primarySurgeonName : '') + '</small>';
+                        item.addEventListener('click', function () { selectProcedure(p); });
+                        box.appendChild(item);
+                    });
+                })
+                .catch(function () { showAlert('Could not search procedures.', 'danger'); });
+        }
+        var searchDebounce;
+        document.getElementById('procedureSearchBox').addEventListener('input', function () {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(runProcedureSearch, 300);
+        });
+        document.getElementById('searchThisPatientBtn').addEventListener('click', function () {
+            searchThisPatientOnly = !searchThisPatientOnly;
+            this.classList.toggle('btn-outline-secondary', !searchThisPatientOnly);
+            this.classList.toggle('btn-primary', searchThisPatientOnly);
+            runProcedureSearch();
+        });
+
+        // ── Quick "Raise Procedure Request" from empty state ─────────────
+        document.getElementById('showQuickRequestBtn').addEventListener('click', function () {
+            document.getElementById('quickRequestBox').style.display = 'block';
+        });
+        document.getElementById('cancelQuickRequestBtn').addEventListener('click', function () {
+            document.getElementById('quickRequestBox').style.display = 'none';
+        });
+        document.getElementById('submitQuickRequestBtn').addEventListener('click', function () {
+            var name = document.getElementById('qrProcedureName').value;
+            if (!name) { showAlert('Procedure name is required.', 'danger'); return; }
+            if (!currentPatientId) { showAlert('Open this board from a specific patient\'s IPD tab to raise a request for them.', 'danger'); return; }
+
+            ajaxPost('@Url.Action("QuickRequestProcedure", "OTScheduling")', {
+                PatientId: currentPatientId,
+                VisitContextType: 'IPD',
+                VisitContextId: ipdId,
+                ProcedureName: name,
+                ProcedureCategory: document.getElementById('qrCategory').value,
+                Priority: document.getElementById('qrPriority').value,
+                ClinicalIndication: document.getElementById('qrClinicalIndication').value
+            }, function (res) {
+                showAlert('Procedure request raised. You can now search for it above.');
+                document.getElementById('quickRequestBox').style.display = 'none';
+                document.getElementById('qrProcedureName').value = '';
+                document.getElementById('qrClinicalIndication').value = '';
+                runProcedureSearch();
+            });
+        });
+
+        function selectProcedure(p) {
+            document.getElementById('bookProcedureId').value = p.procedureId;
+            document.getElementById('selectedProcedureSummary').innerHTML =
+                '<strong>' + p.procedureName + '</strong> &mdash; ' + p.patientName +
+                (p.primarySurgeonName ? ' &middot; ' + p.primarySurgeonName : '');
+            document.getElementById('procedureSearchStep').style.display = 'none';
+            document.getElementById('bookingDetailsStep').style.display = 'block';
+            document.getElementById('bookCaseSubmitBtn').style.display = 'inline-block';
+
+            var now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+            document.getElementById('bookStart').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+            fetch(theatresUrl, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var sel = document.getElementById('bookTheatreSelect');
+                    sel.innerHTML = '<option value="">-- Select Theatre --</option>';
+                    (res.data || []).forEach(function (t) {
+                        var opt = document.createElement('option');
+                        opt.value = t.theatreId;
+                        opt.textContent = t.theatreName + (t.theatreNumber ? ' (' + t.theatreNumber + ')' : '');
+                        sel.appendChild(opt);
+                    });
+                    if (!res.data || res.data.length === 0) {
+                        showAlert('No active theatres configured yet. Use the Theatres button to add one.', 'warning');
+                    }
+                });
+        }
+        document.getElementById('changeProcedureBtn').addEventListener('click', function () {
+            document.getElementById('procedureSearchStep').style.display = 'block';
+            document.getElementById('bookingDetailsStep').style.display = 'none';
+            document.getElementById('bookCaseSubmitBtn').style.display = 'none';
+        });
+
+        document.getElementById('openBookCaseBtn').addEventListener('click', function () {
+            document.getElementById('bookCaseForm').reset();
+            document.getElementById('procedureSearchStep').style.display = 'block';
+            document.getElementById('bookingDetailsStep').style.display = 'none';
+            document.getElementById('bookCaseSubmitBtn').style.display = 'none';
+            document.getElementById('procedureSearchResults').innerHTML = '';
+            document.getElementById('noProcedureFoundBox').style.display = 'none';
+            document.getElementById('quickRequestBox').style.display = 'none';
+            document.getElementById('procedureSearchBox').value = '';
+            searchThisPatientOnly = false;
+            document.getElementById('searchThisPatientBtn').classList.remove('btn-primary');
+            document.getElementById('searchThisPatientBtn').classList.add('btn-outline-secondary');
+            new bootstrap.Modal(document.getElementById('bookCaseModal')).show();
+            runProcedureSearch();
+        });
+
+        document.getElementById('bookCaseSubmitBtn').addEventListener('click', function () {
+            if (!document.getElementById('bookProcedureId').value) {
+                showAlert('Please select a procedure first.', 'danger');
+                return;
+            }
+            if (!document.getElementById('bookTheatreSelect').value) {
+                showAlert('Please select a theatre.', 'danger');
+                return;
+            }
+            ajaxSubmitForm('@Url.Action("CreateBooking", "OTScheduling")', document.getElementById('bookCaseForm'), function () {
+                showAlert('Theatre booked successfully.');
+                closeModal('bookCaseModal');
+                reloadBoard();
+            });
+        });
+
+        // ── Theatres management ──────────────────────────────────────────
+        function loadAllTheatresForModal() {
+            fetch('@Url.Action("Theatres", "OTScheduling")' + '?all=true', { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var body = document.getElementById('theatreListBody');
+                    if (!res.data || res.data.length === 0) {
+                        body.innerHTML = '<div class="text-muted">No theatres yet — add one below.</div>';
+                        return;
+                    }
+                    var html = '<table class="table table-sm"><tbody>';
+                    res.data.forEach(function (t) {
+                        var badge = t.status === 'Active' ? 'success' : (t.status === 'Maintenance' ? 'warning' : 'secondary');
+                        html += '<tr><td>' + t.theatreName + (t.theatreNumber ? ' (' + t.theatreNumber + ')' : '') +
+                            '</td><td><span class="badge bg-' + badge + '">' + t.status + '</span></td>' +
+                            '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary edit-theatre-btn" ' +
+                            'data-id="' + t.theatreId + '" data-name="' + t.theatreName + '" data-number="' + (t.theatreNumber || '') +
+                            '" data-status="' + t.status + '"><i class="fas fa-pen"></i></button></td></tr>';
+                    });
+                    html += '</tbody></table>';
+                    body.innerHTML = html;
+                    document.querySelectorAll('.edit-theatre-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            document.getElementById('theatreFormId').value = btn.dataset.id;
+                            document.getElementById('theatreFormName').value = btn.dataset.name;
+                            document.getElementById('theatreFormNumber').value = btn.dataset.number;
+                            document.getElementById('theatreFormStatus').value = btn.dataset.status;
+                        });
+                    });
+                });
+        }
+        document.getElementById('manageTheatresBtn').addEventListener('click', function () {
+            document.getElementById('theatreForm').reset();
+            document.getElementById('theatreFormId').value = 0;
+            loadAllTheatresForModal();
+            new bootstrap.Modal(document.getElementById('theatresModal')).show();
+        });
+        document.getElementById('theatreFormSaveBtn').addEventListener('click', function () {
+            var name = document.getElementById('theatreFormName').value;
+            if (!name) { showAlert('Theatre name is required.', 'danger'); return; }
+            ajaxSubmitForm('@Url.Action("SaveTheatre", "OTScheduling")', document.getElementById('theatreForm'), function () {
+                showAlert('Theatre saved.');
+                document.getElementById('theatreForm').reset();
+                document.getElementById('theatreFormId').value = 0;
+                loadAllTheatresForModal();
+                reloadBoard();
+            });
+        });
+
+        // ── Board card actions ────────────────────────────────────────────
+        function wireBoardActions() {
+            document.querySelectorAll('.ot-case-card').forEach(function (card) {
+                var bookingId = card.dataset.bookingId;
+                var procedureId = card.dataset.procedureId;
+
+                var consentBtn = card.querySelector('.ot-consent-btn');
+                if (consentBtn) consentBtn.addEventListener('click', function () {
+                    document.getElementById('consentBookingId').value = bookingId;
+                    document.getElementById('consentForm').reset();
+                    new bootstrap.Modal(document.getElementById('consentModal')).show();
+                });
+
+                var checklistBtn = card.querySelector('.ot-checklist-btn');
+                if (checklistBtn) checklistBtn.addEventListener('click', function () { openChecklist(procedureId); });
+
+                var consumablesBtn = card.querySelector('.ot-consumables-btn');
+                if (consumablesBtn) consumablesBtn.addEventListener('click', function () { openConsumables(procedureId); });
+
+                var startBtn = card.querySelector('.ot-start-btn');
+                if (startBtn) startBtn.addEventListener('click', function () {
+                    ajaxPost('@Url.Action("StartBooking", "OTScheduling")', { bookingId: bookingId, procedureId: procedureId },
+                        function () { showAlert('Case started.'); reloadBoard(); });
+                });
+
+                var completeBtn = card.querySelector('.ot-complete-btn');
+                if (completeBtn) completeBtn.addEventListener('click', function () {
+                    document.getElementById('completeBookingId').value = bookingId;
+                    document.getElementById('completeProcedureId').value = procedureId;
+                    document.getElementById('completeCaseForm').reset();
+                    new bootstrap.Modal(document.getElementById('completeCaseModal')).show();
+                });
+
+                var cancelBtn = card.querySelector('.ot-cancel-btn');
+                if (cancelBtn) cancelBtn.addEventListener('click', function () {
+                    document.getElementById('cancelBookingId').value = bookingId;
+                    document.getElementById('cancelProcedureId').value = procedureId;
+                    new bootstrap.Modal(document.getElementById('cancelBookingModal')).show();
+                });
+
+                var chargesBtn = card.querySelector('.ot-charges-btn');
+                if (chargesBtn) chargesBtn.addEventListener('click', function () { openCharges(bookingId, procedureId); });
+            });
+        }
+
+        // ── Consent ───────────────────────────────────────────────────────
+        document.getElementById('consentSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("RecordConsent", "OTScheduling")', document.getElementById('consentForm'), function () {
+                showAlert('Consent recorded.');
+                closeModal('consentModal');
+                reloadBoard();
+            });
+        });
+
+        // ── Cancel ────────────────────────────────────────────────────────
+        document.getElementById('cancelBookingSubmitBtn').addEventListener('click', function () {
+            var reasonEl = document.querySelector('#cancelBookingForm textarea[name="CancelReason"]');
+            if (!reasonEl.value.trim()) { showAlert('A cancellation reason is required.', 'danger'); return; }
+            ajaxSubmitForm('@Url.Action("UpdateBookingStatus", "OTScheduling")', document.getElementById('cancelBookingForm'), function () {
+                showAlert('Booking cancelled.');
+                closeModal('cancelBookingModal');
+                reloadBoard();
+            });
+        });
+
+        // ── Complete ──────────────────────────────────────────────────────
+        document.getElementById('completeCaseSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("CompleteBooking", "OTScheduling")', document.getElementById('completeCaseForm'), function () {
+                showAlert('Case marked completed. You can record OT charges from the board now.');
+                closeModal('completeCaseModal');
+                reloadBoard();
+            });
+        });
+
+        // ── Checklist (WHO 3-phase) ───────────────────────────────────────
+        var phaseLabels = { SignIn: 'Sign In (before anaesthesia)', TimeOut: 'Time Out (before incision)', SignOut: 'Sign Out (before leaving OT)' };
+
+        function openChecklist(procedureId) {
+            var body = document.getElementById('checklistModalBody');
+            body.innerHTML = '<div class="text-center text-muted py-3">Loading...</div>';
+            new bootstrap.Modal(document.getElementById('checklistModal')).show();
+
+            fetch('@Url.Action("GetChecklist", "OTScheduling")' + '?procedureId=' + procedureId, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) { body.innerHTML = '<div class="text-danger">' + (res.message || 'Could not load checklist.') + '</div>'; return; }
+                    if (!res.data || res.data.length === 0) {
+                        body.innerHTML = '<div class="text-muted text-center py-3">No checklist items exist for this procedure yet. These are seeded from the Procedures tab.</div>';
+                        return;
+                    }
+                    var groups = { SignIn: [], TimeOut: [], SignOut: [], Untagged: [] };
+                    res.data.forEach(function (item) { groups[item.phase || 'Untagged'].push(item); });
+
+                    var html = '';
+                    ['SignIn', 'TimeOut', 'SignOut', 'Untagged'].forEach(function (phase) {
+                        if (groups[phase].length === 0) return;
+                        html += '<h6 class="mt-2">' + (phaseLabels[phase] || 'Not yet tagged to a phase') + '</h6>';
+                        groups[phase].forEach(function (item) {
+                            html += '<div class="form-check d-flex align-items-center justify-content-between border-bottom py-1">' +
+                                '<div><input class="form-check-input checklist-item-checkbox" type="checkbox" data-id="' + item.checklistItemId + '" ' + (item.isChecked ? 'checked' : '') + '>' +
+                                ' <label class="form-check-label">' + item.itemText + (item.isMandatory ? ' <span class="text-danger">*</span>' : '') + '</label></div>';
+                            if (phase === 'Untagged') {
+                                html += '<div class="btn-group btn-group-sm">' +
+                                    '<button type="button" class="btn btn-outline-secondary tag-phase-btn" data-id="' + item.checklistItemId + '" data-phase="SignIn">Sign In</button>' +
+                                    '<button type="button" class="btn btn-outline-secondary tag-phase-btn" data-id="' + item.checklistItemId + '" data-phase="TimeOut">Time Out</button>' +
+                                    '<button type="button" class="btn btn-outline-secondary tag-phase-btn" data-id="' + item.checklistItemId + '" data-phase="SignOut">Sign Out</button>' +
+                                    '</div>';
+                            }
+                            html += '</div>';
+                        });
+                    });
+                    body.innerHTML = html;
+
+                    document.querySelectorAll('.checklist-item-checkbox').forEach(function (cb) {
+                        cb.addEventListener('change', function () {
+                            ajaxPost('@Url.Action("ToggleChecklistItem", "OTScheduling")', { checklistItemId: cb.dataset.id, isChecked: cb.checked },
+                                function () { reloadBoard(); });
+                        });
+                    });
+                    document.querySelectorAll('.tag-phase-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            ajaxPost('@Url.Action("TagChecklistPhase", "OTScheduling")', { checklistItemId: btn.dataset.id, phase: btn.dataset.phase },
+                                function () { openChecklist(procedureId); });
+                        });
+                    });
+                })
+                .catch(function () { body.innerHTML = '<div class="text-danger">Could not load checklist.</div>'; });
+        }
+
+        // ── Consumables / Implants ────────────────────────────────────────
+        function openConsumables(procedureId) {
+            document.getElementById('consumableProcedureId').value = procedureId;
+            document.getElementById('consumableSearchBox').value = '';
+            document.getElementById('consumableSearchResults').innerHTML = '';
+            document.getElementById('consumableSelectedBox').style.display = 'none';
+            document.getElementById('consumableMedicineId').value = '';
+            document.getElementById('consumableBatchId').value = '';
+            loadConsumablesList(procedureId);
+            new bootstrap.Modal(document.getElementById('consumablesModal')).show();
+        }
+        function loadConsumablesList(procedureId) {
+            var body = document.getElementById('consumablesListBody');
+            body.innerHTML = '<div class="text-center text-muted py-3">Loading...</div>';
+            fetch('@Url.Action("GetConsumables", "OTScheduling")' + '?procedureId=' + procedureId, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) { body.innerHTML = '<div class="text-danger">' + (res.message || 'Could not load.') + '</div>'; return; }
+                    if (!res.data || res.data.length === 0) {
+                        body.innerHTML = '<div class="text-muted text-center py-2">No consumables/implants recorded yet.</div>';
+                        return;
+                    }
+                    var html = '<table class="table table-sm"><thead><tr><th>Item</th><th>Qty</th><th>Lot/Serial</th><th class="text-end">Charge</th><th></th></tr></thead><tbody>';
+                    res.data.forEach(function (c) {
+                        html += '<tr><td>' + c.itemName + (c.isImplant ? ' <span class="badge bg-info">Implant</span>' : '') + '</td>' +
+                            '<td>' + c.quantity + '</td><td>' + (c.lotOrSerialNumber || '-') + '</td>' +
+                            '<td class="text-end">₹' + (c.quantity * c.charge).toFixed(2) + '</td>' +
+                            '<td><button type="button" class="btn btn-sm btn-outline-danger del-consumable-btn" data-id="' + c.consumableId + '"><i class="fas fa-trash"></i></button></td></tr>';
+                    });
+                    html += '</tbody></table><div class="text-end fw-bold">Total: ₹' + res.total.toFixed(2) + '</div>';
+                    body.innerHTML = html;
+                    document.querySelectorAll('.del-consumable-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            ajaxPost('@Url.Action("DeleteConsumable", "OTScheduling")', { consumableId: btn.dataset.id },
+                                function () { loadConsumablesList(procedureId); });
+                        });
+                    });
+                });
+        }
+        var consumableSearchDebounce;
+        document.getElementById('consumableSearchBox').addEventListener('input', function () {
+            clearTimeout(consumableSearchDebounce);
+            var term = this.value;
+            consumableSearchDebounce = setTimeout(function () {
+                fetch('@Url.Action("SearchInventory", "OTScheduling")' + '?term=' + encodeURIComponent(term), { cache: 'no-store' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        var box = document.getElementById('consumableSearchResults');
+                        box.innerHTML = '';
+                        (res.data || []).forEach(function (i) {
+                            var item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action py-1';
+                            item.innerHTML = '<small>' + i.medicineName + ' &middot; Stock: ' + i.stock + ' &middot; ₹' + i.sellingPrice + '</small>';
+                            item.addEventListener('click', function () {
+                                document.getElementById('consumableMedicineId').value = i.medicineId;
+                                document.getElementById('consumableBatchId').value = i.batchId;
+                                document.getElementById('consumableCharge').value = i.sellingPrice;
+                                var selBox = document.getElementById('consumableSelectedBox');
+                                selBox.style.display = 'block';
+                                selBox.textContent = 'Selected: ' + i.medicineName;
+                                selBox.dataset.name = i.medicineName;
+                                box.innerHTML = '';
+                            });
+                            box.appendChild(item);
+                        });
+                    });
+            }, 300);
+        });
+        document.getElementById('addConsumableBtn').addEventListener('click', function () {
+            if (!document.getElementById('consumableMedicineId').value) {
+                showAlert('Please search and select an item from Inventory first.', 'danger');
+                return;
+            }
+            var fd = new FormData(document.getElementById('consumableForm'));
+            fd.append('ItemName', document.getElementById('consumableSelectedBox').dataset.name || '');
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch('@Url.Action("AddConsumable", "OTScheduling")', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) { showAlert(res.message || 'Could not add item.', 'danger'); return; }
+                    showAlert('Item added.');
+                    var procedureId = document.getElementById('consumableProcedureId').value;
+                    document.getElementById('consumableMedicineId').value = '';
+                    document.getElementById('consumableBatchId').value = '';
+                    document.getElementById('consumableSelectedBox').style.display = 'none';
+                    document.getElementById('consumableSearchBox').value = '';
+                    document.getElementById('consumableQty').value = 1;
+                    document.getElementById('consumableCharge').value = 0;
+                    document.getElementById('consumableLot').value = '';
+                    document.getElementById('consumableIsImplant').checked = false;
+                    loadConsumablesList(procedureId);
+                });
+        });
+
+        // ── Record OT Charges ─────────────────────────────────────────────
+        function openCharges(bookingId, procedureId) {
+            document.getElementById('chargesBookingId').value = bookingId;
+            document.getElementById('chargesProcedureId').value = procedureId;
+            document.getElementById('chargesForm').reset();
+            document.getElementById('chargesOperationDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('chargesContextBox').textContent = 'Loading procedure details...';
+
+            fetch('@Url.Action("GetProcedureContextForCharges", "OTScheduling")' + '?procedureId=' + procedureId, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (ctx) {
+                    if (!ctx.success) { showAlert(ctx.message || 'Could not load procedure context.', 'danger'); return; }
+                    document.getElementById('chargesIPDId').value = ctx.ipdId;
+                    document.getElementById('chargesSurgeonId').value = ctx.surgeonId || '';
+                    document.getElementById('chargesAnesthesistId').value = ctx.anesthesistId || '';
+                    document.getElementById('chargesContextBox').innerHTML =
+                        (ctx.surgeonName ? '<i class="fas fa-user-md"></i> Surgeon: <strong>' + ctx.surgeonName + '</strong><br>' : '') +
+                        (ctx.anesthesistName ? '<i class="fas fa-syringe"></i> Anaesthetist: <strong>' + ctx.anesthesistName + '</strong>' : '');
+
+                    return fetch('@Url.Action("GetConsumables", "OTScheduling")' + '?procedureId=' + procedureId, { cache: 'no-store' });
+                })
+                .then(function (r) { return r ? r.json() : null; })
+                .then(function (consRes) {
+                    if (consRes && consRes.success) {
+                        document.getElementById('chargesActualCharge').value = consRes.total.toFixed(2);
+                    }
+                });
+
+            fetch('@Url.Action("GetOperationTypes", "OTScheduling")', { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var sel = document.getElementById('chargesOperationSelect');
+                    sel.innerHTML = '<option value="">-- Select Operation Type --</option>';
+                    (res.data || []).forEach(function (o) {
+                        var opt = document.createElement('option');
+                        opt.value = o.operationId;
+                        opt.textContent = o.operationName;
+                        opt.dataset.surgeon = o.surgeonCharge;
+                        opt.dataset.anesthesia = o.anesthesiaCharge;
+                        opt.dataset.ot = o.otCharge;
+                        opt.dataset.default = o.defaultCharge;
+                        sel.appendChild(opt);
+                    });
+                });
+
+            new bootstrap.Modal(document.getElementById('chargesModal')).show();
+        }
+        document.getElementById('chargesOperationSelect').addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            if (!opt.dataset.surgeon) return;
+            document.getElementById('chargesSurgeonCharge').value = opt.dataset.surgeon;
+            document.getElementById('chargesAnesthesiaCharge').value = opt.dataset.anesthesia;
+            document.getElementById('chargesOTCharge').value = opt.dataset.ot;
+        });
+        document.getElementById('chargesSubmitBtn').addEventListener('click', function () {
+            if (!document.getElementById('chargesOperationSelect').value) {
+                showAlert('Please select an operation type.', 'danger');
+                return;
+            }
+            ajaxSubmitForm('@Url.Action("RecordOTCharges", "OTScheduling")', document.getElementById('chargesForm'), function () {
+                showAlert('OT charges recorded and added to the patient\'s bill.');
+                closeModal('chargesModal');
+                reloadBoard();
+            });
+        });
+
+        wireBoardActions();
+    </script>
+}

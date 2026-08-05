@@ -1,0 +1,242 @@
+﻿@model List<WebApplicationSampleTest2.Models.LabInvestigationModel>
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+
+            <h4 class="mb-3">Lab Investigations</h4>
+
+           
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link @(ViewBag.CurrentStatus == "" ? "active" : "")"
+                       asp-action="Index" asp-route-status="" asp-route-priority="@ViewBag.CurrentPriority">
+                        All
+                        <span class="badge bg-secondary ms-1">@ViewBag.CountAll</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewBag.CurrentStatus == "Ordered" ? "active" : "")"
+                       asp-action="Index" asp-route-status="Ordered" asp-route-priority="@ViewBag.CurrentPriority">
+                        Ordered
+                        <span class="badge bg-info ms-1">@ViewBag.CountOrdered</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewBag.CurrentStatus == "Collected" ? "active" : "")"
+                       asp-action="Index" asp-route-status="Collected" asp-route-priority="@ViewBag.CurrentPriority">
+                        Collected
+                        <span class="badge bg-warning ms-1">@ViewBag.CountCollected</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewBag.CurrentStatus == "Completed" ? "active" : "")"
+                       asp-action="Index" asp-route-status="Completed" asp-route-priority="@ViewBag.CurrentPriority">
+                        Completed
+                        <span class="badge bg-success ms-1">@ViewBag.CountCompleted</span>
+                    </a>
+                </li>
+            </ul>
+
+           
+            <div class="d-flex gap-2 mb-3">
+                <span class="fw-bold">Priority:</span>
+                <a asp-action="Index"
+                   asp-route-status="@ViewBag.CurrentStatus"
+                   asp-route-priority=""
+                   class="btn btn-sm @(ViewBag.CurrentPriority == "" ? "btn-dark" : "btn-outline-dark")">
+                    All
+                </a>
+                <a asp-action="Index"
+                   asp-route-status="@ViewBag.CurrentStatus"
+                   asp-route-priority="Routine"
+                   class="btn btn-sm @(ViewBag.CurrentPriority == "Routine" ? "btn-secondary" : "btn-outline-secondary")">
+                    Routine
+                </a>
+                <a asp-action="Index"
+                   asp-route-status="@ViewBag.CurrentStatus"
+                   asp-route-priority="Urgent"
+                   class="btn btn-sm @(ViewBag.CurrentPriority == "Urgent" ? "btn-warning" : "btn-outline-warning")">
+                    Urgent
+                </a>
+                <a asp-action="Index"
+                   asp-route-status="@ViewBag.CurrentStatus"
+                   asp-route-priority="Emergency"
+                   class="btn btn-sm @(ViewBag.CurrentPriority == "Emergency" ? "btn-danger" : "btn-outline-danger")">
+                    Emergency
+                    @if (ViewBag.CountEmergency > 0)
+                    {
+                        <span class="badge bg-white text-danger ms-1">@ViewBag.CountEmergency</span>
+                    }
+                </a>
+            </div>
+
+           
+            <table class="table table-bordered ">
+                <thead class="table ">
+                    <tr>
+                        <th>#</th>
+                        <th>Patient</th>
+                        <th>IPD No</th>
+                        <th>Type</th>
+                        <th>Test Name</th>
+                        <th>Priority</th>
+                        <th>Ordered By</th>
+                        <th>Ordered On</th>
+                        <th>Status</th>
+                        <th>Report</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        int i = 1;
+                        foreach (var inv in Model)
+                        {
+                            <tr @*class="@(inv.Priority == "Emergency" ? "table-danger" : inv.Priority == "Urgent" ? "table-warning" : "")" *@>
+                                <td>@i</td>
+                                <td>
+                                    <strong>@inv.PatientName</strong>
+                                </td>
+                                <td>@inv.AdmissionNumber</td>
+                                <td>
+                                    <span class="badge bg-info">@inv.InvestigationType</span>
+                                </td>
+                                <td>@inv.TestName</td>
+                                <td>
+                                    <span class="badge
+                                                @(inv.Priority == "Emergency" ? "bg-danger" :
+                                                                                    inv.Priority == "Urgent" ? "bg-warning" :
+                                                                                    "bg-secondary")">
+                                                                                                 @inv.Priority
+                                                                                             </span>
+                                                                                         </td>
+                                                                                         <td>@inv.DoctorName</td>
+                                                                                         <td>@inv.OrderedDateTime.ToString("dd-MM-yyyy HH:mm")</td>
+                                                                                         <td>
+                                                                                             <span class="badge
+                                                @(inv.Status == "Completed" ? "bg-success" :
+                                                                                    inv.Status == "Collected" ? "bg-warning" :
+                                                                                    inv.Status == "Cancelled" ? "bg-danger" :
+                                                                                    "bg-info")">
+                                @inv.Status
+                            </span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(inv.ResultFilePath))
+                                    {
+                                        var ext = System.IO.Path.GetExtension(inv.ResultFilePath).ToLower();
+                                        if (ext == ".pdf")
+                                        {
+                                            <a href="@inv.ResultFilePath" target="_blank" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@inv.ResultFilePath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-image"></i> Image
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (inv.Status != "Completed" && inv.Status != "Cancelled")
+                                    {
+                                        <a asp-action="Update"
+                                           asp-route-id="@inv.Id"
+                                           class="btn btn-sm btn-primary">
+                                            Update
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Update"
+                                           asp-route-id="@inv.Id"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            View
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">
+                                No investigations found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination justify-content-end mt-3">
+
+                        <!-- Previous -->
+                        <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(ViewBag.CurrentPage - 1)"
+                               asp-route-status="@ViewBag.CurrentStatus"
+                               asp-route-priority="@ViewBag.CurrentPriority">
+                                Previous
+                            </a>
+                        </li>
+
+                        <!-- Page Numbers -->
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-status="@ViewBag.CurrentStatus"
+                                   asp-route-priority="@ViewBag.CurrentPriority">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <!-- Next -->
+                        <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(ViewBag.CurrentPage + 1)"
+                               asp-route-status="@ViewBag.CurrentStatus"
+                               asp-route-priority="@ViewBag.CurrentPriority">
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+            }
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @if (TempData["Success"] != null)
+        {
+                <text>toastr.success("@TempData["Success"]");</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+                <text>toastr.error("@TempData["Error"]");</text>
+        }
+    </script>
+}

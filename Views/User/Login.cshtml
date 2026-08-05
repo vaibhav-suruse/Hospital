@@ -1,0 +1,236 @@
+﻿@model WebApplicationSampleTest2.Models.Login
+@using WebApplicationSampleTest2.Models
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+
+                @* ERROR MESSAGE *@
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger text-center mb-3">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">Welcome Back to Hospital System</h5>
+                                    <p>Sign in to continue</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png" alt="" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="auth-logo">
+                            <a class="auth-logo-light">
+                                <div class="avatar-md profile-user-wid mb-4">
+                                    <span class="avatar-title rounded-circle bg-light">
+                                        <img src="~/assets/images/logo-light.svg" alt="" class="rounded-circle" height="34">
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="p-2">
+                            <form asp-action="LoginClick"
+                                  asp-controller="User"
+                                  method="post"
+                                  class="form-horizontal">
+
+                                @Html.AntiForgeryToken()
+
+                                <!-- USERNAME -->
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text"
+                                           asp-for="username"
+                                           id="username"
+                                           class="form-control"
+                                           placeholder="Enter username"
+                                           autocomplete="off" />
+                                </div>
+
+                                <!-- PASSWORD -->
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <div class="input-group auth-pass-inputgroup">
+                                        <input type="password"
+                                               asp-for="password"
+                                               class="form-control"
+                                               placeholder="Enter password" />
+                                        <button class="btn btn-light" type="button">
+                                            <i class="mdi mdi-eye-outline"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- MAIN HOSPITAL -->
+                                <div class="mb-3" id="mainHospitalDiv" style="display:none;">
+                                    <label class="form-label">Main Hospital</label>
+                                    <select asp-for="MainHospitalId"
+                                            class="form-control"
+                                            id="mainHospitalSelect">
+                                        <option value="">-- Select Main Hospital --</option>
+                                        @foreach (var h in ViewBag.MainHospitals as List<Hospital>)
+                                        {
+                                            <option value="@h.Id">@h.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- SUB HOSPITAL -->
+                                <div class="mb-3" id="subHospitalDiv" style="display:none;">
+                                    <label class="form-label">Sub Hospital</label>
+                                    <select asp-for="SubHospitalId"
+                                            class="form-control"
+                                            id="subHospitalSelect"
+                                            disabled>
+                                        <option value="">-- Select Sub Hospital --</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="UserRoleHidden" value="@ViewBag.UserRole" />
+                                <input type="hidden" id="SelectedMainHospitalId" value="@Model?.MainHospitalId" />
+
+                                <div class="mt-3 d-grid">
+                                    <button type="submit"
+                                            class="btn btn-primary waves-effect waves-light">
+                                        Log In
+                                    </button>
+                                </div>
+
+                                @* <div class="mt-4 text-center">
+                                    <a asp-action="ForgotPassword"
+                                       asp-controller="User"
+                                       class="text-muted">
+                                        <i class="mdi mdi-lock me-1"></i> Forgot your password?
+                                    </a>
+                                </div> *@
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 text-center">
+                    <p>
+                        © <script>document.write(new Date().getFullYear())</script>
+                        Hospital Management System
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // 🔁 INVALID LOGIN नंतर UI restore करण्यासाठी
+            var role = $("#UserRoleHidden").val();
+            var mainId = $("#SelectedMainHospitalId").val();
+
+            if (role === "SuperAdmin") {
+                $("#mainHospitalDiv").hide();
+                $("#subHospitalDiv").hide();
+            } else if (role === "MainAdmin") {
+                // ✅ MainAdmin — फक्त Main Hospital show, Sub Hospital hide
+                $("#mainHospitalDiv").show();
+                $("#subHospitalDiv").hide();
+            } else if (role === "Admin") {
+                // ✅ Admin — Main Hospital show, Sub Hospital main select केल्यावर show
+                $("#mainHospitalDiv").show();
+                if (mainId) {
+                    $("#mainHospitalSelect").val(mainId).trigger("change");
+                }
+            }
+        });
+
+        // Identify user role by username
+        $("#username").on("blur", function () {
+            var username = $(this).val();
+            if (!username) return;
+
+            $.ajax({
+                url: '@Url.Action("IdentifyUser", "User")',
+                type: 'GET',
+                data: { username: username },
+                success: function (res) {
+
+                    $("#mainHospitalDiv").hide();
+                    $("#subHospitalDiv").hide();
+                    $("#subHospitalSelect").prop("disabled", true);
+                    $("#subHospitalSelect").html('<option value="">-- Select Sub Hospital --</option>');
+                    $("#mainHospitalSelect").val("");
+
+
+                    if (res.role === "SuperAdmin") {
+
+                        $("#mainHospitalDiv").hide();
+                        $("#subHospitalDiv").hide();
+
+                    } else if (res.role === "MainAdmin") {
+
+                        $("#mainHospitalDiv").show();
+                        $("#subHospitalDiv").hide();
+
+                    } else if (res.role === "Admin") {
+
+                        $("#mainHospitalDiv").show();
+                    }
+
+
+                    $("#UserRoleHidden").val(res.role);
+                }
+            });
+        });
+
+
+        $("#mainHospitalSelect").on("change", function () {
+            var mainId = $(this).val();
+            var role = $("#UserRoleHidden").val();
+            var subSelect = $("#subHospitalSelect");
+
+            subSelect.prop("disabled", true);
+            subSelect.html('<option value="">-- Select Sub Hospital --</option>');
+            $("#subHospitalDiv").hide();
+
+
+            if (mainId && role === "Admin") {
+                $.ajax({
+                    url: '@Url.Action("GetSubHospitals", "User")',
+                    type: 'GET',
+                    data: { mainHospitalId: mainId },
+                    success: function (data) {
+                        if (data && data.length > 0) {
+                            $("#subHospitalDiv").show();
+                            subSelect.prop("disabled", false);
+
+                            $.each(data, function (i, item) {
+                                subSelect.append(
+                                    '<option value="' + item.id + '">' + item.name + '</option>'
+                                );
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

@@ -1,0 +1,309 @@
+﻿@* Views/Radiology/Index.cshtml *@
+@model WebApplicationSampleTest2.Models.RadiologyReportsVM
+@{
+    ViewData["Title"] = "Radiology Reports";
+    int ipdId = Model.Admission.IPDId;
+    ViewBag.IPDId = ipdId;
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-x-ray me-1"></i>
+                <strong>Radiology Reports</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.Admission.PatientName
+                    <small>(Adm# @Model.Admission.AdmissionNumber)</small>
+                </span>
+            </div>
+            <div>
+                <a asp-controller="Radiology" asp-action="Print" asp-route-ipdId="@ipdId" target="_blank" class="btn btn-sm btn-light me-1">
+                    <i class="fas fa-print me-1"></i> Print
+                </a>
+                <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Radiology Report</h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRadiologyModal">
+                    <i class="fas fa-plus me-1"></i> Add Radiology Report
+                </button>
+            </div>
+
+            <div id="radiologyReportsContainer">
+                @await Html.PartialAsync("_RadiologyReportsPartial", Model.Reports)
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@* ============================= ADD RADIOLOGY REPORT ============================= *@
+<div class="modal fade" id="addRadiologyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addRadiologyForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IPDId" value="@ipdId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Radiology Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="Title" id="raTitle" class="form-control mb-3" placeholder="e.g. USG, MRI Brain, X-Ray Chest" required>
+
+                            <label class="form-label">Notes</label>
+                            <textarea name="Notes" id="raNotes" class="form-control mb-3" rows="6" placeholder="Report findings..." required></textarea>
+
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <label class="form-label">Radiologist</label>
+                                    <select name="RadiologistDoctorId" class="form-select" asp-items="ViewBag.Doctors" required>
+                                        <option value="">-- Select Radiologist --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">Date &amp; Time</label>
+                                    <input type="datetime-local" name="ReportDateTime" id="raReportDateTime" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5 border-start">
+                            <label class="form-label">Templates</label>
+                            <input type="text" id="raTemplateSearch" class="form-control mb-2" placeholder="Search templates">
+                            <div id="raTemplateList" class="list-group mb-2" style="max-height:200px; overflow-y:auto;"></div>
+
+                            <a href="javascript:void(0)" id="raAddTemplateLink" class="small text-decoration-none">
+                                <i class="fas fa-plus-circle me-1"></i>Add Template
+                            </a>
+                            <input type="checkbox" id="raSaveTemplate" name="saveAsTemplate" value="true" class="d-none">
+                            <div id="raTemplateNameBox" class="d-none mt-2">
+                                <label class="form-label small mb-1">Template Name</label>
+                                <input type="text" id="raTemplateName" name="templateName" class="form-control form-control-sm" placeholder="Template Name">
+                                <div class="form-text">Saves the Title &amp; Notes above as a reusable template when you Submit.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="raResetBtn">Reset</button>
+                    <button type="button" class="btn btn-primary" id="raSubmitBtn"><i class="fas fa-check me-1"></i> Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= EDIT RADIOLOGY REPORT ============================= *@
+<div class="modal fade" id="editRadiologyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editRadiologyForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editRaId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Radiology Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="Title" id="editRaTitle" class="form-control mb-3" required>
+
+                    <label class="form-label">Notes</label>
+                    <textarea name="Notes" id="editRaNotes" class="form-control mb-3" rows="6" required></textarea>
+
+                    <div class="row g-2">
+                        <div class="col-md-7">
+                            <label class="form-label">Radiologist</label>
+                            <select name="RadiologistDoctorId" id="editRaRadiologist" class="form-select" asp-items="ViewBag.Doctors" required>
+                                <option value="">-- Select Radiologist --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Date &amp; Time</label>
+                            <input type="datetime-local" name="ReportDateTime" id="editRaReportDateTime" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="editRaSubmitBtn"><i class="fas fa-check me-1"></i> Update</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 4000);
+        }
+        function ajaxSubmitForm(url, formEl, callback) {
+            var fd = new FormData(formEl);
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function ajaxPost(url, dataObj, callback) {
+            var fd = new FormData();
+            for (var k in dataObj) fd.append(k, dataObj[k]);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            var inst = bootstrap.Modal.getInstance(el);
+            if (inst) { inst.hide(); }
+            cleanupStrayModalBackdrops();
+        }
+        function cleanupStrayModalBackdrops() {
+            setTimeout(function () {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+                }
+            }, 150);
+        }
+        document.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrops);
+
+        function reloadRadiologyReports() {
+            fetch('@Url.Action("ReportsPartial", "Radiology")?ipdId=' + ipdId, { cache: 'no-store' })
+                .then(r => r.text())
+                .then(html => { document.getElementById('radiologyReportsContainer').innerHTML = html; });
+        }
+
+        function nowForDateTimeLocal() {
+            var d = new Date();
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().slice(0, 16);
+        }
+
+        // =====================================================================
+        // ADD - templates search/apply, "+Add Template" toggle, submit, reset
+        // =====================================================================
+        var raTitle = document.getElementById('raTitle');
+        var raNotes = document.getElementById('raNotes');
+        var raTemplateSearch = document.getElementById('raTemplateSearch');
+        var raTemplateList = document.getElementById('raTemplateList');
+
+        function loadRaTemplates(term) {
+            fetch('@Url.Action("SearchTemplates", "Radiology")?term=' + encodeURIComponent(term || ''), { cache: 'no-store' })
+                .then(r => r.json())
+                .then(function (data) {
+                    raTemplateList.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        raTemplateList.innerHTML = '<div class="text-muted small px-1">No templates yet.</div>';
+                        return;
+                    }
+                    data.forEach(function (t) {
+                        var a = document.createElement('a');
+                        a.href = '#';
+                        a.className = 'list-group-item list-group-item-action py-1';
+                        a.textContent = t.templateName;
+                        a.onclick = function (e) {
+                            e.preventDefault();
+                            raNotes.value = t.templateText;
+                            if (!raTitle.value) raTitle.value = t.templateName;
+                        };
+                        raTemplateList.appendChild(a);
+                    });
+                });
+        }
+        raTemplateSearch.addEventListener('input', function () { loadRaTemplates(this.value); });
+        document.getElementById('addRadiologyModal').addEventListener('shown.bs.modal', function () {
+            loadRaTemplates('');
+            var dt = document.getElementById('raReportDateTime');
+            if (!dt.value) dt.value = nowForDateTimeLocal();
+        });
+
+        document.getElementById('raAddTemplateLink').addEventListener('click', function () {
+            var box = document.getElementById('raTemplateNameBox');
+            var chk = document.getElementById('raSaveTemplate');
+            var showing = !box.classList.contains('d-none');
+            box.classList.toggle('d-none', showing);
+            chk.checked = !showing;
+            if (!showing) document.getElementById('raTemplateName').focus();
+        });
+
+        function resetAddRadiologyForm() {
+            document.getElementById('addRadiologyForm').reset();
+            document.getElementById('raTemplateNameBox').classList.add('d-none');
+            document.getElementById('raSaveTemplate').checked = false;
+            document.getElementById('raReportDateTime').value = nowForDateTimeLocal();
+        }
+        document.getElementById('raResetBtn').addEventListener('click', resetAddRadiologyForm);
+
+        document.getElementById('raSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("AddReport", "Radiology")', document.getElementById('addRadiologyForm'), function () {
+                reloadRadiologyReports();
+                showAlert('Radiology report added.');
+                closeModal('addRadiologyModal');
+                resetAddRadiologyForm();
+                raTemplateList.innerHTML = '';
+            });
+        });
+
+        // =====================================================================
+        // EDIT / DELETE
+        // =====================================================================
+        document.getElementById('editRaSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("EditReport", "Radiology")', document.getElementById('editRadiologyForm'), function () {
+                reloadRadiologyReports(); showAlert('Radiology report updated.'); closeModal('editRadiologyModal');
+            });
+        });
+
+        document.getElementById('radiologyReportsContainer').addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.rr-edit-btn');
+            if (editBtn) {
+                document.getElementById('editRaId').value = editBtn.dataset.id;
+                document.getElementById('editRaTitle').value = editBtn.dataset.title;
+                document.getElementById('editRaNotes').value = editBtn.dataset.notes;
+                document.getElementById('editRaRadiologist').value = editBtn.dataset.radiologist;
+                document.getElementById('editRaReportDateTime').value = editBtn.dataset.reportdatetime;
+                new bootstrap.Modal(document.getElementById('editRadiologyModal')).show();
+                return;
+            }
+            var delBtn = e.target.closest('.rr-delete-btn');
+            if (delBtn) {
+                if (!confirm('Delete this radiology report?')) return;
+                ajaxPost('@Url.Action("DeleteReport", "Radiology")',
+                    { id: delBtn.dataset.id, ipdId: ipdId },
+                    function () { reloadRadiologyReports(); showAlert('Radiology report deleted.'); });
+            }
+        });
+    </script>
+}

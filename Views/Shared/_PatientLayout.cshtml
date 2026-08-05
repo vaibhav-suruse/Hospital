@@ -1,0 +1,220 @@
+﻿@using Microsoft.AspNetCore.Http
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Patient Portal</title>
+
+    <!-- Same CSS as your main app -->
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/css/icons.min.css" rel="stylesheet" />
+    <link href="~/assets/css/app.min.css" rel="stylesheet" />
+
+    <style>
+        /* ── Patient Portal specific styles ── */
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .patient-sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: #2c3e50;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            padding-top: 20px;
+        }
+
+            .patient-sidebar .brand {
+                padding: 16px 20px 24px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+                .patient-sidebar .brand h5 {
+                    color: #fff;
+                    margin: 0;
+                    font-size: 15px;
+                }
+
+                .patient-sidebar .brand small {
+                    color: rgba(255,255,255,0.5);
+                    font-size: 11px;
+                }
+
+            .patient-sidebar .nav-item {
+                padding: 2px 12px;
+            }
+
+            .patient-sidebar .nav-link {
+                color: rgba(255,255,255,0.65);
+                padding: 9px 14px;
+                border-radius: 6px;
+                font-size: 14px;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .patient-sidebar .nav-link:hover,
+                .patient-sidebar .nav-link.active {
+                    background: rgba(255,255,255,0.12);
+                    color: #fff;
+                }
+
+                .patient-sidebar .nav-link i {
+                    font-size: 18px;
+                    width: 20px;
+                }
+
+            .patient-sidebar .nav-section {
+                color: rgba(255,255,255,0.3);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                padding: 16px 20px 6px;
+            }
+
+        .patient-main {
+            margin-left: 240px;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .patient-topbar {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 12px 24px;
+            margin: -24px -24px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @@media (max-width: 768px) {
+            .patient-sidebar {
+                display: none;
+            }
+
+            .patient-main {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="patient-sidebar">
+        <div class="brand">
+            <h5><i class="bx bx-plus-medical me-1"></i> Patient Portal</h5>
+          
+        </div>
+
+        <ul class="nav flex-column mt-2">
+            <li class="nav-section">Main</li>
+
+            <li class="nav-item">
+                <a asp-action="Dashboard" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="bx bxs-dashboard"></i> Dashboard
+                </a>
+            </li>
+
+            <li class="nav-section">Appointments</li>
+
+            <li class="nav-item">
+                <a asp-action="Appointments" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Appointments" ? "active" : "")">
+                    <i class="bx bx-calendar"></i> My Appointments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a asp-action="BookAppointment" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BookAppointment" ? "active" : "")">
+                    <i class="bx bx-calendar-plus"></i> Book Appointment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a asp-action="AddFamilyMember"
+                   asp-controller="Login"
+                   class="nav-link @(ViewContext.RouteData
+                                 .Values["action"]?.ToString() ==
+                                 "AddFamilyMember" ? "active" : "")">
+                    <i class="bx bx-user-plus"></i>
+                    Add Family Member
+                </a>
+            </li>
+
+            <li class="nav-section">Medical Records</li>
+
+            <li class="nav-item">
+                <a asp-action="OPDHistory" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "OPDHistory" ? "active" : "")">
+                    <i class="bx bx-first-aid"></i> OPD History
+                </a>
+            </li>
+            <li class="nav-item">
+                <a asp-action="IPDHistory" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "IPDHistory" ? "active" : "")">
+                    <i class="bx bx-bed"></i> IPD History
+                </a>
+            </li>
+
+            <li class="nav-section">Finance</li>
+
+            <li class="nav-item">
+                <a asp-action="Billing" asp-controller="PatientPortal"
+                   class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Billing" ? "active" : "")">
+                    <i class="bx bx-receipt"></i> My Billing
+                </a>
+            </li>
+
+            <li class="nav-section mt-3"></li>
+
+            <li class="nav-item">
+                <a asp-action="Logout" asp-controller="PatientPortal" class="nav-link text-danger">
+                    <i class="bx bx-log-out"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="patient-main">
+
+        <!-- Top Bar -->
+        <div class="patient-topbar">
+            <span class="text-muted small">
+                <i class="bx bx-chevron-right me-1"></i>@ViewData["Title"]
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border">
+                    <i class="bx bx-user me-1"></i>
+                    @Context.Session.GetString("PatientName")
+                </span>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="position-fixed top-0 end-0 p-3" style="z-index:1055">
+            <div id="toastContainer"></div>
+        </div>
+
+        <!-- Page Content -->
+        @RenderBody()
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/js/app.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,52 @@
+﻿@* Views/TreatmentSheet/_InvestigationsPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.TreatmentInvestigationVM>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Investigation</th><th>Remarks</th><th>Status</th><th>Entered By</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-3">No investigations added</td></tr>
+            }
+            else
+            {
+                foreach (var inv in Model)
+                {
+                    <tr>
+                        <td><strong>@inv.TestName</strong><div class="small text-muted">@inv.InvestigationType</div></td>
+                        <td>@inv.Instructions</td>
+                        <td>
+                            @{
+                                string iBadge = inv.Status == "Completed" ? "bg-success" : inv.Status == "Cancelled" ? "bg-danger" : "bg-warning text-dark";
+                            }
+                            <span class="badge @iBadge">@inv.Status</span>
+                            @if (inv.Priority != "Routine")
+                            {
+                                <span class="badge bg-danger ms-1">@inv.Priority</span>
+                            }
+                        </td>
+                        <td>@inv.OrderByName</td>
+                        <td class="text-end">
+                            @if (inv.Status != "Completed" && inv.Status != "Cancelled")
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary inv-edit-btn" title="Edit"
+                                        data-id="@inv.Id" data-type="@inv.InvestigationType" data-test-name="@inv.TestName"
+                                        data-priority="@inv.Priority" data-instructions="@inv.Instructions">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger inv-delete-btn" title="Cancel" data-id="@inv.Id">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

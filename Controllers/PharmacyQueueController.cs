@@ -1,0 +1,376 @@
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using WebApplicationSampleTest2.Models;
+using WebApplicationSampleTest2.Repository;
+
+namespace WebApplicationSampleTest2.Controllers
+{
+    public class PharmacyQueueController : Controller
+    {
+        private readonly IPharmacyQueue _pharmacy;
+
+        public PharmacyQueueController(IPharmacyQueue pharmacy)
+        {
+            _pharmacy = pharmacy;
+        }
+
+        // ── 1. QUEUE PAGE ─────────────────────────────────────────────────────
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        // ── 2. AJAX — GET OPD QUEUE DATA (polled every 8s) ───────────────────
+        [HttpGet]
+        public JsonResult GetQueueData()
+        {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+            var list = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+
+            var result = list.Select(n => new
+            {
+                notificationId = n.NotificationId,
+                patientName = n.PatientName,
+                doctorName = n.DoctorName,
+                medicineCount = n.MedicineCount,
+                medicinesSummary = n.MedicinesSummary,
+                status = n.Status,
+                opdId = n.OPDId,
+                appointmentId = n.AppointmentId,
+                createdAt = n.CreatedAt.ToString("dd-MM-yyyy hh:mm tt"),
+                dispensedAt = n.DispensedAt.HasValue ? n.DispensedAt.Value.ToString("hh:mm tt") : null,
+                timeAgo = n.TimeAgo
+            }).ToList();
+
+            return Json(result);
+        }
+
+        // ── 3. AJAX — GET PRESCRIPTION DETAIL for modal ──────────────────────
+        [HttpGet]
+        public JsonResult GetPrescription(int notificationId)
+        {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+            try
+            {
+                var allNotifs = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+                var notif = allNotifs.FirstOrDefault(n => n.NotificationId == notificationId);
+
+                if (notif == null || notif.OPDId == null)
+                    return Json(new { success = false, message = "Notification not found" });
+
+                var medicines = _pharmacy.GetMedicinesForPharmacy(notif.OPDId.Value, hospitalId, subHospitalId);
+
+                return Json(new
+                {
+                    success = true,
+                    notificationId = notif.NotificationId,
+                    patientName = notif.PatientName,
+                    doctorName = notif.DoctorName,
+                    opdId = notif.OPDId,
+                    appointmentId = notif.AppointmentId,
+                    status = notif.Status,
+                    createdAt = notif.CreatedAt.ToString("dd-MM-yyyy hh:mm tt"),
+                    medicines = medicines.Select(m => new
+                    {
+                        opdMedicineId = m.OPDMedicineId,
+                        medicineId = m.MedicineId,
+                        medicineName = m.MedicineName,
+                        medicineType = m.MedicineType,
+                        morning = m.Morning,
+                        afternoon = m.Afternoon,
+                        evening = m.Evening,
+                        days = m.Days,
+                        qtyPerDay = m.QtyPerDay,
+                        totalQty = m.TotalQty,
+                        sellingPrice = m.SellingPrice,
+                        lineTotal = m.LineTotal,
+                        availableStock = m.AvailableStock,
+                        stockStatus = m.StockStatus
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // ── 4. AJAX — MARK DISPENSED ─────────────────────────────────────────
+        [HttpPost]
+        public JsonResult MarkDispensed(int notificationId)
+        {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            try
+            {
+                _pharmacy.MarkDispensed(notificationId, hospitalId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // ── 5. MEDICINE BILLING PAGE ──────────────────────────────────────────
+        [HttpGet]
+        public IActionResult MedicineBill(int notificationId)
+        {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+            var allNotifs = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+            var notif = allNotifs.FirstOrDefault(n => n.NotificationId == notificationId);
+
+            if (notif == null)
+                return RedirectToAction("Index");
+
+            if (notif.Status == "Billed")
+            {
+                TempData["Info"] = "This prescription has already been billed.";
+                return RedirectToAction("Index");
+            }
+
+            var medicines = new List<PharmacyMedicineLineVM>();
+            if (notif.OPDId.HasValue)
+                medicines = _pharmacy.GetMedicinesForPharmacy(notif.OPDId.Value, hospitalId, subHospitalId);
+
+            ViewBag.MobileNumber = _pharmacy.GetPatientMobile(notif.PatientId, hospitalId);
+            ViewBag.Notification = notif;
+            ViewBag.Medicines = medicines;
+            return View();
+        }
+
+        // ── 6. SAVE OPD MEDICINE BILL ─────────────────────────────────────────
+        [HttpPost]
+        public JsonResult SaveMedicineBill([FromBody] PharmacyBillVM bill)
+        {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+            int createdBy = HttpContext.Session.GetInt32("UserId") ?? 0;
+
+            try
+            {
+                if (bill == null || bill.Items == null || !bill.Items.Any())
+                    return Json(new { success = false, message = "No items in bill." });
+
+                int billId = _pharmacy.SaveMedicineBill(bill, hospitalId, subHospitalId, createdBy);
+
+                if (billId > 0)
+                {
+                    _pharmacy.MarkBilled(bill.NotificationId, hospitalId, billId);
+                    return Json(new { success = true, billId });
+                }
+
+                return Json(new { success = false, message = "Bill could not be saved." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+    }
+}
+
+
+
+
+
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using WebApplicationSampleTest2.Models;
+//using WebApplicationSampleTest2.Repository;
+
+//namespace WebApplicationSampleTest2.Controllers
+//{
+//    public class PharmacyQueueController : Controller
+//    {
+//        private readonly IPharmacyQueue _pharmacy;
+
+//        public PharmacyQueueController(IPharmacyQueue pharmacy)
+//        {
+//            _pharmacy = pharmacy;
+//        }
+
+//        // ── 1. QUEUE PAGE ─────────────────────────────────────────────────
+//        public IActionResult Index()
+//        {
+//            return View();
+//        }
+
+//        // ── 2. AJAX — GET QUEUE DATA (polled every 8s) ───────────────────
+//        [HttpGet]
+//        public JsonResult GetQueueData()
+//        {
+//            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+//            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+//            var list = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+
+//            // Return only OPD type and filter to today
+//            var result = list
+//                .Where(n => n.Type == "OPD")
+//                .Select(n => new
+//                {
+//                    notificationId = n.NotificationId,
+//                    patientName = n.PatientName,
+//                    doctorName = n.DoctorName,
+//                    medicineCount = n.MedicineCount,
+//                    medicinesSummary = n.MedicinesSummary,
+//                    status = n.Status,
+//                    opdId = n.OPDId,
+//                    appointmentId = n.AppointmentId,
+//                    createdAt = n.CreatedAt.ToString("dd-MM-yyyy hh:mm tt"),
+//                    dispensedAt = n.DispensedAt.HasValue
+//                                        ? n.DispensedAt.Value.ToString("hh:mm tt")
+//                                        : null,
+//                    timeAgo = n.TimeAgo
+//                })
+//                .ToList();
+
+//            return Json(result);
+//        }
+
+//        // ── 3. AJAX — GET PRESCRIPTION DETAIL for modal ──────────────────
+//        [HttpGet]
+//        public JsonResult GetPrescription(int notificationId)
+//        {
+//            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+//            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+//            try
+//            {
+//                // Get the notification to find OPDId
+//                var allNotifs = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+//                var notif = allNotifs.FirstOrDefault(n => n.NotificationId == notificationId);
+
+//                if (notif == null || notif.OPDId == null)
+//                    return Json(new { success = false, message = "Notification not found" });
+
+//                var medicines = _pharmacy.GetMedicinesForPharmacy(
+//                    notif.OPDId.Value, hospitalId, subHospitalId);
+
+//                return Json(new
+//                {
+//                    success = true,
+//                    notificationId = notif.NotificationId,
+//                    patientName = notif.PatientName,
+//                    doctorName = notif.DoctorName,
+//                    opdId = notif.OPDId,
+//                    appointmentId = notif.AppointmentId,
+//                    status = notif.Status,
+//                    createdAt = notif.CreatedAt.ToString("dd-MM-yyyy hh:mm tt"),
+//                    medicines = medicines.Select(m => new
+//                    {
+//                        opdMedicineId = m.OPDMedicineId,
+//                        medicineId = m.MedicineId,
+//                        medicineName = m.MedicineName,
+//                        medicineType = m.MedicineType,
+//                        morning = m.Morning,
+//                        afternoon = m.Afternoon,
+//                        evening = m.Evening,
+//                        days = m.Days,
+//                        qtyPerDay = m.QtyPerDay,
+//                        totalQty = m.TotalQty,
+//                        sellingPrice = m.SellingPrice,
+//                        lineTotal = m.LineTotal
+//                    }).ToList()
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                return Json(new { success = false, message = ex.Message });
+//            }
+//        }
+
+//        // ── 4. AJAX — MARK DISPENSED ─────────────────────────────────────
+//        [HttpPost]
+//        public JsonResult MarkDispensed(int notificationId)
+//        {
+//            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+//            try
+//            {
+//                _pharmacy.MarkDispensed(notificationId, hospitalId);
+//                return Json(new { success = true });
+//            }
+//            catch (Exception ex)
+//            {
+//                return Json(new { success = false, message = ex.Message });
+//            }
+//        }
+
+//        // ── 5. MEDICINE BILLING PAGE ──────────────────────────────────────
+//        [HttpGet]
+//        public IActionResult MedicineBill(int notificationId)
+//        {
+//            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+//            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
+//            var allNotifs = _pharmacy.GetOPDQueue(hospitalId, subHospitalId);
+//            var notif = allNotifs.FirstOrDefault(n => n.NotificationId == notificationId);
+
+//            if (notif == null)
+//                return RedirectToAction("Index");
+
+//            // Already billed — redirect back
+//            if (notif.Status == "Billed")
+//            {
+//                TempData["Info"] = "This prescription has already been billed.";
+//                return RedirectToAction("Index");
+//            }
+
+//            var medicines = new List<PharmacyMedicineLineVM>();
+//            if (notif.OPDId.HasValue)
+//                medicines = _pharmacy.GetMedicinesForPharmacy(notif.OPDId.Value, hospitalId, subHospitalId);
+
+//            // ✅ Fetch patient mobile number
+//            string mobileNumber = _pharmacy.GetPatientMobile(notif.PatientId, hospitalId);
+//            ViewBag.MobileNumber = mobileNumber;
+
+
+
+//            ViewBag.Notification = notif;
+//            ViewBag.Medicines = medicines;
+//            return View();
+//        }
+
+//        // ── 6. SAVE MEDICINE BILL ─────────────────────────────────────────
+//        [HttpPost]
+//        public JsonResult SaveMedicineBill([FromBody] PharmacyBillVM bill)
+//        {
+//            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+//            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+//            int createdBy = HttpContext.Session.GetInt32("UserId") ?? 0;
+
+//            try
+//            {
+//                if (bill == null || bill.Items == null || !bill.Items.Any())
+//                    return Json(new { success = false, message = "No items in bill." });
+
+//                int billId = _pharmacy.SaveMedicineBill(bill, hospitalId, subHospitalId, createdBy);
+
+//                if (billId > 0)
+//                {
+//                    // Mark notification as Billed
+//                    _pharmacy.MarkBilled(bill.NotificationId, hospitalId, billId);
+//                    return Json(new { success = true, billId = billId });
+//                }
+
+//                return Json(new { success = false, message = "Bill could not be saved." });
+//            }
+//            catch (Exception ex)
+//            {
+//                return Json(new { success = false, message = ex.Message });
+//            }
+//        }
+//    }
+//}

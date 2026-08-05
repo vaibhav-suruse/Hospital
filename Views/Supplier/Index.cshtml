@@ -1,0 +1,221 @@
+﻿@using WebApplicationSampleTest2.Models
+@model List<SupplierModel>
+
+@{
+    ViewData["Title"] = "Supplier Master";
+}
+
+<!-- TempData Alerts -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bx bx-check-circle me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bx bx-error-circle me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-primary" asp-controller="Supplier" asp-action="Create">
+        <i class="bx bx-plus me-1"></i> Add Supplier
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">Supplier Master</h4>
+               
+
+                <!-- SEARCH -->
+                <div class="d-flex justify-content-end mb-3">
+                    <form id="searchForm" method="get" asp-action="Index" class="d-flex">
+                        <input type="text"
+                               name="search"
+                               id="searchInput"
+                               value="@ViewBag.Search"
+                               class="form-control me-2 w-auto"
+                               placeholder="Search supplier..." />
+                        <input type="hidden" name="page" value="1" />
+                    </form>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-rep-plugin">
+                    <div class="table-responsive mb-0" data-pattern="priority-columns">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Supplier Name</th>
+                                    <th>Contact No</th>
+                                    <th>Address</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    int serial = 1;
+                                    foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@serial</td>
+
+                                            <td>
+                                                <b>@item.SupplierName</b>
+                                            </td>
+
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.ContactNo))
+                                                {
+                                                    <span><i class="bx bx-phone me-1 text-muted"></i>@item.ContactNo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Address))
+                                                {
+                                                    <span title="@item.Address">
+                                                        @(item.Address.Length > 40
+                                                                                                    ? item.Address.Substring(0, 40) + "..."
+                                                                                                    : item.Address)
+                                        </span>
+                                                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                <a asp-action="Edit"
+                                                   asp-controller="Supplier"
+                                                   asp-route-id="@item.SupplierId"
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="bx bx-edit-alt me-1"></i>Edit
+                                                </a>
+
+                                                <button class="btn btn-sm btn-danger"
+                                                        onclick="confirmDelete(@item.SupplierId, '@item.SupplierName')">
+                                                    <i class="bx bx-trash me-1"></i>Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        serial++;
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bx bx-package font-size-24 d-block mb-1"></i>
+                                            No suppliers found.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PAGINATION -->
+                @if (ViewBag.TotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination justify-content-end mt-3">
+                            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage - 1)"
+                                   asp-route-search="@ViewBag.Search">Previous</a>
+                            </li>
+
+                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@i"
+                                       asp-route-search="@ViewBag.Search">@i</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage + 1)"
+                                   asp-route-search="@ViewBag.Search">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bx bx-error-circle text-danger me-2"></i> Delete Confirmation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete supplier
+                <strong id="supplierNameDisplay"></strong>?
+                <br />
+                <small class="text-muted">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer">
+                <form id="deleteForm" method="get">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bx bx-trash me-1"></i> Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Delete confirmation
+        function confirmDelete(id, name) {
+            document.getElementById("deleteForm").action = '/Supplier/Delete/' + id;
+            document.getElementById("supplierNameDisplay").innerText = '"' + name + '"';
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        // Live search with debounce
+        let searchTimer;
+        document.getElementById("searchInput").addEventListener("keyup", function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                document.getElementById("searchForm").submit();
+            }, 600);
+        });
+    </script>
+}

@@ -1,0 +1,161 @@
+﻿@model WebApplicationSampleTest2.Models.PatientRegisterVM
+@{
+    ViewData["Title"] = "Patient Registration";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-6">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">
+                                        Patient Registration
+                                    </h5>
+                                    <p>Create your health portal account</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png"
+                                     class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3">
+
+                            @if (ViewBag.Error != null)
+                            {
+                                <div class="alert alert-danger">
+                                    @ViewBag.Error
+                                </div>
+                            }
+
+                            <form asp-action="PatientRegister"
+                                  asp-controller="Login"
+                                  method="post">
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            First Name
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="FirstName"
+                                               class="form-control"
+                                               placeholder="First name"
+                                               required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Last Name
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="LastName"
+                                               class="form-control"
+                                               placeholder="Last name"
+                                               required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Email Address
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Email"
+                                           type="email"
+                                           class="form-control"
+                                           placeholder="Enter your email"
+                                           required />
+                                    <small class="text-muted">
+                                        OTP will be sent to this email
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Password
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group auth-pass-inputgroup">
+                                        <input asp-for="Password"
+                                               type="password"
+                                               id="regPassword"
+                                               class="form-control"
+                                               placeholder="Create password"
+                                               required />
+                                        <button class="btn btn-light"
+                                                type="button"
+                                                id="toggleRegPass">
+                                            <i class="mdi mdi-eye-outline"
+                                               id="regEyeIcon"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">
+                                        Min 8 chars, 1 capital,
+                                        1 number, 1 symbol
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Phone Number
+                                    </label>
+                                    <input asp-for="PhoneNumber"
+                                           class="form-control"
+                                           placeholder="Enter phone number"
+                                           maxlength="10" />
+                                </div>
+
+                                <div class="d-grid mt-3">
+                                    <button type="submit"
+                                            class="btn btn-primary">
+                                        <i class="mdi mdi-email-outline me-1"></i>
+                                        Send OTP and Continue
+                                    </button>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <p>
+                                        Already registered?
+                                        <a asp-action="PatientLogin"
+                                           asp-controller="Login"
+                                           class="fw-medium text-primary">
+                                            Login here
+                                        </a>
+                                    </p>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('toggleRegPass')
+            .addEventListener('click', function () {
+            var field = document.getElementById('regPassword');
+            var icon  = document.getElementById('regEyeIcon');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.replace(
+                    'mdi-eye-outline', 'mdi-eye-off-outline');
+            } else {
+                field.type = 'password';
+                icon.classList.replace(
+                    'mdi-eye-off-outline', 'mdi-eye-outline');
+            }
+        });
+    </script>
+}

@@ -1,0 +1,127 @@
+﻿@using WebApplicationSampleTest2.Models
+@model CategoryModel
+
+@{
+    ViewData["Title"] = Model.IsUpdate ? "Edit Category" : "Add Category";
+}
+
+<h4 class="card-title">
+    @(Model.IsUpdate ? "Edit Category" : "Add Category")
+</h4>
+
+<div class="row">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-body">
+
+                <p class="card-title-desc">
+                    @(Model.IsUpdate
+                                        ? "Update the category name below."
+                                        : "Add a new medicine category for your inventory.")
+                </p>
+
+                <form id="categoryForm"
+                      asp-action="Create"
+                      asp-controller="Category"
+                      method="post"
+                      novalidate>
+
+                    @Html.HiddenFor(x => x.CategoryId)
+                    @Html.HiddenFor(x => x.IsUpdate)
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Category Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               asp-for="CategoryName"
+                               id="CategoryName"
+                               class="form-control"
+                               placeholder="e.g. Antibiotic, Tablet, Syrup" />
+                        <small class="text-danger" id="errCategoryName"></small>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bx @(Model.IsUpdate ? "bx-save" : "bx-plus-circle") me-1"></i>
+                            @(Model.IsUpdate ? "Update Category" : "Add Category")
+                        </button>
+                        <a asp-action="Index"
+                           asp-controller="Category"
+                           class="btn btn-secondary ms-1">
+                            <i class="bx bx-arrow-back me-1"></i> Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick reference panel -->
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Common Medicine Categories</h5>
+                <p class="card-title-desc">Click any tag to auto-fill the form.</p>
+                <div class="d-flex flex-wrap gap-2" id="quickTags">
+                    @{
+                        var suggestions = new[] {
+                                        "Analgesic", "Antibiotic", "Antidiabetic", "Antifungal",
+                                        "Antiviral", "Antihistamine", "Antacid", "Antipyretic",
+                                        "Vitamin & Supplement", "Tablet", "Syrup", "Capsule",
+                                        "Injection", "Ointment", "Eye Drop", "Ear Drop",
+                                        "Cardiac", "Oncology", "Neurological", "Hormonal"
+                                        };
+                        foreach (var s in suggestions)
+                        {
+                            <span class="badge"
+                                  style="background:#f0f2f8;color:#3d4aad;font-size:.8rem;
+                                                 font-weight:600;padding:6px 14px;border-radius:20px;
+                                                 cursor:pointer;border:1px solid #dde2ff;"
+                                  onclick="fillCategory('@s')">
+                                @s
+                            </span>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function fillCategory(name) {
+            document.getElementById('CategoryName').value = name;
+            document.getElementById('CategoryName').focus();
+        }
+
+        function clearErrors() {
+            $(".text-danger").text("");
+            $(".form-control").removeClass("is-invalid");
+        }
+
+        function setError(inputId, errorId, message) {
+            $("#" + inputId).addClass("is-invalid");
+            $("#" + errorId).text(message);
+        }
+
+        $("#categoryForm").on("submit", function (e) {
+            clearErrors();
+            let isValid = true;
+
+            const name = $("#CategoryName").val().trim();
+            if (name === "") {
+                setError("CategoryName", "errCategoryName", "Category name is required.");
+                isValid = false;
+            } else if (name.length < 2) {
+                setError("CategoryName", "errCategoryName", "Category name must be at least 2 characters.");
+                isValid = false;
+            }
+
+            if (!isValid) e.preventDefault();
+        });
+    </script>
+}

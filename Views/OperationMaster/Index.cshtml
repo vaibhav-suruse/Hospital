@@ -1,0 +1,119 @@
+﻿@* Views/OperationMaster/Index.cshtml *@
+@model List<WebApplicationSampleTest2.Models.OperationMaster>
+@{
+    ViewData["Title"] = "Operation Master";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>
+                    <i class="fas fa-procedures me-2"></i>
+                    Operation Master
+                </h4>
+                <a asp-action="Create" class="btn btn-primary btn-sm">
+                    + Add Operation
+                </a>
+            </div>
+            <hr />
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <table class="table table-bordered table-hover">
+                <thead >
+                    <tr>
+                        <th>#</th>
+                        <th>Operation Name</th>
+                        <th>Code</th>
+                        <th>Category</th>
+                        <th class="text-end">OT Charge</th>
+                        <th class="text-end">Surgeon</th>
+                        <th class="text-end">Anesthesia</th>
+                        <th class="text-end">Other</th>
+                        <th class="text-end">Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        int i = 1;
+                        foreach (var op in Model)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td><strong>@op.OperationName</strong></td>
+                                <td>@(op.OperationCode ?? "-")</td>
+                                <td>@(op.Category ?? "-")</td>
+                                <td class="text-end">
+                                    ₹@op.OTCharge.ToString("0.00")
+                                </td>
+                                <td class="text-end">
+                                    ₹@op.SurgeonCharge.ToString("0.00")
+                                </td>
+                                <td class="text-end">
+                                    ₹@op.AnesthesiaCharge.ToString("0.00")
+                                </td>
+                                <td class="text-end">
+                                    ₹@op.DefaultCharge.ToString("0.00")
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-primary">
+                                        ₹@op.TotalCharge.ToString("0.00")
+                                    </strong>
+                                </td>
+                                <td>
+                                    @if (op.IsActive)
+                                    {
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Edit"
+                                       asp-route-id="@op.OperationId"
+                                       class="btn btn-sm btn-warning">
+                                        Edit
+                                    </a>
+                                    <a asp-action="Delete"
+                                       asp-route-id="@op.OperationId"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm(
+                                                   'Delete this operation?')">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11"
+                                class="text-center text-muted">
+                                No operations found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

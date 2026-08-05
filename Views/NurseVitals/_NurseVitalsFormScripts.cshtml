@@ -1,0 +1,135 @@
+@model WebApplicationSampleTest2.Models.IPDNurseVitals
+
+<partial name="_ValidationScriptsPartial" />
+<script>
+    var ipdId = @Model.IPDId;
+
+    function toggleRecordedBy() {
+        var role = document.getElementById('ddlRecordedByRole').value;
+        document.getElementById('nurseField').style.display = (role === 'Nurse') ? '' : 'none';
+        document.getElementById('doctorField').style.display = (role === 'Doctor') ? '' : 'none';
+    }
+
+    function setVal(fieldName, value) {
+        var el = document.getElementById(fieldName);
+        if (el && value !== null && value !== undefined) el.value = value;
+        evaluateAll();
+    }
+
+    function copyPrevious() {
+        fetch('@Url.Action("GetLastVitals", "NurseVitals")?ipdId=' + ipdId)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('No previous reading found for this admission.');
+                    return;
+                }
+                setVal('Temperature', data.temperature);
+                setVal('Pulse', data.pulse);
+                setVal('Systolic', data.systolic);
+                setVal('Diastolic', data.diastolic);
+                setVal('RespirationRate', data.respirationRate);
+                setVal('OxygenSaturation', data.oxygenSaturation);
+                setVal('Notes', data.notes);
+            });
+    }
+
+    var presets = {
+        adult:     { Temperature: [36.1, 37.2], Pulse: [60, 100], Systolic: [90, 120], Diastolic: [60, 80], RespirationRate: [12, 20], OxygenSaturation: [95, 100] },
+        pediatric: { Temperature: [36.5, 37.5], Pulse: [70, 120], Systolic: [90, 110], Diastolic: [55, 75], RespirationRate: [18, 30], OxygenSaturation: [95, 100] },
+        critical:  { Temperature: [36.5, 37.5], Pulse: [60, 100], Systolic: [90, 140], Diastolic: [60, 90], RespirationRate: [12, 20], OxygenSaturation: [95, 100] }
+    };
+
+    function currentPreset() {
+        var el = document.getElementById('vitalPreset');
+        return presets[el ? el.value : 'adult'];
+    }
+
+    function setBadge(badgeEl, level, text) {
+        badgeEl.textContent = text;
+        badgeEl.className = 'input-group-text vital-badge badge-' + level;
+    }
+
+    function evaluateField(fieldName, range) {
+        var input = document.getElementById(fieldName);
+        var badge = document.getElementById(fieldName + 'Badge');
+        var rangeLabel = document.getElementById(fieldName + 'Range');
+        if (!input || !badge) return 'empty';
+
+        if (rangeLabel) rangeLabel.textContent = 'Normal: ' + range[0] + '–' + range[1];
+
+        var raw = input.value;
+        if (raw === '' || raw === null) {
+            setBadge(badge, 'empty', '--');
+            return 'empty';
+        }
+        var val = parseFloat(raw);
+        if (isNaN(val)) {
+            setBadge(badge, 'empty', '--');
+            return 'empty';
+        }
+        if (val < range[0] || val > range[1]) {
+            setBadge(badge, 'critical', val < range[0] ? 'Low' : 'High');
+            return 'critical';
+        }
+        setBadge(badge, 'normal', 'OK');
+        return 'normal';
+    }
+
+    function evaluateAll() {
+        var preset = currentPreset();
+        var worst = 'empty';
+        var anyEntered = false;
+        var fields = ["Temperature", "Pulse", "Systolic", "Diastolic", "RespirationRate", "OxygenSaturation"];
+
+        fields.forEach(function (f) {
+            var level = evaluateField(f, preset[f]);
+            if (level !== 'empty') anyEntered = true;
+            if (level === 'critical') worst = 'critical';
+        });
+
+        var pill = document.getElementById('overallStatusPill');
+        if (!pill) return;
+        if (!anyEntered) {
+            pill.textContent = 'Awaiting readings';
+            pill.className = 'badge bg-light text-dark me-2';
+        } else if (worst === 'critical') {
+            pill.textContent = 'Attention needed';
+            pill.className = 'badge bg-danger me-2';
+        } else {
+            pill.textContent = 'Within normal range';
+            pill.className = 'badge bg-success me-2';
+        }
+    }
+
+    function initializeVitalsForm() {
+        var fields = ["Temperature", "Pulse", "Systolic", "Diastolic", "RespirationRate", "OxygenSaturation"];
+        toggleRecordedBy();
+        fields.forEach(function (f) {
+            var input = document.getElementById(f);
+            if (input) input.addEventListener('input', evaluateAll);
+        });
+        var presetEl = document.getElementById('vitalPreset');
+        if (presetEl) presetEl.addEventListener('change', evaluateAll);
+        evaluateAll();
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeVitalsForm);
+</script>
+
+<style>
+    .badge-normal {
+        background-color: #198754 !important;
+        color: #fff;
+    }
+
+    .badge-critical {
+        background-color: #dc3545 !important;
+        color: #fff;
+    }
+
+    .badge-empty {
+        background-color: #e9ecef !important;
+        color: #6c757d;
+    }
+</style>

@@ -1,0 +1,183 @@
+﻿@using WebApplicationSampleTest2.Models
+@model User
+
+@{
+    ViewData["Title"] = Model.isUpdate ? "Edit User" : "Create User";
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="userForm" asp-action="Save" method="post">
+                    @Html.HiddenFor(x => x.Id)
+
+                    <!-- Row 1 -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input asp-for="FirstName" class="form-control" id="FirstName" />
+                            <small id="errFirstName" class="text-danger"></small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input asp-for="LastName" class="form-control" id="LastName" />
+                            <small id="errLastName" class="text-danger"></small>
+                        </div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Login Name</label>
+                            <input asp-for="LoginName" class="form-control" id="LoginName" />
+                            <small id="errLoginName" class="text-danger"></small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role</label>
+                            <input asp-for="Role" class="form-control" id="Role" />
+                            <small id="errRole" class="text-danger"></small>
+                        </div>
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input asp-for="PhoneNo"
+                                   id="PhoneNo"
+                                   maxlength="10"
+                                   oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   class="form-control" />
+                            <small id="errPhoneNo" class="text-danger"></small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input asp-for="EmailId" id="EmailId" class="form-control" />
+                            <small id="errEmail" class="text-danger"></small>
+                        </div>
+                    </div>
+
+                    <!-- Row 4 (Gender + Status) -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender</label>
+                            <select asp-for="Gender" id="Gender" class="form-select">
+                                <option value="">-- Select Gender --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <small id="errGender" class="text-danger"></small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select asp-for="IsActive" id="IsActive" class="form-select">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 5 (Password + Hospitals) -->
+                    <div class="row">
+                        @if (!Model.isUpdate)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password</label>
+                                <input id="Password" asp-for="Password" type="password" class="form-control" />
+                                <small id="passwordRule" class="text-danger d-block mt-1">
+                                    First character must be capital, min 8 chars, at least 1 number & 1 symbol
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Main Hospital</label>
+                                <select asp-for="MainHospitalId"
+                                        asp-items="ViewBag.MainHospitals"
+                                        class="form-select"
+                                        id="MainHospital">
+                                    <option value="">-- Select Main Hospital --</option>
+                                </select>
+                                <small id="errMainHospital" class="text-danger"></small>
+                                <br />
+                                <div id="subDiv" style="display:none;">
+                                    <label class="form-label">Sub Hospital</label>
+                                    <select asp-for="SubHospitalId"
+                                            class="form-select"
+                                            id="SubHospital">
+                                        <option value="">-- Select Sub Hospital --</option>
+                                    </select>
+                                    <small id="errSubHospital" class="text-danger"></small>
+                                </div>
+                            </div>
+                        }
+                    
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.isUpdate ? "Update" : "Submit")
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/UserValidation.js?v=1.1"></script>
+
+    <script>
+        $('#MainHospital').on('change', function () {
+
+            var mainHospitalId = $(this).val();
+
+            // Reset sub dropdown
+            $('#SubHospital').empty()
+                .append('<option value="">-- Select Sub Hospital --</option>');
+
+            if (!mainHospitalId) {
+                $('#subDiv').hide();
+                return;
+            }
+
+            $.ajax({
+                url: '/User/GetSubHospitals',
+                type: 'GET',
+                data: { mainHospitalId: mainHospitalId },
+                success: function (data) {
+
+                    if (data && data.length > 0) {
+
+                        $('#subDiv').show(); // ✅ SHOW only if sub exists
+
+                        $.each(data, function (i, item) {
+                            $('#SubHospital').append(
+                                `<option value="${item.id}">${item.name}</option>`
+                            );
+                        });
+                    }
+                    else {
+                        $('#subDiv').hide(); // ❌ No sub → hide
+                    }
+                },
+                error: function () {
+                    $('#subDiv').hide();
+                }
+            });
+        });
+    </script>
+}

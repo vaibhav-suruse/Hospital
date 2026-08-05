@@ -1,0 +1,148 @@
+﻿@model List<WebApplicationSampleTest2.Models.tablet>
+
+<div class="table-responsive">
+    <table class="table align-middle table-nowrap table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Medicine</th>
+                <th>Morning</th>
+                <th>Afternoon</th>
+                <th>Evening</th>
+                <th>Days</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Count > 0)
+            {
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model[i].TablateName
+                        </td>
+                        <td>
+                            @Model[i].Morning
+                        </td>
+                        <td>
+                            @Model[i].Afternoon
+                        </td>
+                        <td>
+                            @Model[i].Evening
+                        </td>
+                        <td> @Model[i].Days</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-medicine" data-id="@Model[i].Id">delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@* @model List<WebApplicationSampleTest2.Models.tablet>
+
+<div class="table-responsive">
+    <table class="table align-middle table-nowrap table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Medicine</th>
+                <th>Morning</th>
+                <th>Afternoon</th>
+                <th>Evening</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Count > 0)
+            {
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model[i].TablateName
+                            <input type="hidden" name="Medicines[@i].MedicineId" value="@Model[i].TablateName" />
+                        </td>
+                        <td><input type="hidden" name="Medicines[@i].Morning" value="@Model[i].Morning" />@Model[i].Morning</td>
+                        <td><input type="hidden" name="Medicines[@i].Afternoon" value="@Model[i].Afternoon" />@Model[i].Afternoon</td>
+                        <td><input type="hidden" name="Medicines[@i].Evening" value="@Model[i].Evening" />@Model[i].Evening</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-medicine" data-command="@Model[i].TablateName">delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@model List<WebApplicationSampleTest2.Models.tablet>
+
+<div class="table-responsive">
+    <table class="table align-middle table-nowrap table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Medicine</th>
+                <th>Morning</th>
+                <th>Afternoon</th>
+                <th>Evening</th>
+                <th>Days</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Count > 0)
+            {
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model[i].TablateName
+                        </td>
+                        <td>
+                            @Model[i].Morning
+                        </td>
+                        <td>
+                            @Model[i].Afternoon
+                        </td>
+                        <td>
+                            @Model[i].Evening
+                        </td>
+                        <td> @Model[i].Days</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-medicine" data-id="@Model[i].Id">delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+ *@

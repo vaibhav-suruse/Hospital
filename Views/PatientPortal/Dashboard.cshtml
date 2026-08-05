@@ -1,0 +1,281 @@
+﻿@model WebApplicationSampleTest2.Models.PatientDashboardVM
+@{
+    ViewData["Title"] = "My Dashboard";
+    Layout = "~/Views/Shared/_PatientLayout.cshtml";
+}
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:1055">
+    <div id="toastContainer"></div>
+</div>
+
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center">
+            <div class="avatar-sm me-3">
+                <span class="avatar-title rounded-circle bg-primary font-size-18">
+                    @(Model.PatientName?.Length > 0 ? Model.PatientName[0].ToString().ToUpper() : "P")
+                </span>
+            </div>
+            <div>
+                <h4 class="mb-0">Welcome, @Model.PatientName 👋</h4>
+                <p class="text-muted mb-0">Here's your health summary</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <!-- Upcoming Appointments -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">Upcoming Appointments</p>
+                        <h4 class="mb-0">@Model.UpcomingAppointmentsCount</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                            <span class="avatar-title">
+                                <i class="bx bx-calendar font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPD Visits -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">Total OPD Visits</p>
+                        <h4 class="mb-0">@Model.TotalOPDVisits</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
+                            <span class="avatar-title">
+                                <i class="bx bx-first-aid font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IPD Admissions -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">IPD Admissions</p>
+                        <h4 class="mb-0">@Model.TotalIPDAdmissions</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-info">
+                            <span class="avatar-title">
+                                <i class="bx bx-bed font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Due -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium">Total Due Amount</p>
+                        <h4 class="mb-0 @(Model.TotalDueAmount > 0 ? "text-danger" : "text-success")">
+                            ₹@Model.TotalDueAmount.ToString("0.00")
+                        </h4>
+                    </div>
+                    <div class="align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
+                            <span class="avatar-title">
+                                <i class="bx bx-rupee font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Next Appointment Alert -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="bx bx-bell text-primary me-1"></i> Next Appointment
+                </h5>
+                @if (Model.NextAppointmentDate.HasValue)
+                {
+                    <div class="alert alert-primary d-flex align-items-center" role="alert">
+                        <i class="bx bx-calendar-check font-size-20 me-2"></i>
+                        <div>
+                            <strong>@Model.NextAppointmentDate.Value.ToString("ddd, dd MMM yyyy")</strong>
+                            at <strong>@Model.NextAppointmentTime?.ToString(@"hh\:mm")</strong>
+                            <br />
+                            <small>Dr. @Model.NextDoctorName</small>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted text-center py-3">
+                        <i class="bx bx-calendar-x font-size-32 d-block mb-1"></i>
+                        No upcoming appointments
+                    </div>
+                }
+                <a asp-action="BookAppointment" asp-controller="PatientPortal"
+                   class="btn btn-primary btn-sm mt-2">
+                    <i class="bx bx-plus me-1"></i> Book New Appointment
+                </a>
+                <a asp-action="AddFamilyMember"
+                   asp-controller="Login"
+                   class="btn btn-outline-secondary btn-sm mt-2 ms-1">
+                    <i class="bx bx-user-plus me-1"></i> Add Family Member
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Summary -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="bx bx-user text-primary me-1"></i> My Profile
+                </h5>
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width:40%">Name</td>
+                        <td><strong>@Model.PatientName</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Gender</td>
+                        <td>@Model.Gender</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Age</td>
+                        <td>@Model.Age years</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Phone</td>
+                        <td>@Model.PhoneNumber</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Email</td>
+                        <td>@Model.Email</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Address</td>
+                        <td>@Model.Address</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Appointments -->
+@if (Model.RecentAppointments?.Count > 0)
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bx bx-list-ul text-primary me-1"></i> Recent Appointments
+                        </h5>
+                        <a asp-action="Appointments" asp-controller="PatientPortal"
+                           class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Specialization</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var appt in Model.RecentAppointments)
+                                {
+                                    <tr>
+                                        <td>@appt.AppointmentDate.ToString("dd MMM yyyy")</td>
+                                        <td>Dr. @appt.DoctorName</td>
+                                        <td>@appt.DoctorSpecialization</td>
+                                        <td>
+                                            @{
+                                                var badge = appt.Status switch
+                                                {
+                                                    "Pending" => "warning",
+                                                    "OPD Completed" => "success",
+                                                    "Cancelled" => "danger",
+                                                    _ => "secondary"
+                                                };
+                                            }
+                                            <span class="badge bg-@badge">@appt.Status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Show toast messages from TempData
+        $(document).ready(function () {
+            @if (TempData["Success"] != null)
+            {
+                    <text>showToast('@TempData["Success"]', 'success');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                    <text>showToast('@TempData["Error"]', 'error');</text>
+            }
+
+            function showToast(message, type) {
+                let bgClass = type === 'success' ? 'bg-success text-white' : 'bg-danger text-white';
+                const toastHTML = `
+                <div class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                data-bs-dismiss="toast"></button>
+                    </div>
+                </div>`;
+                const container = document.getElementById('toastContainer');
+                container.insertAdjacentHTML('beforeend', toastHTML);
+                const toastEl = container.lastElementChild;
+                new bootstrap.Toast(toastEl, { delay: 4000 }).show();
+                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+            }
+        });
+    </script>
+}

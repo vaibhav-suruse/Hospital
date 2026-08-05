@@ -1,0 +1,153 @@
+﻿@model WebApplicationSampleTest2.Models.Patient
+@{
+    ViewData["Title"] = "Patient Registration";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+<!-- Toast container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1055">
+    <div id="toastContainer"></div>
+</div>
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-6">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">Patient Registration</h5>
+                                    <p>Create your account</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png" class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3">
+                            <form asp-action="Signup" asp-controller="Login" method="post" id="signupForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label>First Name</label>
+                                        <input asp-for="FirstName" class="form-control" required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Last Name</label>
+                                        <input asp-for="LastName" class="form-control" required />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label>Gender</label>
+                                        <select asp-for="Gender" class="form-control" required>
+                                            <option value="">Select</option>
+                                            <option>Male</option>
+                                            <option>Female</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Age</label>
+                                        <input asp-for="Age" type="number" class="form-control" required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>Phone Number</label>
+                                    <input asp-for="PhoneNumber" class="form-control" id="PhoneNumber" maxlength="10" required />
+                                    <small id="mobileError" class="text-danger"></small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>Email</label>
+                                    <input asp-for="Email" type="email" class="form-control" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>Password</label>
+                                    <input asp-for="Password" type="password" class="form-control" id="Password" required />
+                                    <small id="passwordRule" class="text-danger d-block mt-1">
+                                        First character must be capital, min 8 chars, at least 1 number & 1 symbol
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>Address</label>
+                                    <textarea asp-for="Address" class="form-control" required></textarea>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Register</button>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <a asp-action="Index" asp-controller="Login">Back to Login</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Toastr -->
+        <<script>
+             $(document).ready(function() {
+
+                 function showToast(message, type = 'success') {
+                     // Choose background color
+                     let bgClass = type === 'success' ? 'bg-success text-white' : 'bg-danger text-white';
+
+                     // Create toast HTML
+                     const toastHTML = `
+                     <div class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                         <div class="d-flex">
+                             <div class="toast-body">
+                                 ${message}
+                             </div>
+                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                         </div>
+                     </div>`;
+
+                     // Append to container
+                     const container = document.getElementById('toastContainer');
+                     container.insertAdjacentHTML('beforeend', toastHTML);
+
+                     // Initialize and show the toast using Bootstrap
+                     const toastEl = container.lastElementChild;
+                     const bsToast = new bootstrap.Toast(toastEl, { delay: 4000 });
+                     bsToast.show();
+
+                     // Remove from DOM after hide
+                     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+                 }
+
+                 // Show messages from TempData
+                 var errorMsg = '@TempData["Error"]';
+                 var successMsg = '@TempData["Success"]';
+
+                 if (errorMsg) {
+                     showToast(errorMsg, 'error');
+                 }
+                 if (successMsg) {
+                     showToast(successMsg, 'success');
+                 }
+             });
+    </script>
+
+
+    <!-- External JS file -->
+    <script src="~/js/PatientValidation..js"></script>
+}

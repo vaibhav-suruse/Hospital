@@ -1,0 +1,219 @@
+﻿@using WebApplicationSampleTest2.Models
+@model Hospital
+
+@{
+    ViewData["Title"] = Model.isUpdate ? "Edit Hospital" : "Create Hospital";
+}
+
+<h4 class="card-title">
+    @(Model.isUpdate ? "Edit Hospital" : "Create Hospital")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="hospitalForm" class="custom-validation" asp-action="Create" asp-controller="Hospital" method="post" enctype="multipart/form-data">
+
+                    @Html.HiddenFor(x => x.Id)
+                    @Html.HiddenFor(x => x.Logo) @* OLD IMAGE PATH *@
+
+                    <div class="row">
+                        <!-- Hospital Name -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Hospital Name</label>
+                                <input asp-for="Name" class="form-control" id="Name" />
+                                <small class="text-danger" id="errName"></small>
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input asp-for="PhoneNumber" class="form-control" id="PhoneNumber" />
+                                <small class="text-danger" id="errPhoneNumber"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input asp-for="EmailId" class="form-control" id="EmailId" />
+                                @* <input asp-for="EmailId" id="EmailId" type="email" class="form-control" r
+                                       placeholder="Enter a  e-mail" /> *@
+
+                                <small class="text-danger" id="errEmail"></small>
+                            </div>
+                        </div>
+
+                        <!-- Registration -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Registration Number</label>
+                                <input asp-for="RegistrationNumber" class="form-control" id="RegistrationNumber" />
+                                <small class="text-danger" id="errRegNumber"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Meta -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Meta Link</label> 
+                                <input asp-for="MetaLink" type="url" class="form-control" id="MetaLink" />
+                                <small class="text-danger" id="errMetaLink"></small>
+                            </div>
+                        </div>
+
+                        <!-- Insta -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Instagram Link</label>
+                                <input asp-for="InstaLink" type="url" class="form-control" id="InstaLink" />
+                                <small class="text-danger" id="errInstaLink"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Hospital Logo -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Hospital Logo</label>
+                                <input type="file" asp-for="LogoFile" class="form-control" id="Logo" accept=".jpg,.jpeg,.png,.gif,.pdf" />
+                                
+                                @if (Model.isUpdate && !string.IsNullOrEmpty(Model.Logo))
+                                {
+                                    <div class="mt-2">
+                                        <img src="@Model.Logo"
+                                             alt="Hospital Logo"
+                                             style="height:80px;border:1px solid #ccc;padding:4px;" />
+                                    </div>
+                                }
+                                <small class="text-danger" id="errLogo"></small>
+                            </div>
+                        </div>
+                        <!-- IsActive -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Hospital Status</label>
+                                <select asp-for="IsActive" class="form-select">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="row">
+                        <!--Description -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea asp-for="Description" class="form-control" id="Description"></textarea>
+                                <small class="text-danger" id="errDescription"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea asp-for="Address" class="form-control" id="Address"></textarea>
+                                <small class="text-danger" id="errAddress"></small>
+                            </div>
+                            
+                        </div>                     
+                    </div>
+                    <div class="row">
+                        <!--Description -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <!-- Hospital Type -->
+                                <label class="form-label">Hospital Type</label>
+                                <select asp-for="IsSubHospital" class="form-select" id="HospitalType">
+                                    <option value="false">Main Hospital</option>
+                                    <option value="true">Sub Hospital</option>
+                                </select>
+                                <br />
+                            </div>                
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <!-- Parent Hospital -->
+                                <div id="ParentHospitalDiv" style="display:none;">
+                                    <label class="form-label">Parent Hospital</label>
+                                    <select asp-for="ParentHospitalId" class="form-select" id="ParentHospitalId">
+                                        <option value="">-- Select Parent Hospital --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Buttons -->
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.isUpdate ? "Update" : "Submit")
+                        </button>
+
+                        <a asp-action="Index"
+                           asp-controller="Hospital"
+                           class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/hospitalvalidation.js?v=1.2"></script>
+   
+
+    @* <script src="~/js/hospitalvalidation.js"></script> *@
+    <script>
+        $(document).ready(function() {
+
+            function loadParentHospitals() {
+                $.ajax({
+                    url: '@Url.Action("GetMainHospitals", "Hospital")',
+                    type: 'GET',
+                    success: function(data) {
+                        var parentDropdown = $("#ParentHospitalId");
+                        parentDropdown.empty();
+                        parentDropdown.append('<option value="">-- Select Parent Hospital --</option>');
+                        $.each(data, function(i, hospital) {
+                            parentDropdown.append('<option value="' + hospital.id + '">' + hospital.name + '</option>');
+                        });
+                    }
+                });
+            }
+
+            $("#HospitalType").on("change", function() {
+                var isSub = $(this).val() === "true";
+                if (isSub) {
+                    $("#ParentHospitalDiv").show();
+                    loadParentHospitals();
+                } else {
+                    $("#ParentHospitalDiv").hide();
+                    $("#ParentHospitalId").val("");
+                }
+            });
+
+            // Page load check for edit
+            if ($("#HospitalType").val() === "true") {
+                $("#ParentHospitalDiv").show();
+                loadParentHospitals();
+            }
+        });
+    </script>
+}

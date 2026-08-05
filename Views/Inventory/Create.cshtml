@@ -1,0 +1,268 @@
+﻿@model InventoryModel
+
+<h4 class="card-title">@(Model.IsUpdate ? "Edit Inventory" : "Create Inventory")</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="inventoryForm" asp-action="Create" asp-controller="Inventory" method="post">
+                    @Html.HiddenFor(x => x.BatchId)
+                    @Html.HiddenFor(x => x.MedicineId)
+                    @Html.HiddenFor(x => x.IsUpdate)
+                    <div class="row">
+
+                        <!-- Medicine -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Medicine Name</label>
+                                <input type="text" asp-for="MedicineName" name="MedicineName" class="form-control" id="MedicineName">
+                                <small class="text-danger" id="errMedicine"></small>
+                            </div>
+                        </div>
+
+                        <!-- Supplier -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Supplier</label>
+                                <select asp-for="SupplierId"  id="supplierDropdown" name="SupplierId" class="form-select">
+                                    <option value="">-- Select Supplier --</option>
+                                </select>
+                                <small class="text-danger" id="errSupplier"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select asp-for="CategoryId"  id="categoryDropdown" name="CategoryId" class="form-select">
+                                    <option value="">-- Select Category --</option>
+                                </select>
+                                <small class="text-danger" id="errCategory"></small>
+                            </div>
+                        </div>
+
+                        <!-- Batch -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Batch</label>
+                                <input type="text" name="BatchNumber" class="form-control" value="@Model.BatchNumber" />     
+                                
+                                <small class="text-danger" id="errBatch"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Expiry -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Expiry Date</label>
+                                <input asp-for="ExpiryDate"  type="date" name="ExpiryDate" class="form-control" id="ExpiryDate">
+                                <small class="text-danger" id="errExpiry"></small>
+                            </div>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quantity</label>
+                                <input asp-for="Quantity" type="number" name="Quantity" class="form-control" id="Quantity" min="1">
+                                <small class="text-danger" id="errQuantity"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Reorder -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Reorder Level</label>
+                                <input asp-for="ReorderLevel" type="number" name="ReorderLevel" class="form-control" id="ReorderLevel" min="1">
+                                <small class="text-danger" id="errReorder"></small>
+                            </div>
+                        </div>
+
+                        <!-- Unit -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Unit</label>
+                                <input asp-for="Unit" type="text" name="Unit" class="form-control" id="Unit">
+                                <small class="text-danger" id="errUnit"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <!-- MRP -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">MRP</label>
+                                @* <input type="text" name="MRP" class="form-control" value="@Model.MRP" /> *@
+                                <input asp-for="MRP" type="number" name="MRP" class="form-control" id="MRP" min="0">
+                                <small class="text-danger" id="errMRP"></small>
+                            </div>
+                        </div>
+
+                        <!-- Selling -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Selling Price</label>
+                                <input asp-for="SellingPrice" type="number" name="SellingPrice" class="form-control" id="SellingPrice" min="0">
+                                <small class="text-danger" id="errSelling"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.IsUpdate ? "Update" : "Submit")
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+
+    <script>
+        function clearErrors() {
+            $(".text-danger").text("");
+            $(".form-control, .form-select").removeClass("is-invalid");
+        }
+
+        function setError(id, errorId, msg) {
+            $("#" + id).addClass("is-invalid");
+            $("#" + errorId).text(msg);
+        }
+
+        $("#inventoryForm").on("submit", function (e) {
+
+            clearErrors();
+            let isValid = true;
+
+            if ($("#MedicineName").val().trim() === "") {
+                setError("MedicineName", "errMedicine", "Enter medicine name");
+                isValid = false;
+            }
+
+            if ($("#supplierDropdown").val() === "") {
+                setError("supplierDropdown", "errSupplier", "Select supplier");
+                isValid = false;
+            }
+
+            if ($("#categoryDropdown").val() === "") {
+                setError("categoryDropdown", "errCategory", "Select category");
+                isValid = false;
+            }
+
+            if ($("#BatchNumber").val().trim() === "") {
+                setError("BatchNumber", "errBatch", "Enter batch number");
+                isValid = false;
+            }
+
+            if ($("#ExpiryDate").val() === "") {
+                setError("ExpiryDate", "errExpiry", "Select expiry date");
+                isValid = false;
+            }
+
+            if ($("#Quantity").val() <= 0) {
+                setError("Quantity", "errQuantity", "Invalid quantity");
+                isValid = false;
+            }
+
+            if ($("#ReorderLevel").val() <= 0) {
+                setError("ReorderLevel", "errReorder", "Invalid reorder level");
+                isValid = false;
+            }
+
+            if ($("#Unit").val().trim() === "") {
+                setError("Unit", "errUnit", "Enter unit");
+                isValid = false;
+            }
+
+            if ($("#MRP").val() <= 0) {
+                setError("MRP", "errMRP", "Enter valid MRP");
+                isValid = false;
+            }
+
+            if ($("#SellingPrice").val() <= 0) {
+                setError("SellingPrice", "errSelling", "Enter selling price");
+                isValid = false;
+            }
+
+            if (!isValid) e.preventDefault();
+        });
+    </script>
+
+    <script>
+
+        $(document).ready(function () {
+            loadSuppliers();
+            loadCategories();
+        });
+
+        function loadSuppliers() {
+            $.ajax({
+                url: '/Inventory/GetSuppliers',
+                type: 'GET',
+                success: function (data) {
+
+                    let dropdown = $('#supplierDropdown');
+                    dropdown.empty();
+                    dropdown.append('<option value="">-- Select Supplier --</option>');
+
+                    $.each(data, function (index, item) {
+                        dropdown.append('<option value="' + item.supplierId + '">' + item.supplierName + '</option>');
+                    });
+
+                    // ✅ Pre-select on Edit
+                    dropdown.val('@Model.SupplierId');
+                },
+                error: function () {
+                    alert('Supplier load error');
+                }
+            });
+        }
+
+        function loadCategories() {
+            $.ajax({
+                url: '/Inventory/GetCategories',
+                type: 'GET',
+                success: function (data) {
+
+                    let dropdown = $('#categoryDropdown');
+                    dropdown.empty();
+                    dropdown.append('<option value="">-- Select Category --</option>');
+
+                    $.each(data, function (index, item) {
+                        dropdown.append('<option value="' + item.categoryId + '">' + item.categoryName + '</option>');
+                    });
+
+                    // ✅ Pre-select on Edit
+                    dropdown.val('@Model.CategoryId');
+                },
+                error: function () {
+                    alert('Category load error');
+                }
+            });
+        }
+
+    </script>
+
+}

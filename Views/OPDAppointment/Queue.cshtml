@@ -1,0 +1,745 @@
+﻿@{
+    ViewData["Title"] = "OPD Queue";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">OPD Queue</h4>
+                <p class="card-title-desc">Today's patient queue — real-time</p>
+
+                <!-- ===== TOP BAR: Stats + Date Filter ===== -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-primary fs-6 px-3 py-2">Total: <b id="statTotal">0</b></span>
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">Pending: <b id="statPending">0</b></span>
+                        <span class="badge bg-success fs-6 px-3 py-2">Done: <b id="statDone">0</b></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="date" id="queueDateFilter"
+                               class="form-control form-control-sm"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               style="width:160px" />
+                    </div>
+                </div>
+
+                <!-- ===== TABS ===== -->
+                <ul class="nav nav-tabs mb-3" id="queueTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tabAll" onclick="setTab('all')">All</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabPending" onclick="setTab('Pending')">Pending</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabConsult" onclick="setTab('In Consultation')">In Consultation</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabCompleted" onclick="setTab('OPD Completed')">Completed</button>
+                    </li>
+                </ul>
+
+                <!-- ===== QUEUE TABLE ===== -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Medicines</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    Loading queue...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PRESCRIPTION MODAL ===== -->
+<div class="modal fade" id="prescriptionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-pills me-2"></i>Prescription Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div id="modalPatientInfo" class="px-4 pt-3 pb-2 border-bottom bg-light d-none">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1 fw-bold" id="modalPatientName"></h6>
+                        <small class="text-muted" id="modalPatientMeta"></small>
+                    </div>
+                    <span class="badge bg-secondary" id="modalTokenBadge"></span>
+                </div>
+            </div>
+
+            <div class="modal-body" id="prescModalBody">
+                <div class="text-center py-4 text-muted">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+                </div>
+            </div>
+
+            <div class="modal-footer d-none" id="prescModalFooter">
+                <button class="btn btn-success" id="btnCompleteVisit">
+                    <i class="fas fa-check me-1"></i> Complete Visit
+                </button>
+                <a href="#" class="btn btn-primary" id="btnGenerateBill">
+                    <i class="fas fa-file-invoice-dollar me-1"></i> Generate Bill
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var allItems       = [];
+        var currentTab     = 'all';
+        var selectedApptId = null;
+
+        // ─── LOAD QUEUE ───────────────────────────────────────────────
+        function loadQueue() {
+            var date = document.getElementById('queueDateFilter').value;
+            $.ajax({
+                url: '/OPDAppointment/GetQueueData',
+                type: 'GET',
+                data: { date: date },
+                success: function(data) {
+                    allItems = Array.isArray(data) ? data : [];
+                    renderTable();
+                    updateStats();
+                },
+                error: function() {
+                    document.getElementById('queueBody').innerHTML =
+                        '<tr><td colspan="6" class="text-center text-danger py-4">Failed to load queue. Please refresh.</td></tr>';
+                }
+            });
+        }
+
+        // ─── RENDER TABLE ─────────────────────────────────────────────
+        function renderTable() {
+            var tbody    = document.getElementById('queueBody');
+            var filtered = currentTab === 'all'
+                ? allItems
+                : allItems.filter(function(x) {
+                    return (x.status || '').toLowerCase() === currentTab.toLowerCase();
+                });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No patients found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(function(item, idx) {
+                return buildRow(item, idx + 1);
+            }).join('');
+        }
+
+        function buildRow(item, token) {
+            var status = item.status || 'Pending';
+            var apptId = item.appointmentId;
+
+            // Status badge
+            var badge = '';
+            if (status === 'Pending')           badge = '<span class="badge bg-warning text-dark">Pending</span>';
+            else if (status === 'In Consultation') badge = '<span class="badge bg-primary">In Consultation</span>';
+            else if (status === 'OPD Completed')   badge = '<span class="badge bg-success">OPD Completed</span>';
+            else if (status === 'Cancelled')       badge = '<span class="badge bg-danger">Cancelled</span>';
+            else                                   badge = '<span class="badge bg-secondary">' + esc(status) + '</span>';
+
+            // Medicines
+            var medCell = item.medicineCount > 0
+                ? '<span class="badge bg-success">' + item.medicineCount + ' meds</span>'
+                : '<span class="text-muted">—</span>';
+
+            return '<tr>' +
+                '<td><span class="badge bg-secondary">Token #' + esc(item.tokenNumber || token) + '</span></td>' +
+                '<td><strong>' + esc(item.patientName) + '</strong></td>' +
+                '<td>Dr. ' + esc(item.doctorName || '—') + '</td>' +
+                '<td>' + esc(item.appointmentTime || '—') + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td>' + medCell + '</td>' +
+                '<td><button class="btn btn-info btn-sm" onclick="openPrescription(' + apptId + ')"><i class="fas fa-eye"></i> View</button></td>' +
+            '</tr>';
+        }
+
+        // ─── STATS ────────────────────────────────────────────────────
+        function updateStats() {
+            document.getElementById('statTotal').textContent   = allItems.length;
+            document.getElementById('statPending').textContent = allItems.filter(function(x){ return x.status === 'Pending'; }).length;
+            document.getElementById('statDone').textContent    = allItems.filter(function(x){ return x.status === 'OPD Completed'; }).length;
+        }
+
+        // ─── TAB SWITCH ───────────────────────────────────────────────
+        window.setTab = function(tab) {
+            currentTab = tab;
+            document.querySelectorAll('#queueTabs .nav-link').forEach(function(b) { b.classList.remove('active'); });
+            var map = { 'all': 'tabAll', 'Pending': 'tabPending', 'In Consultation': 'tabConsult', 'OPD Completed': 'tabCompleted' };
+            if (map[tab]) document.getElementById(map[tab]).classList.add('active');
+            renderTable();
+        };
+
+        // ─── OPEN PRESCRIPTION MODAL ──────────────────────────────────
+        window.openPrescription = function(appointmentId) {
+            selectedApptId = appointmentId;
+            var info   = document.getElementById('modalPatientInfo');
+            var footer = document.getElementById('prescModalFooter');
+            info.classList.add('d-none');
+            footer.classList.add('d-none');
+            document.getElementById('prescModalBody').innerHTML =
+                '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>';
+
+            new bootstrap.Modal(document.getElementById('prescriptionModal')).show();
+            loadPrescription(appointmentId);
+        };
+
+        // ─── LOAD & RENDER PRESCRIPTION ───────────────────────────────
+        function loadPrescription(appointmentId) {
+            $.ajax({
+                url: '/OPDAppointment/GetPrescriptionDetail',
+                type: 'GET',
+                data: { appointmentId: appointmentId },
+                success: function(d) { renderPrescModal(d); },
+                error:   function()  {
+                    document.getElementById('prescModalBody').innerHTML =
+                        '<div class="alert alert-danger">Could not load prescription. Please try again.</div>';
+                }
+            });
+        }
+
+        function renderPrescModal(d) {
+            if (!d || !d.patientName) {
+                document.getElementById('prescModalBody').innerHTML =
+                    '<div class="text-center py-4">' +
+                    '<i class="fas fa-file-medical fa-3x text-muted mb-3 d-block"></i>' +
+                    '<p class="text-muted mb-3">No OPD created yet for this appointment.</p>' +
+                    '<a href="/Patient/EditAsOPD?appointmentId=' + selectedApptId + '" class="btn btn-primary">Create OPD</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Patient header
+            var info = document.getElementById('modalPatientInfo');
+            info.classList.remove('d-none');
+            document.getElementById('modalPatientName').textContent  = d.patientName;
+            document.getElementById('modalPatientMeta').textContent  = 'Dr. ' + (d.doctorName || '—') + (d.symptoms ? ' | ' + d.symptoms : '');
+            document.getElementById('modalTokenBadge').textContent   = 'Token #' + (d.tokenNumber || '—');
+
+            // Medicines
+            var medsHtml = '';
+            if (d.medicines && d.medicines.length > 0) {
+                medsHtml += '<div class="table-responsive"><table class="table table-bordered table-sm">';
+                medsHtml += '<thead class="table-light"><tr><th>#</th><th>Medicine</th><th>Morning</th><th>Afternoon</th><th>Evening</th><th>Days</th><th>Status</th></tr></thead><tbody>';
+                d.medicines.forEach(function(m, i) {
+                    var morning   = (m.morning   && m.morning   != '0') ? m.morning   : '—';
+                    var afternoon = (m.afternoon && m.afternoon != '0') ? m.afternoon : '—';
+                    var evening   = (m.evening   && m.evening   != '0') ? m.evening   : '—';
+                    var days      = m.days > 0 ? m.days + ' days' : '—';
+                    var action    = m.isDispensed
+                        ? '<span class="badge bg-success">Dispensed</span>'
+                        : (m.opdMedId > 0
+                            ? '<button class="btn btn-sm btn-outline-success" onclick="dispenseMed(' + m.opdMedId + ', this)">Dispense</button>'
+                            : '<span class="text-muted">—</span>');
+                    medsHtml += '<tr><td>' + (i+1) + '</td><td><strong>' + esc(m.medicineName) + '</strong></td>' +
+                        '<td>' + esc(morning) + '</td><td>' + esc(afternoon) + '</td><td>' + esc(evening) + '</td>' +
+                        '<td>' + esc(days) + '</td><td>' + action + '</td></tr>';
+                });
+                medsHtml += '</tbody></table></div>';
+            } else {
+                medsHtml = '<div class="alert alert-info">No medicines prescribed for this appointment.</div>';
+            }
+
+            document.getElementById('prescModalBody').innerHTML =
+                '<h6 class="fw-bold mb-2"><i class="fas fa-pills me-2 text-primary"></i>Prescribed Medicines</h6>' + medsHtml;
+
+            // Footer
+            var footer = document.getElementById('prescModalFooter');
+            footer.classList.remove('d-none');
+            document.getElementById('btnGenerateBill').href     = '/OPDBilling/GenerateBill?appointmentId=' + selectedApptId;
+            document.getElementById('btnCompleteVisit').onclick = function() { completeVisit(selectedApptId); };
+        }
+
+        // ─── DISPENSE MEDICINE ────────────────────────────────────────
+        window.dispenseMed = function(opdMedId, btn) {
+            if (!opdMedId || opdMedId <= 0) { alert('Invalid medicine ID.'); return; }
+            btn.disabled    = true;
+            btn.textContent = '...';
+            $.ajax({
+                url: '/OPDAppointment/DispenseMedicine',
+                type: 'GET',
+                data: { opdMedId: opdMedId },
+                success: function(res) {
+                    if (res && res.success) {
+                        btn.outerHTML = '<span class="badge bg-success">Dispensed</span>';
+                        loadQueue();
+                    } else {
+                        btn.disabled = false; btn.textContent = 'Dispense';
+                        alert('Could not dispense. Please try again.');
+                    }
+                },
+                error: function() { btn.disabled = false; btn.textContent = 'Dispense'; alert('Server error.'); }
+            });
+        };
+
+        // ─── COMPLETE VISIT ───────────────────────────────────────────
+        window.completeVisit = function(appointmentId) {
+            if (!confirm('Mark this visit as completed?')) return;
+            var btn = document.getElementById('btnCompleteVisit');
+            btn.disabled    = true;
+            btn.textContent = 'Saving...';
+            $.ajax({
+                url: '/OPDAppointment/CompleteVisit',
+                type: 'GET',
+                data: { appointmentId: appointmentId },
+                success: function(res) {
+                    if (res && res.success) {
+                        loadQueue();
+                        bootstrap.Modal.getInstance(document.getElementById('prescriptionModal')).hide();
+                        if (typeof toastr !== 'undefined') toastr.success('Visit marked as completed!');
+                    } else {
+                        btn.disabled = false; btn.textContent = 'Complete Visit';
+                        alert('Could not complete visit.');
+                    }
+                },
+                error: function() { btn.disabled = false; btn.textContent = 'Complete Visit'; alert('Server error.'); }
+            });
+        };
+
+        // ─── ESCAPE HTML ──────────────────────────────────────────────
+        function esc(s) {
+            return (s || '').toString()
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────
+        $(document).ready(function() {
+            loadQueue();
+            // Date filter change
+            document.getElementById('queueDateFilter').addEventListener('change', loadQueue);
+            // Auto-refresh every 10 seconds
+            setInterval(loadQueue, 10000);
+        });
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@* @{
+    ViewData["Title"] = "OPD Queue";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">OPD Queue</h4>
+                <p class="card-title-desc">Today's patient queue — real-time</p>
+
+                <!-- ===== TOP BAR: Stats + Date Filter ===== -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-primary fs-6 px-3 py-2">Total: <b id="statTotal">0</b></span>
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">Pending: <b id="statPending">0</b></span>
+                        <span class="badge bg-success fs-6 px-3 py-2">Done: <b id="statDone">0</b></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="date" id="queueDateFilter"
+                               class="form-control form-control-sm"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               style="width:160px" />
+                    </div>
+                </div>
+
+                <!-- ===== TABS ===== -->
+                <ul class="nav nav-tabs mb-3" id="queueTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tabAll" onclick="setTab('all')">All</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabPending" onclick="setTab('Pending')">Pending</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabConsult" onclick="setTab('In Consultation')">In Consultation</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tabCompleted" onclick="setTab('OPD Completed')">Completed</button>
+                    </li>
+                </ul>
+
+                <!-- ===== QUEUE TABLE ===== -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Medicines</th>
+                                <th>OPD</th>
+                                <th>Billing</th>
+                                <th>Prescription</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueBody">
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    Loading queue...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PRESCRIPTION MODAL ===== -->
+<div class="modal fade" id="prescriptionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-pills me-2"></i>Prescription Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div id="modalPatientInfo" class="px-4 pt-3 pb-2 border-bottom bg-light d-none">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1 fw-bold" id="modalPatientName"></h6>
+                        <small class="text-muted" id="modalPatientMeta"></small>
+                    </div>
+                    <span class="badge bg-secondary" id="modalTokenBadge"></span>
+                </div>
+            </div>
+
+            <div class="modal-body" id="prescModalBody">
+                <div class="text-center py-4 text-muted">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+                </div>
+            </div>
+
+            <div class="modal-footer d-none" id="prescModalFooter">
+                <button class="btn btn-success" id="btnCompleteVisit">
+                    <i class="fas fa-check me-1"></i> Complete Visit
+                </button>
+                <a href="#" class="btn btn-primary" id="btnGenerateBill">
+                    <i class="fas fa-file-invoice-dollar me-1"></i> Generate Bill
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var allItems       = [];
+        var currentTab     = 'all';
+        var selectedApptId = null;
+
+        // ─── LOAD QUEUE ───────────────────────────────────────────────
+        function loadQueue() {
+            var date = document.getElementById('queueDateFilter').value;
+            $.ajax({
+                url: '/OPDAppointment/GetQueueData',
+                type: 'GET',
+                data: { date: date },
+                success: function(data) {
+                    allItems = Array.isArray(data) ? data : [];
+                    renderTable();
+                    updateStats();
+                },
+                error: function() {
+                    document.getElementById('queueBody').innerHTML =
+                        '<tr><td colspan="10" class="text-center text-danger py-4">Failed to load queue. Please refresh.</td></tr>';
+                }
+            });
+        }
+
+        // ─── RENDER TABLE ─────────────────────────────────────────────
+        function renderTable() {
+            var tbody    = document.getElementById('queueBody');
+            var filtered = currentTab === 'all'
+                ? allItems
+                : allItems.filter(function(x) {
+                    return (x.status || '').toLowerCase() === currentTab.toLowerCase();
+                });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No patients found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(function(item, idx) {
+                return buildRow(item, idx + 1);
+            }).join('');
+        }
+
+        function buildRow(item, token) {
+            var status = item.status || 'Pending';
+            var apptId = item.appointmentId;
+            var opdId  = item.opdId || 0;
+
+            // Status badge
+            var badge = '';
+            if (status === 'Pending')           badge = '<span class="badge bg-warning text-dark">Pending</span>';
+            else if (status === 'In Consultation') badge = '<span class="badge bg-primary">In Consultation</span>';
+            else if (status === 'OPD Completed')   badge = '<span class="badge bg-success">OPD Completed</span>';
+            else if (status === 'Cancelled')       badge = '<span class="badge bg-danger">Cancelled</span>';
+            else                                   badge = '<span class="badge bg-secondary">' + esc(status) + '</span>';
+
+            // Medicines
+            var medCell = item.medicineCount > 0
+                ? '<span class="badge bg-success">' + item.medicineCount + ' meds</span>'
+                : '<span class="text-muted">—</span>';
+
+            // OPD link
+            var opdCell = opdId > 0
+                ? '<a href="/Patient/EditAsOPD?appointmentId=' + apptId + '" style="text-decoration:none;">Edit OPD</a>'
+                : '<a href="/Patient/EditAsOPD?appointmentId=' + apptId + '" style="text-decoration:none;">Create OPD</a>';
+
+            return '<tr>' +
+                '<td><span class="badge bg-secondary">Token #' + esc(item.tokenNumber || token) + '</span></td>' +
+                '<td><strong>' + esc(item.patientName) + '</strong></td>' +
+                '<td>Dr. ' + esc(item.doctorName || '—') + '</td>' +
+                '<td>' + esc(item.appointmentTime || '—') + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td>' + medCell + '</td>' +
+                '<td>' + opdCell + '</td>' +
+                '<td><a href="/OPDBilling/GenerateBill?appointmentId=' + apptId + '" class="btn btn-primary btn-sm">Generate Bill</a></td>' +
+                '<td><a href="/Patient/PrintPriscription?appointmentId=' + apptId + '" style="text-decoration:none;">Print</a></td>' +
+                '<td><button class="btn btn-info btn-sm" onclick="openPrescription(' + apptId + ')"><i class="fas fa-eye"></i> View</button></td>' +
+            '</tr>';
+        }
+
+        // ─── STATS ────────────────────────────────────────────────────
+        function updateStats() {
+            document.getElementById('statTotal').textContent   = allItems.length;
+            document.getElementById('statPending').textContent = allItems.filter(function(x){ return x.status === 'Pending'; }).length;
+            document.getElementById('statDone').textContent    = allItems.filter(function(x){ return x.status === 'OPD Completed'; }).length;
+        }
+
+        // ─── TAB SWITCH ───────────────────────────────────────────────
+        window.setTab = function(tab) {
+            currentTab = tab;
+            document.querySelectorAll('#queueTabs .nav-link').forEach(function(b) { b.classList.remove('active'); });
+            var map = { 'all': 'tabAll', 'Pending': 'tabPending', 'In Consultation': 'tabConsult', 'OPD Completed': 'tabCompleted' };
+            if (map[tab]) document.getElementById(map[tab]).classList.add('active');
+            renderTable();
+        };
+
+        // ─── OPEN PRESCRIPTION MODAL ──────────────────────────────────
+        window.openPrescription = function(appointmentId) {
+            selectedApptId = appointmentId;
+            var info   = document.getElementById('modalPatientInfo');
+            var footer = document.getElementById('prescModalFooter');
+            info.classList.add('d-none');
+            footer.classList.add('d-none');
+            document.getElementById('prescModalBody').innerHTML =
+                '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>';
+
+            new bootstrap.Modal(document.getElementById('prescriptionModal')).show();
+            loadPrescription(appointmentId);
+        };
+
+        // ─── LOAD & RENDER PRESCRIPTION ───────────────────────────────
+        function loadPrescription(appointmentId) {
+            $.ajax({
+                url: '/OPDAppointment/GetPrescriptionDetail',
+                type: 'GET',
+                data: { appointmentId: appointmentId },
+                success: function(d) { renderPrescModal(d); },
+                error:   function()  {
+                    document.getElementById('prescModalBody').innerHTML =
+                        '<div class="alert alert-danger">Could not load prescription. Please try again.</div>';
+                }
+            });
+        }
+
+        function renderPrescModal(d) {
+            if (!d || !d.patientName) {
+                document.getElementById('prescModalBody').innerHTML =
+                    '<div class="text-center py-4">' +
+                    '<i class="fas fa-file-medical fa-3x text-muted mb-3 d-block"></i>' +
+                    '<p class="text-muted mb-3">No OPD created yet for this appointment.</p>' +
+                    '<a href="/Patient/EditAsOPD?appointmentId=' + selectedApptId + '" class="btn btn-primary">Create OPD</a>' +
+                    '</div>';
+                return;
+            }
+
+            // Patient header
+            var info = document.getElementById('modalPatientInfo');
+            info.classList.remove('d-none');
+            document.getElementById('modalPatientName').textContent  = d.patientName;
+            document.getElementById('modalPatientMeta').textContent  = 'Dr. ' + (d.doctorName || '—') + (d.symptoms ? ' | ' + d.symptoms : '');
+            document.getElementById('modalTokenBadge').textContent   = 'Token #' + (d.tokenNumber || '—');
+
+            // Medicines
+            var medsHtml = '';
+            if (d.medicines && d.medicines.length > 0) {
+                medsHtml += '<div class="table-responsive"><table class="table table-bordered table-sm">';
+                medsHtml += '<thead class="table-light"><tr><th>#</th><th>Medicine</th><th>Morning</th><th>Afternoon</th><th>Evening</th><th>Days</th><th>Status</th></tr></thead><tbody>';
+                d.medicines.forEach(function(m, i) {
+                    var morning   = (m.morning   && m.morning   != '0') ? m.morning   : '—';
+                    var afternoon = (m.afternoon && m.afternoon != '0') ? m.afternoon : '—';
+                    var evening   = (m.evening   && m.evening   != '0') ? m.evening   : '—';
+                    var days      = m.days > 0 ? m.days + ' days' : '—';
+                    var action    = m.isDispensed
+                        ? '<span class="badge bg-success">Dispensed</span>'
+                        : (m.opdMedId > 0
+                            ? '<button class="btn btn-sm btn-outline-success" onclick="dispenseMed(' + m.opdMedId + ', this)">Dispense</button>'
+                            : '<span class="text-muted">—</span>');
+                    medsHtml += '<tr><td>' + (i+1) + '</td><td><strong>' + esc(m.medicineName) + '</strong></td>' +
+                        '<td>' + esc(morning) + '</td><td>' + esc(afternoon) + '</td><td>' + esc(evening) + '</td>' +
+                        '<td>' + esc(days) + '</td><td>' + action + '</td></tr>';
+                });
+                medsHtml += '</tbody></table></div>';
+            } else {
+                medsHtml = '<div class="alert alert-info">No medicines prescribed for this appointment.</div>';
+            }
+
+            document.getElementById('prescModalBody').innerHTML =
+                '<h6 class="fw-bold mb-2"><i class="fas fa-pills me-2 text-primary"></i>Prescribed Medicines</h6>' + medsHtml;
+
+            // Footer
+            var footer = document.getElementById('prescModalFooter');
+            footer.classList.remove('d-none');
+            document.getElementById('btnGenerateBill').href     = '/OPDBilling/GenerateBill?appointmentId=' + selectedApptId;
+            document.getElementById('btnCompleteVisit').onclick = function() { completeVisit(selectedApptId); };
+        }
+
+        // ─── DISPENSE MEDICINE ────────────────────────────────────────
+        window.dispenseMed = function(opdMedId, btn) {
+            if (!opdMedId || opdMedId <= 0) { alert('Invalid medicine ID.'); return; }
+            btn.disabled    = true;
+            btn.textContent = '...';
+            $.ajax({
+                url: '/OPDAppointment/DispenseMedicine',
+                type: 'GET',
+                data: { opdMedId: opdMedId },
+                success: function(res) {
+                    if (res && res.success) {
+                        btn.outerHTML = '<span class="badge bg-success">Dispensed</span>';
+                        loadQueue();
+                    } else {
+                        btn.disabled = false; btn.textContent = 'Dispense';
+                        alert('Could not dispense. Please try again.');
+                    }
+                },
+                error: function() { btn.disabled = false; btn.textContent = 'Dispense'; alert('Server error.'); }
+            });
+        };
+
+        // ─── COMPLETE VISIT ───────────────────────────────────────────
+        window.completeVisit = function(appointmentId) {
+            if (!confirm('Mark this visit as completed?')) return;
+            var btn = document.getElementById('btnCompleteVisit');
+            btn.disabled    = true;
+            btn.textContent = 'Saving...';
+            $.ajax({
+                url: '/OPDAppointment/CompleteVisit',
+                type: 'GET',
+                data: { appointmentId: appointmentId },
+                success: function(res) {
+                    if (res && res.success) {
+                        loadQueue();
+                        bootstrap.Modal.getInstance(document.getElementById('prescriptionModal')).hide();
+                        if (typeof toastr !== 'undefined') toastr.success('Visit marked as completed!');
+                    } else {
+                        btn.disabled = false; btn.textContent = 'Complete Visit';
+                        alert('Could not complete visit.');
+                    }
+                },
+                error: function() { btn.disabled = false; btn.textContent = 'Complete Visit'; alert('Server error.'); }
+            });
+        };
+
+        // ─── ESCAPE HTML ──────────────────────────────────────────────
+        function esc(s) {
+            return (s || '').toString()
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────
+        $(document).ready(function() {
+            loadQueue();
+            // Date filter change
+            document.getElementById('queueDateFilter').addEventListener('change', loadQueue);
+            // Auto-refresh every 10 seconds
+            setInterval(loadQueue, 10000);
+        });
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ *@

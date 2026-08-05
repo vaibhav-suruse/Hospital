@@ -1,0 +1,125 @@
+﻿@using WebApplicationSampleTest2.Models
+@model ReferenceDoctorModel
+
+@{
+    ViewData["Title"] = Model.isUpdate ? "Edit Reference Doctor" : "Create Reference Doctor";
+}
+
+<h4 class="card-title">
+    @(Model.isUpdate ? "Edit Reference Doctor" : "Create Reference Doctor")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="doctorForm"
+                      novalidate
+                      asp-action="Create"
+                      method="post"
+                      asp-controller="ReferenceDoctor">
+
+                    @Html.HiddenFor(model => model.ReferenceDoctorId)
+
+                    <div class="row">
+
+                        <!-- Doctor Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Doctor Name</label>
+                            <input asp-for="DoctorName" class="form-control" id="DoctorName" />
+                            <small class="text-danger" id="errDoctorName"></small>
+                        </div>
+
+                        <!-- Clinic Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Clinic Name</label>
+                            <input asp-for="ClinicName" class="form-control" id="ClinicName" />
+                            <small class="text-danger" id="errClinicName"></small>
+                        </div>
+
+                        <!-- Mobile -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mobile Number</label>
+                            <input asp-for="MobileNumber" class="form-control" id="MobileNumber" />
+                            <small class="text-danger" id="errMobile"></small>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" id="Email" />
+                            <small class="text-danger" id="errEmail"></small>
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea asp-for="Address" class="form-control" id="Address" rows="3"></textarea>
+                            <small class="text-danger" id="errAddress"></small>
+                        </div>
+
+                        <!-- Percentage -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Percentage (%)</label>
+                            <input asp-for="Percentage" class="form-control" id="Percentage" value="@(Model.Percentage == null ? "" : Model.Percentage.ToString())" />
+                            <small class="text-danger" id="errPercentage"></small>
+                        </div>
+
+                        @* <!-- Address -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea asp-for="Address" class="form-control" id="Address" rows="3"></textarea>
+                            <small class="text-danger" id="errAddress"></small>
+                        </div> *@
+
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary w-md">
+                            @(Model.isUpdate ? "Update" : "Submit")
+                        </button>
+
+                        <a class="btn btn-secondary"
+                           asp-controller="ReferenceDoctor"
+                           asp-action="Index">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="~/js/RefernceDoctor.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            $.ajax({
+                url: '/IPD/GetReferenceDoctors',
+                type: 'GET',
+                success: function (data) {
+
+                    $("#ReferenceDoctorId").empty();
+                    $("#ReferenceDoctorId").append('<option value="">-- Select Reference Doctor --</option>');
+
+                    $.each(data, function (i, item) {
+                        $("#ReferenceDoctorId").append(
+                            '<option value="' + item.id + '">' + item.name + '</option>'
+                        );
+                    });
+                },
+                error: function () {
+                    alert("Failed to load Reference Doctors");
+                }
+            });
+
+        });
+
+    </script>
+
+}

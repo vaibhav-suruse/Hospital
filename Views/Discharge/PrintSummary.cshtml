@@ -1,0 +1,1200 @@
+﻿@model WebApplicationSampleTest2.Models.DischargeModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Discharge Summary</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #222;
+            background: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            width: 750px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1f4e79;
+            margin-bottom: 10px;
+        }
+
+        .hospital-info img {
+            height: 70px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .hospital-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1f4e79;
+        }
+
+        .hospital-sub {
+            font-size: 12px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        .doc-title {
+            text-align: right;
+        }
+
+            .doc-title h2 {
+                font-size: 20px;
+                color: #1f4e79;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+
+            .doc-title p {
+                font-size: 12px;
+                color: #777;
+            }
+
+        .patient-bar {
+            background: #1f4e79;
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+
+            .patient-bar span strong {
+                color: #cce5ff;
+            }
+
+        .section {
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #1f4e79;
+            background: #e8f0fe;
+            padding: 5px 10px;
+            border-left: 4px solid #1f4e79;
+            margin-bottom: 8px;
+        }
+
+        .allergy-banner {
+            background: #fff5f5;
+            border: 2px solid #dc2626;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 10px 0;
+        }
+
+            .allergy-banner .allergy-title {
+                font-size: 13px;
+                font-weight: bold;
+                color: #991b1b;
+                margin-bottom: 4px;
+            }
+
+        .allergy-chip {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #dc2626;
+            color: #7f1d1d;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin: 2px 3px 2px 0;
+        }
+
+        .no-allergy-note {
+            font-size: 12px;
+            color: #166534;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        .dx-pill {
+            display: inline-block;
+            background: #e8f0fe;
+            border: 1px solid #b6d0fb;
+            color: #1f4e79;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin: 2px 3px 2px 0;
+        }
+
+            .dx-pill.dx-final {
+                background: #eafaf0;
+                border-color: #9be3b8;
+                color: #14532d;
+            }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 20px;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+            .info-grid .label {
+                color: #555;
+                font-weight: bold;
+            }
+
+        .text-block {
+            padding: 6px 10px;
+            font-size: 12px;
+            color: #333;
+            background: #fafafa;
+            border-radius: 3px;
+            border: 1px solid #eee;
+            min-height: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-regular {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-lama {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-death {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-referral {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-absconded {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .badge-good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-expired {
+            background: #1f4e79;
+            color: white;
+        }
+
+        .followup-box {
+            background: #fff8e1;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        /* Medicine table */
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+            .med-table th {
+                background: #e8f0fe;
+                padding: 6px 8px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+            .med-table td {
+                padding: 6px 8px;
+                border: 1px solid #eee;
+            }
+
+            .med-table tr:nth-child(even) td {
+                background: #fafafa;
+            }
+
+        .check {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .dash {
+            color: #aaa;
+        }
+
+        /* Vitals table */
+        .vitals-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+            .vitals-table th {
+                background: #e3f2fd;
+                padding: 5px 6px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+            .vitals-table td {
+                padding: 5px 6px;
+                border: 1px solid #eee;
+            }
+
+            .vitals-table tr:nth-child(even) td {
+                background: #fafafa;
+            }
+
+        .vitals-abnormal td {
+            background: #fff8e1 !important;
+        }
+
+        .badge-abnormal {
+            background: #fff3cd;
+            color: #856404;
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .badge-normal {
+            background: #d4edda;
+            color: #155724;
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        /* Round blocks */
+        .round-block {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+        }
+
+        .round-header {
+            background: #1f4e79;
+            color: white;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .round-body {
+            padding: 8px 12px;
+        }
+
+        .round-sub-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #1f4e79;
+            margin: 6px 0 4px 0;
+            border-bottom: 1px solid #e8f0fe;
+            padding-bottom: 2px;
+        }
+
+        .round-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+            .round-table th {
+                background: #f0f4ff;
+                padding: 4px 6px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }
+
+            .round-table td {
+                padding: 4px 6px;
+                border: 1px solid #eee;
+            }
+
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 10px;
+        }
+
+        .sig-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #333;
+            margin-bottom: 5px;
+            padding-top: 5px;
+        }
+
+.footer {
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+
+        /* ── PRINT OPTIONS PANEL ── */
+        .po-panel {
+            width: 780px;
+            margin: 0 auto 15px auto;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(15,23,42,.08);
+            padding: 14px 18px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .po-panel .po-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .po-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px 14px;
+        }
+
+        .po-grid label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: #374151;
+            cursor: pointer;
+            padding: 3px 0;
+        }
+
+        .po-grid input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: #1f4e79;
+            cursor: pointer;
+        }
+
+        .po-actions {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eef2f7;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .po-actions .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+        }
+
+        .btn-select-all { background: #6c757d; }
+        .btn-print { background: #1f4e79; }
+        .btn-pdf { background: #28a745; }
+        .btn-back { background: #6c757d; }
+
+        .po-actions .btn:hover { opacity: .92; }
+
+        .po-panel .btn-check-all {
+            background: #eef2f7;
+            color: #1f2937;
+            border: 1px solid #d1d9e4;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            margin: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        .btn-print {
+            background: #1f4e79;
+        }
+
+        .btn-pdf {
+            background: #28a745;
+        }
+
+        .btn-back {
+            background: #6c757d;
+        }
+
+        @@media print {
+            .btn-bar, .po-panel {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            .round-block {
+                page-break-inside: avoid;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    @* ── PRINT OPTIONS PANEL (visible on screen, hidden when printing) ── *@
+    <div class="po-panel" id="printOptionsPanel">
+        <div class="po-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f4e79" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+            Print Options — select sections to include
+        </div>
+        <div class="po-grid">
+            <label><input type="checkbox" class="po-sec" value="po-header" checked /> Hospital Header</label>
+            <label><input type="checkbox" class="po-sec" value="po-patient" checked /> Patient Bar</label>
+            <label><input type="checkbox" class="po-sec" value="po-allergy" checked /> Allergies</label>
+            <label><input type="checkbox" class="po-sec" value="po-admission" checked /> Admission &amp; Discharge</label>
+            <label><input type="checkbox" class="po-sec" value="po-reason" checked /> Reason for Admission</label>
+            <label><input type="checkbox" class="po-sec" value="po-diagnosis" checked /> Final Diagnosis</label>
+            <label><input type="checkbox" class="po-sec" value="po-dxlist" checked /> Diagnosis (Adm vs Discharge)</label>
+            <label><input type="checkbox" class="po-sec" value="po-clinical" checked /> Clinical Background</label>
+            <label><input type="checkbox" class="po-sec" value="po-treatment" checked /> Treatment Summary</label>
+            <label><input type="checkbox" class="po-sec" value="po-instructions" checked /> Discharge Instructions</label>
+            <label><input type="checkbox" class="po-sec" value="po-followup" checked /> Follow-up</label>
+            <label><input type="checkbox" class="po-sec" value="po-medicines" checked /> Discharge Medicines</label>
+            <label><input type="checkbox" class="po-sec" value="po-procedures" checked /> Procedures</label>
+            <label><input type="checkbox" class="po-sec" value="po-lab" checked /> Lab Results</label>
+            <label><input type="checkbox" class="po-sec" value="po-radiology" checked /> Radiology</label>
+            <label><input type="checkbox" class="po-sec" value="po-vitals" checked /> Daily Vitals</label>
+            <label><input type="checkbox" class="po-sec" value="po-rounds" checked /> Doctor Rounds</label>
+            <label><input type="checkbox" class="po-sec" value="po-signature" checked /> Signatures</label>
+            <label><input type="checkbox" class="po-sec" value="po-footer" checked /> Footer</label>
+        </div>
+        <div class="po-actions">
+            <button type="button" class="btn-check-all" onclick="toggleAll(true)">☑ Select All</button>
+            <button type="button" class="btn-check-all" onclick="toggleAll(false)">☐ Clear All</button>
+            <button class="btn btn-print" onclick="printSummary()">🖨 Print</button>
+            <button class="btn btn-pdf" onclick="downloadPDF()">⬇ Download PDF</button>
+            <button class="btn btn-back" onclick="window.close()">✕ Close</button>
+        </div>
+    </div>
+
+    <div class="container" id="summaryContent">
+
+@* HOSPITAL HEADER *@
+        <div class="header po-header-sec">
+            <div class="hospital-info">
+                @if (!string.IsNullOrEmpty(ViewBag.HospitalLogo as string))
+                {
+                    <img src="/uploads/hospitals/@ViewBag.HospitalLogo" alt="Logo" />
+                }
+                <div class="hospital-name">@ViewBag.HospitalName</div>
+                <div class="hospital-sub">@ViewBag.HospitalAddress</div>
+                <div class="hospital-sub">📞 @ViewBag.HospitalPhone &nbsp;|&nbsp; ✉ @ViewBag.HospitalEmail</div>
+                @if (!string.IsNullOrEmpty(ViewBag.HospitalRegNo as string))
+                {
+                    <div class="hospital-sub">Reg No: @ViewBag.HospitalRegNo</div>
+                }
+            </div>
+            <div class="doc-title">
+                <h2>DISCHARGE SUMMARY</h2>
+                <p>Date: @DateTime.Now.ToString("dd-MM-yyyy")</p>
+                <p>IPD No: @Model.AdmissionNumber</p>
+            </div>
+        </div>
+
+@* PATIENT BAR *@
+        <div class="patient-bar po-patient-sec">
+            <span><strong>Patient:</strong> @Model.PatientName</span>
+            <span><strong>Age/Sex:</strong> @Model.Age Y / @Model.Gender</span>
+            <span><strong>Phone:</strong> @Model.PhoneNumber</span>
+<span><strong>Ward:</strong> @Model.WardName</span>
+            <span><strong>Bed:</strong> @Model.BedNumber</span>
+            <span><strong>Room:</strong> @Model.RoomNumber</span>
+        </div>
+
+        @* ALLERGY BANNER - patient safety, shown first *@
+        @{
+            var allergies = ViewBag.Allergies as List<WebApplicationSampleTest2.Models.PatientAllergyModel>
+            ?? new List<WebApplicationSampleTest2.Models.PatientAllergyModel>();
+        }
+@if (allergies.Any())
+        {
+            <div class="allergy-banner po-allergy-sec">
+                <div class="allergy-title">⚠ Known Allergies</div>
+                @foreach (var a in allergies)
+                {
+                    <span class="allergy-chip">
+                        <strong>@a.AllergyName</strong>@(!string.IsNullOrWhiteSpace(a.Reaction) ? " — " + a.Reaction : "")@(!string.IsNullOrWhiteSpace(a.Severity) ? " (" + a.Severity + ")" : "")
+                    </span>
+                }
+            </div>
+        }
+else
+        {
+            <div class="no-allergy-note po-allergy-sec">No known allergies recorded</div>
+        }
+
+@* ADMISSION + DISCHARGE INFO *@
+        <div class="section po-admission-sec">
+            <div class="section-title">Admission &amp; Discharge Information</div>
+            <div class="info-grid">
+                <div><span class="label">Admitted On:</span> @Model.AdmissionDateTime.ToString("dd-MM-yyyy HH:mm")</div>
+                <div><span class="label">Discharged On:</span> @Model.ActualDischargeDateTime?.ToString("dd-MM-yyyy HH:mm")</div>
+                <div><span class="label">Total Stay:</span> @Model.TotalDaysStayed days</div>
+                <div><span class="label">Ward / Bed / Room:</span> @Model.WardName / @Model.BedNumber / @Model.RoomNumber</div>
+                <div>
+                    <span class="label">Discharge Type:</span>
+                    <span class="badge @(Model.DischargeType == "Regular" ? "badge-regular" : Model.DischargeType == "LAMA" ? "badge-lama" : Model.DischargeType == "Death" ? "badge-death" : Model.DischargeType == "Referral" ? "badge-referral" : "badge-absconded")">
+                        @Model.DischargeType
+                    </span>
+                </div>
+                <div>
+                    <span class="label">Discharge Condition:</span>
+                    <span class="badge @(Model.DischargeCondition == "Good" ? "badge-good" : Model.DischargeCondition == "Fair" ? "badge-fair" : Model.DischargeCondition == "Poor" ? "badge-poor" : "badge-expired")">
+                        @Model.DischargeCondition
+                    </span>
+                </div>
+                <div><span class="label">Admitting Doctor:</span> Dr. @Model.PrimaryDoctorName (@Model.PrimaryDoctorSpecialization)</div>
+                <div><span class="label">Discharging Doctor:</span> Dr. @Model.DischargeDoctorName</div>
+            </div>
+        </div>
+
+@* REASON FOR ADMISSION *@
+        <div class="section po-reason-sec">
+            <div class="section-title">Reason for Admission</div>
+            <div class="text-block">@(string.IsNullOrEmpty(Model.ReasonForAdmission) ? "N/A" : Model.ReasonForAdmission)</div>
+        </div>
+
+@* FINAL DIAGNOSIS *@
+        <div class="section po-diagnosis-sec">
+            <div class="section-title">Final Diagnosis</div>
+            <div class="text-block">@(string.IsNullOrEmpty(Model.FinalDiagnosis) ? "N/A" : Model.FinalDiagnosis)</div>
+        </div>
+
+        @* ADMISSION DIAGNOSIS vs DISCHARGE DIAGNOSIS - shown separately *@
+        @{
+            var admissionDx = ViewBag.AdmissionDiagnoses as List<WebApplicationSampleTest2.Models.DiagnosisModel>
+            ?? new List<WebApplicationSampleTest2.Models.DiagnosisModel>();
+            var dischargeDx = ViewBag.DischargeDiagnoses as List<WebApplicationSampleTest2.Models.DiagnosisModel>
+            ?? new List<WebApplicationSampleTest2.Models.DiagnosisModel>();
+        }
+@if (admissionDx.Any() || dischargeDx.Any())
+        {
+            <div class="section po-dxlist-sec">
+                <div class="section-title">Diagnosis</div>
+                <div class="info-grid">
+                    <div>
+                        <span class="label">Admission Diagnosis (Provisional):</span><br />
+                        @if (admissionDx.Any())
+                        {
+                            @foreach (var dx in admissionDx)
+                            {
+                                <span class="dx-pill">@dx.DiagnosisName@(dx.IsPrincipal ? " (Principal)" : "")</span>
+                            }
+                        }
+                        else
+                        {
+                            <span>Not recorded</span>
+                        }
+                    </div>
+                    <div>
+                        <span class="label">Discharge Diagnosis (Final):</span><br />
+                        @if (dischargeDx.Any())
+                        {
+                            @foreach (var dx in dischargeDx)
+                            {
+                                <span class="dx-pill dx-final">@dx.DiagnosisName@(dx.IsPrincipal ? " (Principal)" : "")</span>
+                            }
+                        }
+                        else
+                        {
+                            <span>Not recorded</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* CHIEF COMPLAINTS & MEDICAL HISTORY *@
+        @{
+            var complaints = ViewBag.ChiefComplaints as List<WebApplicationSampleTest2.Models.ChiefComplaintModel>
+            ?? new List<WebApplicationSampleTest2.Models.ChiefComplaintModel>();
+            var medHistory = ViewBag.MedicalHistory as List<WebApplicationSampleTest2.Models.PatientMedicalHistoryModel>
+            ?? new List<WebApplicationSampleTest2.Models.PatientMedicalHistoryModel>();
+        }
+@if (complaints.Any() || medHistory.Any())
+        {
+            <div class="section po-clinical-sec">
+                <div class="section-title">Clinical Background</div>
+                <div class="info-grid">
+                    @if (complaints.Any())
+                    {
+                        <div>
+                            <span class="label">Chief Complaints:</span>
+                            <ul style="margin:4px 0 0 16px; font-size:12px;">
+                                @foreach (var c in complaints)
+                                {
+                                    <li>@c.ComplaintName@(c.DurationValue.HasValue ? " — " + c.DurationValue + " " + c.DurationUnit : "")</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (medHistory.Any())
+                    {
+                        <div>
+                            <span class="label">Medical History:</span>
+                            <ul style="margin:4px 0 0 16px; font-size:12px;">
+                                @foreach (var h in medHistory)
+                                {
+                                    <li>@h.HistoryType@(!string.IsNullOrWhiteSpace(h.Description) ? ": " + h.Description : "")</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+@* TREATMENT SUMMARY *@
+        <div class="section po-treatment-sec">
+            <div class="section-title">Treatment Summary</div>
+            <div class="text-block">@(string.IsNullOrEmpty(Model.TreatmentSummary) ? "N/A" : Model.TreatmentSummary)</div>
+        </div>
+
+@* DISCHARGE INSTRUCTIONS *@
+        <div class="section po-instructions-sec">
+            <div class="section-title">Discharge Instructions</div>
+            <div class="info-grid">
+                <div>
+                    <div class="label" style="margin-bottom:4px;">General Instructions</div>
+                    <div class="text-block">@(string.IsNullOrEmpty(Model.DischargeInstructions) ? "N/A" : Model.DischargeInstructions)</div>
+                </div>
+                <div>
+                    <div class="label" style="margin-bottom:4px;">Diet Instructions</div>
+                    <div class="text-block">@(string.IsNullOrEmpty(Model.DietInstructions) ? "N/A" : Model.DietInstructions)</div>
+                </div>
+                <div style="margin-top:8px;">
+                    <div class="label" style="margin-bottom:4px;">Activity Restrictions</div>
+                    <div class="text-block">@(string.IsNullOrEmpty(Model.ActivityRestrictions) ? "N/A" : Model.ActivityRestrictions)</div>
+                </div>
+                <div style="margin-top:8px;">
+                    <div class="label" style="margin-bottom:4px;">Special Notes</div>
+                    <div class="text-block">@(string.IsNullOrEmpty(Model.SpecialNotes) ? "N/A" : Model.SpecialNotes)</div>
+                </div>
+            </div>
+        </div>
+
+        @* FOLLOW UP *@
+@if (Model.FollowUpDate.HasValue)
+        {
+            <div class="section po-followup-sec">
+                <div class="section-title">Follow-up</div>
+                <div class="followup-box">
+                    <strong>📅 Follow-up Date:</strong> @Model.FollowUpDate.Value.ToString("dd-MM-yyyy")
+                    &nbsp;&nbsp;
+                    <strong>👨‍⚕️ Doctor:</strong> Dr. @(string.IsNullOrEmpty(Model.FollowUpDoctorName) ? "N/A" : Model.FollowUpDoctorName)
+                </div>
+            </div>
+        }
+
+        @* DISCHARGE MEDICINES *@
+        @{
+            var dischargeMeds = ViewBag.DischargeMedicines as List<WebApplicationSampleTest2.Models.DischargeMedicineModel>;
+        }
+@if (dischargeMeds != null && dischargeMeds.Any())
+        {
+            <div class="section po-medicines-sec">
+                <div class="section-title">
+                    ℞ Discharge Medicines
+                    <small style="font-size:11px; color:#555; font-weight:normal;">(Take after discharge)</small>
+                </div>
+                <table class="med-table">
+                    <thead>
+                        <tr><th>#</th><th>Medicine</th><th>Type</th><th>Dosage</th><th>M</th><th>A</th><th>E</th><th>Days</th><th>Route</th><th>Instructions</th></tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int mi = 1;
+                        }
+                        @foreach (var med in dischargeMeds)
+                        {
+                            <tr>
+                                <td>@mi</td>
+                                <td><strong>@med.MedicineName</strong></td>
+                                <td>@med.MedicineType</td>
+                                <td>@(med.Dosage ?? "-")</td>
+                                <td class="@(med.Morning ? "check" : "dash")">@(med.Morning ? "✔" : "–")</td>
+                                <td class="@(med.Afternoon ? "check" : "dash")">@(med.Afternoon ? "✔" : "–")</td>
+                                <td class="@(med.Evening ? "check" : "dash")">@(med.Evening ? "✔" : "–")</td>
+                                <td>@(med.Days.HasValue? med.Days + "d" : "-")</td>
+                                <td>@(med.Route ?? "-")</td>
+                                <td>@(med.Instructions ?? "-")</td>
+                            </tr>
+                            mi++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* PROCEDURES PERFORMED (auto-pulled from Operations module) *@
+        @{
+            var procedures = ViewBag.Procedures as List<WebApplicationSampleTest2.Models.IPDOperationModel>
+            ?? new List<WebApplicationSampleTest2.Models.IPDOperationModel>();
+        }
+@if (procedures.Any())
+        {
+            <div class="section po-procedures-sec">
+                <div class="section-title">Procedures Performed</div>
+                <table class="med-table">
+                    <thead>
+                        <tr><th>Procedure</th><th>Date</th><th>Surgeon</th><th>Anesthetist</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var proc in procedures)
+                        {
+                            <tr>
+                                <td><strong>@proc.OperationName</strong></td>
+                                <td>@proc.OperationDate.ToString("dd-MM-yyyy")</td>
+                                <td>@(proc.SurgeonName ?? "-")</td>
+                                <td>@(proc.AnesthesistName ?? "-")</td>
+                                <td>@(proc.Notes ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* LAB RESULTS (auto-pulled from Lab Reports module) *@
+        @{
+            var labResults = ViewBag.LabResults as List<WebApplicationSampleTest2.Models.LabReportValueVM>
+            ?? new List<WebApplicationSampleTest2.Models.LabReportValueVM>();
+        }
+@if (labResults.Any())
+        {
+            <div class="section po-lab-sec">
+                <div class="section-title">Lab Results</div>
+                <table class="med-table">
+                    <thead>
+                        <tr><th>Test</th><th>Result</th><th>Normal Range</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lab in labResults)
+                        {
+                            <tr>
+                                <td>@lab.ParameterName</td>
+                                <td><strong>@lab.ResultValue</strong> @lab.Unit</td>
+                                <td>@(lab.NormalRangeText ?? "-")</td>
+                                <td>@lab.ReportDate.ToString("dd-MM-yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* RADIOLOGY REPORTS (auto-pulled from Radiology module) *@
+        @{
+            var radiologyReports = ViewBag.RadiologyReports as List<WebApplicationSampleTest2.Models.RadiologyReportModel>
+            ?? new List<WebApplicationSampleTest2.Models.RadiologyReportModel>();
+        }
+@if (radiologyReports.Any())
+        {
+            <div class="section po-radiology-sec">
+                <div class="section-title">Radiology Reports</div>
+                <table class="med-table">
+                    <thead>
+                        <tr><th>Title</th><th>Notes</th><th>Radiologist</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rad in radiologyReports)
+                        {
+                            <tr>
+                                <td><strong>@rad.Title</strong></td>
+                                <td>@rad.Notes</td>
+                                <td>@(rad.RadiologistName ?? "-")</td>
+                                <td>@rad.ReportDateTime.ToString("dd-MM-yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ===== DAILY VITALS ===== *@
+        @{
+            var vitals = ViewBag.Vitals as List<WebApplicationSampleTest2.Models.IPDNurseVitals>
+            ?? new List<WebApplicationSampleTest2.Models.IPDNurseVitals>();
+        }
+@if (vitals.Any())
+        {
+            <div class="section po-vitals-sec">
+                <div class="section-title">
+                    Daily Vitals
+                    <small style="font-size:11px; color:#555; font-weight:normal;">(@vitals.Count records during stay)</small>
+                </div>
+                <table class="vitals-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date &amp; Time</th>
+                            <th>Temp (°C)</th>
+                            <th>Pulse (bpm)</th>
+                            <th>BP (mmHg)</th>
+                            <th>Resp Rate</th>
+                            <th>SpO₂ (%)</th>
+                            <th>Notes</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int vi = 1;
+                        }
+                        @foreach (var v in vitals)
+                        {
+                            <tr class="@(v.IsAbnormal ? "vitals-abnormal" : "")">
+                                <td>@vi</td>
+                                <td>@v.RecordedDateTime.ToString("dd-MM-yyyy HH:mm")</td>
+                                <td>@(v.Temperature.HasValue? v.Temperature + "°" : "-")</td>
+                                <td>@(v.Pulse.HasValue? v.Pulse.ToString() : "-")</td>
+                                <td>
+                                    @if (v.Systolic.HasValue && v.Diastolic.HasValue)
+                                    {
+                                        @($"{v.Systolic}/{v.Diastolic}")
+                                    }
+                                    else
+                                    {
+
+                                        @("-")
+                                    }
+                                </td>
+                                <td>@(v.RespirationRate.HasValue? v.RespirationRate.ToString() : "-")</td>
+                                <td>@(v.OxygenSaturation.HasValue? v.OxygenSaturation + "%" : "-")</td>
+                                <td>@(string.IsNullOrEmpty(v.Notes) ? "-" : v.Notes)</td>
+                                <td>
+                                    @if (v.IsAbnormal)
+                                    {
+                                        <span class="badge-abnormal">⚠ Abnormal</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="badge-normal">Normal</span>
+                                    }
+                                </td>
+                            </tr>
+                            vi++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* DOCTOR ROUNDS *@
+        @{
+            var rounds = (ViewBag.Rounds as List<WebApplicationSampleTest2.Models.IPDRoundPrintVM>)
+            ?? new List<WebApplicationSampleTest2.Models.IPDRoundPrintVM>();
+        }
+@if (rounds.Any())
+        {
+            <div class="section po-rounds-sec">
+                <div class="section-title">
+                    Doctor Rounds Summary
+                    <small style="font-size:11px; font-weight:normal; color:#555;">(@rounds.Count rounds during stay)</small>
+                </div>
+                @{
+                    int roundNo = 1;
+                }
+                @foreach (var round in rounds)
+                {
+                    <div class="round-block">
+                        <div class="round-header">
+                            <span><strong>Round @roundNo</strong> — @round.RoundType &nbsp;|&nbsp; @round.RoundDateTime.ToString("dd-MM-yyyy HH:mm")</span>
+                            <span>Dr. @round.DoctorName (@round.Specialization)</span>
+                        </div>
+                        <div class="round-body">
+                            @if (!string.IsNullOrEmpty(round.PatientCondition) || !string.IsNullOrEmpty(round.Diagnosis))
+                            {
+                                <div style="font-size:12px; margin-bottom:6px;">
+                                    @if (!string.IsNullOrEmpty(round.PatientCondition))
+                                    {
+                                        <span><strong>Condition:</strong> @round.PatientCondition</span>
+                                        <span style="margin:0 8px;">|</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(round.Diagnosis))
+                                    {
+                                        <span><strong>Diagnosis:</strong> @round.Diagnosis</span>
+                                    }
+                                </div>
+                            }
+                            @if (round.Symptoms != null && round.Symptoms.Any())
+                            {
+                                <div class="round-sub-title">Symptoms</div>
+                                <div style="font-size:12px; margin-bottom:6px; padding:4px 6px; background:#fafafa; border:1px solid #eee; border-radius:3px;">
+                                    @string.Join(", ", round.Symptoms.Select(s =>
+                                    string.IsNullOrEmpty(s.SubName) ? s.SymptomName : s.SymptomName + " (" + s.SubName + ")"))
+                    </div>
+                                        }
+                            @if (round.Medicines != null && round.Medicines.Any())
+                            {
+                                <div class="round-sub-title">Medicines</div>
+                                <table class="round-table">
+                                    <thead>
+                                        <tr><th>#</th><th>Medicine</th><th>Type</th><th>Dosage</th><th>M</th><th>A</th><th>E</th><th>Days</th><th>Route</th><th>Instructions</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            int rm = 1;
+                                        }
+                                        @foreach (var med in round.Medicines)
+                                        {
+                                            <tr>
+                                                <td>@rm</td>
+                                                <td><strong>@med.MedicineName</strong></td>
+                                                <td>@med.MedicineType</td>
+                                                <td>@(med.Dosage ?? "-")</td>
+                                                <td style="color:@(med.Morning ? "#28a745" : "#aaa")">@(med.Morning ? "✔" : "–")</td>
+                                                <td style="color:@(med.Afternoon ? "#28a745" : "#aaa")">@(med.Afternoon ? "✔" : "–")</td>
+                                                <td style="color:@(med.Evening ? "#28a745" : "#aaa")">@(med.Evening ? "✔" : "–")</td>
+                                                <td>@(med.Days.HasValue? med.Days + "d" : "-")</td>
+                                                <td>@(med.Route ?? "-")</td>
+                                                <td>@(med.MedicineInstructions ?? "-")</td>
+                                            </tr>
+                                            rm++;
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            @if (round.Investigations != null && round.Investigations.Any())
+                            {
+                                <div class="round-sub-title">Investigations</div>
+                                <table class="round-table">
+                                    <thead>
+                                        <tr><th>#</th><th>Type</th><th>Test Name</th><th>Priority</th><th>Status</th><th>Instructions</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            int ri = 1;
+                                        }
+                                        @foreach (var inv in round.Investigations)
+                                        {
+                                            <tr>
+                                                <td>@ri</td>
+                                                <td>@inv.InvestigationType</td>
+                                                <td><strong>@inv.TestName</strong></td>
+                                                <td>
+                                                    <span style="font-size:10px; padding:1px 6px; border-radius:8px;
+                                                                                    background:@(inv.Priority == "Emergency" ? "#f8d7da" : inv.Priority == "Urgent" ? "#fff3cd" : "#d4edda");
+                                                                                    color:@(inv.Priority == "Emergency" ? "#721c24" : inv.Priority == "Urgent" ? "#856404" : "#155724")">
+                                                        @inv.Priority
+                                                    </span>
+                                                </td>
+                                                <td>@inv.Status</td>
+                                                <td>@(inv.InvInstructions ?? "-")</td>
+                                            </tr>
+                                            ri++;
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            @if (!string.IsNullOrEmpty(round.Instructions) || !string.IsNullOrEmpty(round.Notes))
+                            {
+                                <div style="font-size:11px; color:#555; margin-top:6px;">
+                                    @if (!string.IsNullOrEmpty(round.Instructions))
+                                    {
+                                        <span><strong>Instructions:</strong> @round.Instructions</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(round.Notes))
+                                    {
+                                        <span style="margin-left:10px;"><strong>Notes:</strong> @round.Notes</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    roundNo++;
+                }
+            </div>
+        }
+
+@* SIGNATURE *@
+        <div class="signature-area po-signature-sec">
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div style="font-size:12px; font-weight:bold;">Patient / Relative Signature</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div style="font-size:12px; font-weight:bold;">Dr. @Model.DischargeDoctorName</div>
+                <div style="font-size:11px; color:#555;">Discharging Doctor</div>
+            </div>
+        </div>
+
+@* FOOTER *@
+        <div class="footer po-footer-sec">
+            This is a computer generated discharge summary. &nbsp;|&nbsp;
+            @ViewBag.HospitalName &nbsp;|&nbsp;
+            Printed on: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
+        </div>
+
+    </div>
+
+    <div class="btn-bar">
+        <button class="btn btn-print" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-pdf" onclick="downloadPDF()">⬇ Download PDF</button>
+        <button class="btn btn-back" onclick="window.close()">✕ Close</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // ── Print Options: show/hide selected sections before print/PDF ──
+        function toggleAll(checked) {
+            document.querySelectorAll('.po-sec').forEach(function (cb) { cb.checked = checked; });
+        }
+
+        // Removes sections the user un-checked (stored in a real array so the
+        // full document can be restored afterwards).
+        function collectSections() {
+            var hidden = [];
+            document.querySelectorAll('.po-sec').forEach(function (cb) {
+                hidden.push({ cls: cb.value + '-sec', on: cb.checked });
+            });
+            return hidden;
+        }
+
+        function printSummary() {
+            applyPrintOptions();
+            window.print();
+            restorePrintOptions();
+        }
+
+        function applyPrintOptions() {
+            document.querySelectorAll('.po-sec').forEach(function (cb) {
+                var el = document.querySelector('.' + cb.value + '-sec');
+                if (el) el.style.display = cb.checked ? '' : 'none';
+            });
+        }
+
+        function restorePrintOptions() {
+            document.querySelectorAll('.po-sec').forEach(function (cb) {
+                var el = document.querySelector('.' + cb.value + '-sec');
+                if (el) el.style.display = '';
+            });
+        }
+
+        function downloadPDF() {
+            applyPrintOptions();
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('summaryContent');
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pageWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                var admissionNo = '@Model.AdmissionNumber';
+                pdf.save('Discharge_Summary_' + admissionNo + '.pdf');
+                restorePrintOptions();
+            });
+        }
+    </script>
+
+</body>
+</html>
+
+

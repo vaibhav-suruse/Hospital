@@ -1,0 +1,409 @@
+﻿@model WebApplicationSampleTest2.Models.LabInvestigationModel
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Update Investigation</h4>
+                <a asp-action="Index" class="btn btn-secondary btn-sm">Back</a>
+            </div>
+            <hr />
+
+            @* PATIENT + TEST INFO *@
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <p><strong>Patient:</strong> @Model.PatientName</p>
+                    <p><strong>IPD No:</strong> @Model.AdmissionNumber</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Test:</strong> @Model.TestName</p>
+                    <p>
+                        <strong>Type:</strong>
+                        <span class="badge bg-info">@Model.InvestigationType</span>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Priority:</strong>
+                        <span class="badge
+                            @(Model.Priority == "Emergency" ? "bg-danger" :
+                                                                                          Model.Priority == "Urgent" ? "bg-warning" :
+                                                                                          "bg-secondary")">
+                            @Model.Priority
+                        </span>
+                    </p>
+                    <p><strong>Ordered By:</strong> @Model.DoctorName</p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Current Status:</strong>
+                        <span class="badge
+                            @(Model.Status == "Completed" ? "bg-success" :
+                                                                                          Model.Status == "Collected" ? "bg-warning" :
+                                                                                          Model.Status == "Cancelled" ? "bg-danger" :
+                                                                                          "bg-info")">
+                            @Model.Status
+                        </span>
+                    </p>
+                    <p><strong>Ordered On:</strong> @Model.OrderedDateTime.ToString("dd-MM-yyyy HH:mm")</p>
+                </div>
+            </div>
+
+            @* DOCTOR INSTRUCTIONS *@
+            @if (!string.IsNullOrEmpty(Model.Instructions))
+            {
+                <div class="alert alert-info mb-4">
+                    <strong>Doctor Instructions:</strong> @Model.Instructions
+                </div>
+            }
+
+            @* UPDATE FORM *@
+            <form asp-action="Update" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="IPDId" />
+                <input type="hidden" asp-for="RoundId" />
+
+                <div class="row">
+                    @* Status Dropdown *@
+                    <div class="col-md-4 mb-3">
+                        <label><strong>Update Status</strong></label>
+                        <select asp-for="NewStatus" class="form-control" id="statusSelect">
+                            <option value="">-- Select Status --</option>
+                            @if (Model.Status == "Ordered")
+                            {
+                                <option value="Collected">Collected</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else if (Model.Status == "Collected")
+                            {
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else
+                            {
+                                <option value="@Model.Status" selected>@Model.Status</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NewStatus" class="text-danger"></span>
+                    </div>
+
+                    @* Result *@
+                    <div class="col-md-8 mb-3" id="resultSection" style="display:none;">
+                        <label><strong>Result / Observations</strong></label>
+                        <textarea asp-for="Result"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Enter test result or observations..."></textarea>
+                        <div class="form-check mt-2">
+                            <input asp-for="IsAbnormal" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsAbnormal" class="form-check-label text-danger">
+                                <strong>Flag as Abnormal / Critical</strong>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                @* File Upload *@
+                <div class="row" id="uploadSection" style="display:none;">
+                    <div class="col-md-6 mb-3">
+                        <label><strong>Upload Report</strong></label>
+                        <input type="file"
+                               name="ReportFile"
+                               class="form-control"
+                               accept=".pdf,.jpg,.jpeg,.png" />
+                        <small class="text-muted">
+                            Allowed: PDF, JPG, PNG. Max 5MB.
+                        </small>
+                    </div>
+
+                    @* Show existing report if any *@
+                    @if (!string.IsNullOrEmpty(Model.ResultFilePath))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label><strong>Existing Report</strong></label>
+                            <br />
+                            @{
+                                var ext = System.IO.Path.GetExtension(Model.ResultFilePath).ToLower();
+                            }
+                            @if (ext == ".pdf")
+                            {
+                                <a href="@Model.ResultFilePath"
+                                   target="_blank"
+                                   class="btn btn-outline-danger">
+                                    <i class="fas fa-file-pdf"></i> View PDF Report
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@Model.ResultFilePath" target="_blank">
+                                    <img src="@Model.ResultFilePath"
+                                         style="max-height:100px; border:1px solid #ddd; border-radius:4px;"
+                                         alt="Report" />
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @* Buttons *@
+                <div class="d-flex justify-content-end mt-3">
+                    <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
+                    @if (Model.Status != "Completed" && Model.Status != "Cancelled")
+                    {
+                        <button type="submit" class="btn btn-primary">Save Update</button>
+                    }
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+
+                document.getElementById('statusSelect').addEventListener('change', function () {
+            var status = this.value;
+            var uploadSection = document.getElementById('uploadSection');
+            var resultSection = document.getElementById('resultSection');
+
+            if (status === 'Cancelled' || status === '') {
+                resultSection.style.display = 'none';
+                uploadSection.style.display = 'none';
+            } else {
+                // Collected or Completed → show both
+                resultSection.style.display = 'block';
+                uploadSection.style.display = 'flex';
+            }
+        });
+
+
+
+        // document.getElementById('statusSelect').addEventListener('change', function () {
+        //     var status = this.value;
+        //     var uploadSection = document.getElementById('uploadSection');
+        //     var resultSection = document.getElementById('resultSection');
+
+        //     if (status === 'Completed') {
+        //         Show both result and upload for completed
+        //         resultSection.style.display = 'block';
+        //         uploadSection.style.display = 'flex';
+        //     } else if (status === 'Collected') {
+        //         Only show result for collected
+        //         resultSection.style.display = 'block';
+        //         uploadSection.style.display = 'none';
+        //     } else if (status === 'Cancelled') {
+        //         Hide both for cancelled
+        //         resultSection.style.display = 'none';
+        //         uploadSection.style.display = 'none';
+        //     } else {
+        //         resultSection.style.display = 'none';
+        //         uploadSection.style.display = 'none';
+        //     }
+        // });
+
+        @if (TempData["Error"] != null)
+        {
+                    <text>toastr.error("@TempData["Error"]");</text>
+        }
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+@* @model WebApplicationSampleTest2.Models.LabInvestigationModel
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-3">
+                <h4>Update Investigation</h4>
+                <a asp-action="Index" class="btn btn-secondary btn-sm">Back</a>
+            </div>
+            <hr />
+
+            {{!-- ===== PATIENT + TEST INFO ===== --}}
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <p><strong>Patient:</strong> @Model.PatientName</p>
+                    <p><strong>IPD No:</strong> @Model.AdmissionNumber</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Test:</strong> @Model.TestName</p>
+                    <p>
+                        <strong>Type:</strong>
+                        <span class="badge bg-info">@Model.InvestigationType</span>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Priority:</strong>
+                        <span class="badge
+                            @(Model.Priority == "Emergency" ? "bg-danger" :
+                                                            Model.Priority == "Urgent" ? "bg-warning" :
+                                                            "bg-secondary")">
+                            @Model.Priority
+                        </span>
+                    </p>
+                    <p><strong>Ordered By:</strong> @Model.DoctorName</p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Current Status:</strong>
+                        <span class="badge
+                            @(Model.Status == "Completed" ? "bg-success" :
+                                                            Model.Status == "Collected" ? "bg-warning" :
+                                                            Model.Status == "Cancelled" ? "bg-danger" :
+                                                            "bg-info")">
+                            @Model.Status
+                        </span>
+                    </p>
+                    <p><strong>Ordered On:</strong> @Model.OrderedDateTime.ToString("dd-MM-yyyy HH:mm")</p>
+                </div>
+            </div>
+
+            {{!-- ===== INSTRUCTIONS ===== --}}
+            @if (!string.IsNullOrEmpty(Model.Instructions))
+            {
+                <div class="alert alert-info mb-4">
+                    <strong>Doctor Instructions:</strong> @Model.Instructions
+                </div>
+            }
+
+            {{!-- ===== UPDATE FORM ===== --}}
+            <form asp-action="Update" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="IPDId" />
+                <input type="hidden" asp-for="RoundId" />
+
+                <div class="row">
+                    {{!-- Status --}}
+                    <div class="col-md-4 mb-3">
+                        <label><strong>Update Status</strong></label>
+                        <select asp-for="NewStatus" class="form-control" id="statusSelect">
+                            <option value="">-- Select Status --</option>
+                            @if (Model.Status == "Ordered")
+                            {
+                                <option value="Collected">Collected</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else if (Model.Status == "Collected")
+                            {
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            }
+                            else
+                            {
+                                <option value="@Model.Status" selected>@Model.Status</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NewStatus" class="text-danger"></span>
+                    </div>
+
+                    {{!-- Result --}}
+                    <div class="col-md-8 mb-3" id="resultSection">
+                        <label><strong>Result / Observations</strong></label>
+                        <textarea asp-for="Result"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Enter test result or observations..."></textarea>
+                    </div>
+                </div>
+
+                {{!-- File Upload --}}
+                <div class="row" id="uploadSection">
+                    <div class="col-md-6 mb-3">
+                        <label><strong>Upload Report</strong></label>
+                        <input type="file"
+                               name="ReportFile"
+                               class="form-control"
+                               accept=".pdf,.jpg,.jpeg,.png" />
+                        <small class="text-muted">Allowed: PDF, JPG, PNG. Max 5MB.</small>
+                    </div>
+
+                    {{!-- Show existing report --}}
+                    @if (!string.IsNullOrEmpty(Model.ResultFilePath))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label><strong>Existing Report</strong></label>
+                            <br />
+                            @{
+                                var ext = System.IO.Path.GetExtension(Model.ResultFilePath).ToLower();
+                            }
+                            @if (ext == ".pdf")
+                            {
+                                <a href="@Model.ResultFilePath" target="_blank" class="btn btn-outline-danger">
+                                    <i class="fas fa-file-pdf"></i> View PDF Report
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@Model.ResultFilePath" target="_blank">
+                                    <img src="@Model.ResultFilePath"
+                                         style="max-height:100px; border:1px solid #ddd; border-radius:4px;"
+                                         alt="Report" />
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+
+                {{!-- Buttons --}}
+                <div class="d-flex justify-content-end mt-3">
+                    <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
+                    @if (Model.Status != "Completed" && Model.Status != "Cancelled")
+                    {
+                        <button type="submit" class="btn btn-primary">Save Update</button>
+                    }
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Show/hide upload section based on status
+        document.getElementById('statusSelect').addEventListener('change', function () {
+            var status = this.value;
+            var uploadSection = document.getElementById('uploadSection');
+            var resultSection = document.getElementById('resultSection');
+
+            if (status === 'Completed') {
+                uploadSection.style.display = 'flex';
+                resultSection.style.display = 'block';
+            } else if (status === 'Cancelled') {
+                uploadSection.style.display = 'none';
+                resultSection.style.display = 'none';
+            } else {
+                uploadSection.style.display = 'none';
+                resultSection.style.display = 'none';
+            }
+        });
+
+        // Trigger on load
+        document.getElementById('statusSelect').dispatchEvent(new Event('change'));
+
+        @if (TempData["Error"] != null)
+        {
+                <text>toastr.error("@TempData["Error"]");</text>
+        }
+    </script>
+} *@

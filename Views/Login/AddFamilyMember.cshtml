@@ -1,0 +1,158 @@
+﻿@{
+    ViewData["Title"] = "Add Family Member";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">
+                                        Add Family Member
+                                    </h5>
+                                    <p>Add member to your account</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png"
+                                     class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3">
+
+                            @if (TempData["Error"] != null)
+                            {
+                                <div class="alert alert-danger">
+                                    @TempData["Error"]
+                                </div>
+                            }
+
+                            <form asp-action="AddFamilyMember"
+                                  asp-controller="Login"
+                                  method="post">
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            First Name
+                                            <span class="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <input type="text"
+                                               name="firstName"
+                                               class="form-control"
+                                               required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Last Name
+                                            <span class="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <input type="text"
+                                               name="lastName"
+                                               class="form-control"
+                                               required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Relation
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="relation"
+                                            class="form-select"
+                                            required>
+                                        <option value="">
+                                            -- Select Relation --
+                                        </option>
+                                        <option value="Mother">
+                                            Mother
+                                        </option>
+                                        <option value="Father">
+                                            Father
+                                        </option>
+                                        <option value="Spouse">
+                                            Spouse
+                                        </option>
+                                        <option value="Child">
+                                            Child
+                                        </option>
+                                        <option value="Sibling">
+                                            Sibling
+                                        </option>
+                                        <option value="Other">
+                                            Other
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Age
+                                        </label>
+                                        <input type="number"
+                                               name="age"
+                                               class="form-control"
+                                               min="0"
+                                               max="120" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Gender
+                                        </label>
+                                        <select name="gender"
+                                                class="form-select">
+                                            <option value="">
+                                                Select
+                                            </option>
+                                            <option value="Male">
+                                                Male
+                                            </option>
+                                            <option value="Female">
+                                                Female
+                                            </option>
+                                            <option value="Other">
+                                                Other
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid mt-3">
+                                    <button type="submit"
+                                            class="btn btn-primary">
+                                        Add Family Member
+                                    </button>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <a asp-action="SelectProfile"
+                                       asp-controller="Login"
+                                       class="text-muted">
+                                        <i class="mdi mdi-arrow-left
+                                                   me-1"></i>
+                                        Back to profile selection
+                                    </a>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

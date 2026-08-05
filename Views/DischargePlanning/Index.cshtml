@@ -1,0 +1,203 @@
+﻿@model WebApplicationSampleTest2.Models.DischargePlanningModel
+@{
+    ViewData["Title"] = "Discharge Planning";
+    int ipdId = Model.IPDId;
+    string progressColor = Model.ProgressPercent >= 70 ? "bg-success" : Model.ProgressPercent >= 40 ? "bg-warning" : "bg-danger";
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-clipboard-list me-1"></i>
+                <strong>Discharge Planning</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.PatientName
+                    <small>(Adm# @Model.AdmissionNumber)</small>
+                </span>
+            </div>
+            <div>
+                <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            @* ── PROGRESS ── *@
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>Discharge readiness</strong>
+                    <span id="progressLabel" class="small text-muted">@Model.ChecklistCompleted / @Model.ChecklistTotal complete</span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    <div id="progressBar" class="progress-bar @progressColor" role="progressbar"
+                         style="width: @(Model.ProgressPercent)%;"
+                         aria-valuenow="@Model.ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="form-text">
+                    This checklist is a guide, not a gate — the Discharge Summary can be completed regardless of progress here.
+                </div>
+            </div>
+
+            @* ── BILLING SNAPSHOT (live, read-only) ── *@
+            @if (Model.BillingDueAmount.HasValue && Model.BillingDueAmount.Value > 0)
+            {
+                <div class="alert alert-warning py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-file-invoice-dollar me-2"></i>Billing balance outstanding</span>
+                    <strong>₹@Model.BillingDueAmount.Value.ToString("N2")</strong>
+                </div>
+            }
+            else if (Model.BillingDueAmount.HasValue)
+            {
+                <div class="alert alert-success py-2">
+                    <i class="fas fa-check-circle me-2"></i>Billing cleared
+                </div>
+            }
+
+            <form id="planningForm">
+                <input type="hidden" name="IPDId" value="@ipdId" />
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Estimated Date of Discharge</label>
+                        <input type="date" name="EstimatedDischargeDate" class="form-control"
+                               value="@(Model.EstimatedDischargeDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Disposition</label>
+                        <select name="Disposition" class="form-select">
+                            <option value="">-- Select --</option>
+                            @{
+                                string[] dispositions = { "Home", "Home with Home Care", "Transfer to Another Facility", "Against Medical Advice", "Other" };
+                            }
+                            @foreach (var d in dispositions)
+                            {
+                                <option value="@d" selected="@(Model.Disposition == d)">@d</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Barriers to Discharge</label>
+                    <textarea name="BarriersToDischarge" class="form-control" rows="2"
+                              placeholder="e.g. pending report, family not available, financial clearance pending">@Model.BarriersToDischarge</textarea>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Equipment Needed</label>
+                        <textarea name="EquipmentNeeded" class="form-control" rows="2"
+                                  placeholder="e.g. wheelchair, oxygen, walker">@Model.EquipmentNeeded</textarea>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="equipArranged" name="EquipmentArranged" value="true" @(Model.EquipmentArranged ? "checked" : "")>
+                            <label class="form-check-label" for="equipArranged">Arranged</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Referrals Needed</label>
+                        <textarea name="ReferralsNeeded" class="form-control" rows="2"
+                                  placeholder="e.g. physiotherapy, dietitian, home health nurse">@Model.ReferralsNeeded</textarea>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="refArranged" name="ReferralsArranged" value="true" @(Model.ReferralsArranged ? "checked" : "")>
+                            <label class="form-check-label" for="refArranged">Arranged</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Patient/Family Education</label>
+                        <select name="PatientEducationStatus" class="form-select">
+                            @{
+                                string[] eduStatuses = { "Not Started", "In Progress", "Completed" };
+                            }
+                            @foreach (var s in eduStatuses)
+                            {
+                                <option value="@s" selected="@(Model.PatientEducationStatus == s)">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="followUp" name="FollowUpBooked" value="true" @(Model.FollowUpBooked ? "checked" : "")>
+                            <label class="form-check-label" for="followUp">Follow-up appointment booked</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reportsCollected" name="PendingReportsCollected" value="true" @(Model.PendingReportsCollected ? "checked" : "")>
+                            <label class="form-check-label" for="reportsCollected">Pending reports collected</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Case Manager / Coordinator Notes</label>
+                    <textarea name="CaseManagerNotes" class="form-control" rows="3"
+                              placeholder="Free text notes for complex cases">@Model.CaseManagerNotes</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span id="lastUpdated" class="text-muted small">
+                        @if (Model.UpdatedDate.HasValue)
+                        {
+                            <text>Last updated by @Model.UpdatedByName on @Model.UpdatedDate.Value.ToString("dd MMM yyyy, hh:mm tt")</text>
+                        }
+                    </span>
+                    <button type="button" class="btn btn-primary" id="saveBtn"><i class="fas fa-save me-1"></i> Save</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 4000);
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', function () {
+            var form = document.getElementById('planningForm');
+            var fd = new FormData(form);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+
+            fetch('@Url.Action("Save", "DischargePlanning")', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res.success) {
+                        showAlert(res.message || 'Something went wrong.', 'danger');
+                        return;
+                    }
+                    showAlert(res.message, 'success');
+
+                    var pct = res.progressPercent;
+                    var bar = document.getElementById('progressBar');
+                    bar.style.width = pct + '%';
+                    bar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+                    bar.classList.add(pct >= 70 ? 'bg-success' : (pct >= 40 ? 'bg-warning' : 'bg-danger'));
+                    document.getElementById('progressLabel').textContent = res.completed + ' / ' + res.total + ' complete';
+
+                    if (res.updatedByName) {
+                        document.getElementById('lastUpdated').textContent =
+                            'Last updated by ' + res.updatedByName + ' on ' + res.updatedDate;
+                    }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        });
+    </script>
+}

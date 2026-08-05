@@ -1,0 +1,213 @@
+﻿@model List<WebApplicationSampleTest2.Models.Bed>
+
+@{
+    ViewBag.Title = "Beds List";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">Beds</h4>
+                <p class="card-title-desc">Filter beds by Ward and Room.</p>
+
+
+
+                @if (TempData["ToastMessage"] != null)
+                {
+                    var type = TempData["ToastType"] ?? "success";
+
+                    <div class="toast-container position-fixed top-10 start-50 translate-middle p-3"
+                         style="z-index: 1100;">
+                        <div id="liveToast" class="toast align-items-center text-bg-@type show">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    @TempData["ToastMessage"]
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                        data-bs-dismiss="toast"></button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <form method="get" asp-action="Index" class="mb-4">
+                    <div class="d-flex flex-column align-items-end">
+                        <!-- vertical stack, right-aligned -->
+                        <div class="mb-2" style="width: 200px;">
+                            <!-- width control -->
+                            <label class="form-label">Ward</label>
+                            <select name="wardId"
+                                    id="wardDropdown"
+                                    class="form-control"
+                                    asp-items="ViewBag.Wards"
+                                    onchange="this.form.submit()">
+                                <option value="">-- Select Ward --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2" style="width: 200px;">
+                            <label class="form-label">Room</label>
+                            <select name="roomId"
+                                    id="roomDropdown"
+                                    class="form-control"
+                                    asp-items="ViewBag.Rooms"
+                                    onchange="this.form.submit()">
+                                <option value="">-- Select Room --</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- ADD NEW BED BUTTON -->
+                <div class="d-flex justify-content-end mb-3">
+                    <a asp-action="Create" class="btn btn-primary">Add New Bed</a>
+                </div>
+
+
+                @if (Model != null && Model.Any())
+                {
+                    @* <!-- SUMMARY -->
+                    <div class="alert alert-info">
+                        <strong>Total Beds:</strong> @Model.Count |
+                        <strong>Available:</strong> @Model.Count(x => !x.IsOccupied) |
+                        <strong>Occupied:</strong> @Model.Count(x => x.IsOccupied)
+                    </div> *@
+
+                    <!-- TABLE -->
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Ward</th>
+                                <th>Floore</th>
+                                <th>Room</th>
+                                <th>Bed Number</th>
+                                <th>Bed Charge</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bed in Model)
+                            {
+                                <tr>
+                                    <td>@bed.WardName</td>
+                                    <td>@bed.Floor</td>
+                                    <td>@bed.RoomNumber</td>
+                                    <td>@bed.BedNumber</td>
+                                    <td>@bed.ChargesPerDay</td>
+                                    @* <td>
+                                        @if (bed.IsOccupied)
+                                        {
+                                            <span class="badge bg-danger">Occupied</span>
+
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Available</span>
+                                        }
+                                    </td> *@
+
+
+                                    <td>
+                                        @if (bed.OperationalStatus == "Active")
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else if (bed.OperationalStatus == "Maintenance")
+                                        {
+                                            <span class="badge bg-warning">Maintenance</span>
+                                        }
+                                        else if (bed.OperationalStatus == "Cleaning")
+                                        {
+                                            <span class="badge bg-info">Cleaning</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Blocked</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="Edit"
+                                           asp-route-id="@bed.BedId"
+                                           class="btn btn-sm btn-primary">
+                                            Edit
+                                        </a>
+
+                                        <form asp-action="Delete"
+                                              asp-route-id="@bed.BedId"
+                                              asp-route-wardId="@ViewBag.SelectedWardId"
+                                              asp-route-roomId="@ViewBag.SelectedRoomId"
+                                              method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+
+                                        @* <a asp-action="Delete"
+                                           asp-route-id="@bed.BedId"
+                                           asp-route-wardId="@ViewBag.SelectedWardId"
+                                           asp-route-roomId="@ViewBag.SelectedRoomId"
+                                           class="btn btn-sm btn-danger">
+                                            Delete
+                                        </a> *@
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        No beds found for selected criteria.
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.getElementById("wardDropdown").addEventListener("change", function () {
+
+            var wardId = this.value;
+            var roomDropdown = document.getElementById("roomDropdown");
+
+            roomDropdown.innerHTML = '<option value="">Loading...</option>';
+
+            if (wardId) {
+                fetch('/Bed/GetRoomsByWard?wardId=' + wardId)
+                    .then(response => response.json())
+                    .then(data => {
+
+                        roomDropdown.innerHTML = '<option value="">-- Select Room --</option>';
+
+                        data.forEach(function (room) {
+                            var option = document.createElement("option");
+                            option.value = room.roomId;
+                            option.text = room.roomNumber;
+                            roomDropdown.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        roomDropdown.innerHTML = '<option value="">Error loading rooms</option>';
+                    });
+            } else {
+                roomDropdown.innerHTML = '<option value="">-- Select Room --</option>';
+            }
+        });
+    </script>
+
+
+
+    <script>
+        setTimeout(() => {
+            const toastEl = document.getElementById('liveToast');
+            if (toastEl) {
+                toastEl.classList.remove('show');
+            }
+        }, 3000);
+    </script>
+
+}

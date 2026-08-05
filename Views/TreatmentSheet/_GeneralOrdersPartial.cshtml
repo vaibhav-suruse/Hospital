@@ -1,0 +1,56 @@
+﻿@* Views/TreatmentSheet/_GeneralOrdersPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.GeneralOrderModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Details</th><th>Priority</th><th>Status</th><th>Order By</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-3">No order added</td></tr>
+            }
+            else
+            {
+                foreach (var go in Model)
+                {
+                    <tr class="@(go.Status != "Active" ? "text-muted" : "")">
+                        <td style="white-space:pre-wrap;">@go.OrderDetails</td>
+                        <td>
+                            @{
+                                string pBadge = go.Priority == "STAT" ? "bg-danger" : go.Priority == "Urgent" ? "bg-warning text-dark" : "bg-light text-dark border";
+                            }
+                            <span class="badge @pBadge">@go.Priority</span>
+                        </td>
+                        <td>
+                            @{
+                                string sBadge = go.Status == "Active" ? "bg-success" : go.Status == "Completed" ? "bg-secondary" : "bg-danger";
+                            }
+                            <span class="badge @sBadge">@(go.Status == "Active" ? "On Going" : go.Status)</span>
+                        </td>
+                        <td>@go.OrderByName</td>
+                        <td class="text-end">
+                            @if (go.Status == "Active")
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary go-edit-btn" title="Edit"
+                                        data-id="@go.Id" data-details="@go.OrderDetails" data-priority="@go.Priority">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success go-status-btn" title="Mark completed"
+                                        data-id="@go.Id" data-status="Completed">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger go-delete-btn" title="Delete" data-id="@go.Id">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

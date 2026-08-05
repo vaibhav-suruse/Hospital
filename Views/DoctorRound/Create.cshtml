@@ -1,0 +1,914 @@
+﻿@model WebApplicationSampleTest2.Models.IPDDoctorRound
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h4>Add Doctor Round</h4>
+            <hr />
+
+
+
+            <form asp-action="Create" method="post" id="doctorRoundForm">
+                <input type="hidden" asp-for="IPDId" />
+
+                @* {{!-- ===== BASIC ROUND INFO ===== --}} *@
+
+
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label>Doctor</label>
+                        <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                            <option value="">-- Select Doctor --</option>
+                        </select>
+                        <span asp-validation-for="DoctorId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Round Type</label>
+                        <select asp-for="RoundType" class="form-control" asp-items="ViewBag.RoundTypes">
+                        </select>
+                        <span asp-validation-for="RoundType" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Round Date & Time</label>
+                        <input asp-for="RoundDateTime" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="RoundDateTime" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+
+
+                @* {{!-- ===== TABS ===== --}} *@
+
+
+
+
+                <ul class="nav nav-tabs" id="roundTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tabNotes">Round Notes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabSymptoms">Symptoms</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabPrescription">Medicine</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabInvestigation">Investigation</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content border border-top-0 p-3 mb-3">
+
+
+
+
+                    @* {{!-- ===== TAB 1: ROUND NOTES ===== --}} *@
+
+
+                    <div class="tab-pane fade show active" id="tabNotes">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label>Patient Condition</label>
+                                <textarea asp-for="PatientCondition" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Diagnosis</label>
+                                <textarea asp-for="Diagnosis" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label>Instructions</label>
+                                <textarea asp-for="Instructions" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label>Notes</label>
+                                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    @* {{!-- ===== TAB 2: SYMPTOMS ===== --}} *@
+
+
+
+
+
+
+                    <div class="tab-pane fade" id="tabSymptoms">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label>Select Symptom</label>
+                                <select id="symptomDropdown" class="form-control">
+                                    <option value="">-- Select Symptom --</option>
+                                    @foreach (var s in ViewBag.Symptoms as List<WebApplicationSampleTest2.Models.Symptom>)
+                                    {
+                                        <option value="@s.SymptomId" data-name="@s.SymptomName">
+                                            @s.SymptomName @(string.IsNullOrEmpty(s.SubName) ? "" : "- " + s.SubName)
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary" onclick="addSymptom()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Symptom Name</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="symptomsBody">
+                                <tr id="noSymptomsRow">
+                                    <td colspan="3" class="text-center">No symptoms added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id="symptomHiddenInputs"></div>
+                    </div>
+
+                    @* {{!-- ===== TAB 3: PRESCRIPTION ===== --}} *@
+                    <div class="tab-pane fade" id="tabPrescription">
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label>Medicine</label>
+                                <select id="medicineDropdown" class="form-control" asp-items="ViewBag.Medicines">
+                                    <option value="">-- Select Medicine --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block">Morning</label>
+                                <input type="checkbox" id="pMorning" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block">Afternoon</label>
+                                <input type="checkbox" id="pAfternoon" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block">Evening</label>
+                                <input type="checkbox" id="pEvening" />
+                            </div>
+                            <div class="col-md-1">
+                                <label>Days</label>
+                                <input type="number" id="pDays" class="form-control" min="1" max="365" />
+                            </div>
+                            <div class="col-md-2">
+                                <label>Route</label>
+                                <select id="pRoute" class="form-control" asp-items="ViewBag.Routes"></select>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Dosage</label>
+                                <input type="text" id="pDosage" class="form-control" placeholder="e.g. 500mg" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary" onclick="addPrescription()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Medicine</th>
+                                    <th>M</th>
+                                    <th>A</th>
+                                    <th>E</th>
+                                    <th>Days</th>
+                                    <th>Route</th>
+                                    <th>Dosage</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prescriptionBody">
+                                <tr id="noPrescRow">
+                                    <td colspan="9" class="text-center">No medicines added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id="prescriptionHiddenInputs"></div>
+                    </div>
+
+
+
+
+
+                     @* TAB 4: INVESTIGATION  *@
+
+
+
+
+
+                    <div class="tab-pane fade" id="tabInvestigation">
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label>Type</label>
+                                <select id="invType" class="form-control" asp-items="ViewBag.InvestigationTypes">
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Test Name</label>
+                                <input type="text" id="invTestName" class="form-control" placeholder="e.g. CBC, Chest X-Ray" />
+                            </div>
+                            <div class="col-md-2">
+                                <label>Priority</label>
+                                <select id="invPriority" class="form-control" asp-items="ViewBag.Priorities">
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Instructions</label>
+                                <input type="text" id="invInstructions" class="form-control" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary" onclick="addInvestigation()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Type</th>
+                                    <th>Test Name</th>
+                                    <th>Priority</th>
+                                    <th>Instructions</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investigationBody">
+                                <tr id="noInvRow">
+                                    <td colspan="6" class="text-center">No investigations added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id="investigationHiddenInputs"></div>
+                    </div>
+
+                </div>
+
+               
+                <div class="d-flex justify-content-end">
+                    <a asp-action="Details"
+                       asp-controller="IPDAdmission"
+                       asp-route-id="@Model.IPDId"
+                       class="btn btn-secondary me-2">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        Save Round
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        // ===============================
+        // SYMPTOMS
+        // ===============================
+        let symptomCount = 0;
+        let addedSymptoms = [];
+
+        function addSymptom() {
+            var dropdown = document.getElementById('symptomDropdown');
+            var id = dropdown.value;
+            var name = dropdown.options[dropdown.selectedIndex].getAttribute('data-name');
+
+            if (!id) { alert('Please select a symptom.'); return; }
+            if (addedSymptoms.includes(id)) { alert('Symptom already added.'); return; }
+
+            addedSymptoms.push(id);
+            symptomCount++;
+
+            var noRow = document.getElementById('noSymptomsRow');
+            if (noRow) noRow.remove();
+
+            var tbody = document.getElementById('symptomsBody');
+            tbody.innerHTML += `<tr id="symRow_${id}">
+                <td>${symptomCount}</td>
+                <td>${name}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger"
+                        onclick="removeSymptom('${id}')">
+                        Remove
+                    </button>
+                </td>
+            </tr>`;
+
+            var hiddenDiv = document.getElementById('symptomHiddenInputs');
+            hiddenDiv.innerHTML += `<input type="hidden" id="symInput_${id}" name="SymptomIds" value="${id}" />`;
+
+            dropdown.value = '';
+        }
+
+        function removeSymptom(id) {
+            var row = document.getElementById('symRow_' + id);
+            var input = document.getElementById('symInput_' + id);
+            if (row) row.remove();
+            if (input) input.remove();
+            addedSymptoms = addedSymptoms.filter(x => x !== id);
+        }
+
+        // ===============================
+        // PRESCRIPTION
+        // ===============================
+        let prescCount = 0;
+        let addedMedicines = [];
+
+        function addPrescription() {
+            var dropdown = document.getElementById('medicineDropdown');
+            var id = dropdown.value;
+            var name = dropdown.options[dropdown.selectedIndex].text;
+            var morning = document.getElementById('pMorning').checked;
+            var afternoon = document.getElementById('pAfternoon').checked;
+            var evening = document.getElementById('pEvening').checked;
+            var days = document.getElementById('pDays').value;
+            var route = document.getElementById('pRoute').value;
+            var dosage = document.getElementById('pDosage').value;
+
+            if (!id) { alert('Please select a medicine.'); return; }
+            if (!morning && !afternoon && !evening) { alert('Please select at least one time (M/A/E).'); return; }
+            if (!days) { alert('Please enter number of days.'); return; }
+            if (addedMedicines.includes(id)) { alert('Medicine already added.'); return; }
+
+            addedMedicines.push(id);
+            var idx = prescCount;
+            prescCount++;
+
+            var noRow = document.getElementById('noPrescRow');
+            if (noRow) noRow.remove();
+
+            var tbody = document.getElementById('prescriptionBody');
+            tbody.innerHTML += `<tr id="prescRow_${id}">
+                <td>${prescCount}</td>
+                <td>${name}</td>
+                <td>${morning ? '✓' : '-'}</td>
+                <td>${afternoon ? '✓' : '-'}</td>
+                <td>${evening ? '✓' : '-'}</td>
+                <td>${days}</td>
+                <td>${route}</td>
+                <td>${dosage || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger"
+                        onclick="removePrescription('${id}', ${idx})">
+                        Remove
+                    </button>
+                </td>
+            </tr>`;
+
+            var hiddenDiv = document.getElementById('prescriptionHiddenInputs');
+            hiddenDiv.innerHTML += `
+                <div id="prescHidden_${idx}">
+                    <input type="hidden" name="Prescriptions[${idx}].MedicineId" value="${id}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Morning" value="${morning}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Afternoon" value="${afternoon}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Evening" value="${evening}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Days" value="${days}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Route" value="${route}" />
+                    <input type="hidden" name="Prescriptions[${idx}].Dosage" value="${dosage}" />
+                </div>`;
+
+            dropdown.value = '';
+            document.getElementById('pMorning').checked = false;
+            document.getElementById('pAfternoon').checked = false;
+            document.getElementById('pEvening').checked = false;
+            document.getElementById('pDays').value = '';
+            document.getElementById('pDosage').value = '';
+        }
+
+        function removePrescription(id, idx) {
+            var row = document.getElementById('prescRow_' + id);
+            var hidden = document.getElementById('prescHidden_' + idx);
+            if (row) row.remove();
+            if (hidden) hidden.remove();
+            addedMedicines = addedMedicines.filter(x => x !== id);
+        }
+
+        // ===============================
+        // INVESTIGATION
+        // ===============================
+        let invCount = 0;
+
+        function addInvestigation() {
+            var type = document.getElementById('invType').value;
+            var testName = document.getElementById('invTestName').value.trim();
+            var priority = document.getElementById('invPriority').value;
+            var instructions = document.getElementById('invInstructions').value.trim();
+
+            if (!type) { alert('Please select investigation type.'); return; }
+            if (!testName) { alert('Please enter test name.'); return; }
+
+            var idx = invCount;
+            invCount++;
+
+            var noRow = document.getElementById('noInvRow');
+            if (noRow) noRow.remove();
+
+            var tbody = document.getElementById('investigationBody');
+            tbody.innerHTML += `<tr id="invRow_${idx}">
+                <td>${invCount}</td>
+                <td>${type}</td>
+                <td>${testName}</td>
+                <td>${priority}</td>
+                <td>${instructions || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger"
+                        onclick="removeInvestigation(${idx})">
+                        Remove
+                    </button>
+                </td>
+            </tr>`;
+
+            var hiddenDiv = document.getElementById('investigationHiddenInputs');
+            hiddenDiv.innerHTML += `
+                <div id="invHidden_${idx}">
+                    <input type="hidden" name="Investigations[${idx}].InvestigationType" value="${type}" />
+                    <input type="hidden" name="Investigations[${idx}].TestName" value="${testName}" />
+                    <input type="hidden" name="Investigations[${idx}].Priority" value="${priority}" />
+                    <input type="hidden" name="Investigations[${idx}].Instructions" value="${instructions}" />
+                </div>`;
+
+            document.getElementById('invTestName').value = '';
+            document.getElementById('invInstructions').value = '';
+        }
+
+        function removeInvestigation(idx) {
+            var row = document.getElementById('invRow_' + idx);
+            var hidden = document.getElementById('invHidden_' + idx);
+            if (row) row.remove();
+            if (hidden) hidden.remove();
+        }
+
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@* @model WebApplicationSampleTest2.Models.IPDDoctorRound
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h4>Add Doctor Round</h4>
+            <hr />
+
+            <form asp-action="Create" method="post" id="doctorRoundForm">
+                <input type="hidden" asp-for="IPDId" />
+
+                {{!-- ===== BASIC ROUND INFO ===== --}}
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label>Doctor</label>
+                        <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                            <option value="">-- Select Doctor --</option>
+                        </select>
+                        <span asp-validation-for="DoctorId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Round Type</label>
+                        <select asp-for="RoundType" class="form-control" asp-items="ViewBag.RoundTypes">
+                        </select>
+                        <span asp-validation-for="RoundType" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Round Date & Time</label>
+                        <input asp-for="RoundDateTime" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="RoundDateTime" class="text-danger"></span>
+                    </div>
+                </div>
+
+                {{!-- ===== TABS ===== --}}
+                <ul class="nav nav-tabs" id="roundTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#tabNotes">Round Notes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tabSymptoms">Symptoms</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tabPrescription">Prescription</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tabInvestigation">Investigation</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content border border-top-0 p-3 mb-3">
+
+                    {{!-- ===== TAB 1: ROUND NOTES ===== --}}
+                    <div class="tab-pane fade show active" id="tabNotes">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label>Patient Condition</label>
+                                <textarea asp-for="PatientCondition" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Diagnosis</label>
+                                <textarea asp-for="Diagnosis" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label>Instructions</label>
+                                <textarea asp-for="Instructions" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <label>Notes</label>
+                                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{!-- ===== TAB 2: SYMPTOMS ===== --}}
+                    <div class="tab-pane fade" id="tabSymptoms">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label>Select Symptom</label>
+                                <select id="symptomDropdown" class="form-control">
+                                    <option value="">-- Select Symptom --</option>
+                                    @foreach (var s in ViewBag.Symptoms as List<WebApplicationSampleTest2.Models.Symptom>)
+                                    {
+                                        <option value="@s.SymptomId" data-name="@s.SymptomName">
+                                            @s.SymptomName @(string.IsNullOrEmpty(s.SubName) ? "" : "- " + s.SubName)
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-success" onclick="addSymptom()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3" id="symptomsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Symptom Name</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="symptomsBody">
+                                <tr id="noSymptomsRow">
+                                    <td colspan="3" class="text-center">No symptoms added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {{!-- Hidden inputs for symptoms submitted --}}
+                        <div id="symptomHiddenInputs"></div>
+                    </div>
+
+                    {{!-- ===== TAB 3: PRESCRIPTION ===== --}}
+                    <div class="tab-pane fade" id="tabPrescription">
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label>Medicine</label>
+                                <select id="medicineDropdown" class="form-control" asp-items="ViewBag.Medicines">
+                                    <option value="">-- Select Medicine --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label>Morning</label>
+                                <input type="checkbox" id="pMorning" class="form-check-input d-block mx-auto" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label>Afternoon</label>
+                                <input type="checkbox" id="pAfternoon" class="form-check-input d-block mx-auto" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label>Evening</label>
+                                <input type="checkbox" id="pEvening" class="form-check-input d-block mx-auto" />
+                            </div>
+                            <div class="col-md-1">
+                                <label>Days</label>
+                                <input type="number" id="pDays" class="form-control" min="1" max="365" />
+                            </div>
+                            <div class="col-md-2">
+                                <label>Route</label>
+                                <select id="pRoute" class="form-control" asp-items="ViewBag.Routes"></select>
+                            </div>
+                            <div class="col-md-2">
+                                <label>Dosage</label>
+                                <input type="text" id="pDosage" class="form-control" placeholder="e.g. 500mg" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-success" onclick="addPrescription()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Medicine</th>
+                                    <th>M</th>
+                                    <th>A</th>
+                                    <th>E</th>
+                                    <th>Days</th>
+                                    <th>Route</th>
+                                    <th>Dosage</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prescriptionBody">
+                                <tr id="noPrescRow">
+                                    <td colspan="9" class="text-center">No medicines added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id="prescriptionHiddenInputs"></div>
+                    </div>
+
+                    {{!-- ===== TAB 4: INVESTIGATION ===== --}}
+                    <div class="tab-pane fade" id="tabInvestigation">
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label>Type</label>
+                                <select id="invType" class="form-control" asp-items="ViewBag.InvestigationTypes">
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Test Name</label>
+                                <input type="text" id="invTestName" class="form-control" placeholder="e.g. CBC, Chest X-Ray" />
+                            </div>
+                            <div class="col-md-2">
+                                <label>Priority</label>
+                                <select id="invPriority" class="form-control" asp-items="ViewBag.Priorities">
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Instructions</label>
+                                <input type="text" id="invInstructions" class="form-control" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-success" onclick="addInvestigation()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered mt-3">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Type</th>
+                                    <th>Test Name</th>
+                                    <th>Priority</th>
+                                    <th>Instructions</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investigationBody">
+                                <tr id="noInvRow">
+                                    <td colspan="6" class="text-center">No investigations added</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div id="investigationHiddenInputs"></div>
+                    </div>
+
+                </div>
+
+                {{!-- ===== BUTTONS ===== --}}
+                <div class="d-flex justify-content-end">
+                    <a asp-action="Details"
+                       asp-controller="IPDAdmission"
+                       asp-route-id="@Model.IPDId"
+                       class="btn btn-secondary mr-2">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        Save Round
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        // ===============================
+        // SYMPTOMS
+        // ===============================
+        let symptomCount = 0;
+        let addedSymptoms = [];
+
+        function addSymptom() {
+            var dropdown = document.getElementById('symptomDropdown');
+            var id = dropdown.value;
+            var name = dropdown.options[dropdown.selectedIndex].getAttribute('data-name');
+
+            if (!id) {
+                alert('Please select a symptom.');
+                return;
+            }
+
+            // Duplicate check
+            if (addedSymptoms.includes(id)) {
+                alert('Symptom already added.');
+                return;
+            }
+
+            addedSymptoms.push(id);
+            symptomCount++;
+
+            // Remove empty row
+            var noRow = document.getElementById('noSymptomsRow');
+            if (noRow) noRow.remove();
+
+            // Add table row
+            var tbody = document.getElementById('symptomsBody');
+            var row = `<tr id="symRow_${id}">
+                            <td>${symptomCount}</td>
+                            <td>${name}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="removeSymptom('${id}', 'symRow_${id}', 'symInput_${id}')">
+                                    Remove
+                                </button>
+                            </td>
+                       </tr>`;
+            tbody.innerHTML += row;
+
+            // Add hidden input
+            var hiddenDiv = document.getElementById('symptomHiddenInputs');
+            hiddenDiv.innerHTML += `<input type="hidden" id="symInput_${id}" name="SymptomIds" value="${id}" />`;
+
+            // Reset dropdown
+            dropdown.value = '';
+        }
+
+        function removeSymptom(id, rowId, inputId) {
+            document.getElementById(rowId).remove();
+            document.getElementById(inputId).remove();
+            addedSymptoms = addedSymptoms.filter(x => x !== id);
+        }
+
+        // ===============================
+        // PRESCRIPTION
+        // ===============================
+        let prescCount = 0;
+        let addedMedicines = [];
+
+        function addPrescription() {
+            var dropdown = document.getElementById('medicineDropdown');
+            var id = dropdown.value;
+            var name = dropdown.options[dropdown.selectedIndex].text;
+            var morning = document.getElementById('pMorning').checked;
+            var afternoon = document.getElementById('pAfternoon').checked;
+            var evening = document.getElementById('pEvening').checked;
+            var days = document.getElementById('pDays').value;
+            var route = document.getElementById('pRoute').value;
+            var dosage = document.getElementById('pDosage').value;
+
+            if (!id) { alert('Please select a medicine.'); return; }
+            if (!morning && !afternoon && !evening) { alert('Please select at least one time (M/A/E).'); return; }
+            if (!days) { alert('Please enter number of days.'); return; }
+            if (addedMedicines.includes(id)) { alert('Medicine already added.'); return; }
+
+            addedMedicines.push(id);
+            prescCount++;
+
+            var noRow = document.getElementById('noPrescRow');
+            if (noRow) noRow.remove();
+
+            var tbody = document.getElementById('prescriptionBody');
+            var row = `<tr id="prescRow_${id}">
+                        <td>${prescCount}</td>
+                        <td>${name}</td>
+                        <td>${morning ? '✓' : '-'}</td>
+                        <td>${afternoon ? '✓' : '-'}</td>
+                        <td>${evening ? '✓' : '-'}</td>
+                        <td>${days}</td>
+                        <td>${route}</td>
+                        <td>${dosage || '-'}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                onclick="removePrescription('${id}', 'prescRow_${id}')">
+                                Remove
+                            </button>
+                        </td>
+                       </tr>`;
+            tbody.innerHTML += row;
+
+            // Hidden inputs — array indexed for model binding
+            var idx = prescCount - 1;
+            var hiddenDiv = document.getElementById('prescriptionHiddenInputs');
+            hiddenDiv.innerHTML += `
+                <input type="hidden" name="Prescriptions[${idx}].MedicineId" value="${id}" />
+                <input type="hidden" name="Prescriptions[${idx}].Morning" value="${morning}" />
+                <input type="hidden" name="Prescriptions[${idx}].Afternoon" value="${afternoon}" />
+                <input type="hidden" name="Prescriptions[${idx}].Evening" value="${evening}" />
+                <input type="hidden" name="Prescriptions[${idx}].Days" value="${days}" />
+                <input type="hidden" name="Prescriptions[${idx}].Route" value="${route}" />
+                <input type="hidden" name="Prescriptions[${idx}].Dosage" value="${dosage}" />
+            `;
+
+            // Reset fields
+            dropdown.value = '';
+            document.getElementById('pMorning').checked = false;
+            document.getElementById('pAfternoon').checked = false;
+            document.getElementById('pEvening').checked = false;
+            document.getElementById('pDays').value = '';
+            document.getElementById('pDosage').value = '';
+        }
+
+        function removePrescription(id, rowId) {
+            document.getElementById(rowId).remove();
+            addedMedicines = addedMedicines.filter(x => x !== id);
+        }
+
+        // ===============================
+        // INVESTIGATION
+        // ===============================
+        let invCount = 0;
+
+        function addInvestigation() {
+            var type = document.getElementById('invType').value;
+            var testName = document.getElementById('invTestName').value.trim();
+            var priority = document.getElementById('invPriority').value;
+            var instructions = document.getElementById('invInstructions').value.trim();
+
+            if (!type) { alert('Please select investigation type.'); return; }
+            if (!testName) { alert('Please enter test name.'); return; }
+
+            invCount++;
+
+            var noRow = document.getElementById('noInvRow');
+            if (noRow) noRow.remove();
+
+            var tbody = document.getElementById('investigationBody');
+            var row = `<tr id="invRow_${invCount}">
+                        <td>${invCount}</td>
+                        <td>${type}</td>
+                        <td>${testName}</td>
+                        <td>${priority}</td>
+                        <td>${instructions || '-'}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                onclick="removeInvestigation('invRow_${invCount}', 'invHidden_${invCount}')">
+                                Remove
+                            </button>
+                        </td>
+                       </tr>`;
+            tbody.innerHTML += row;
+
+            var idx = invCount - 1;
+            var hiddenDiv = document.getElementById('investigationHiddenInputs');
+            hiddenDiv.innerHTML += `
+                <div id="invHidden_${invCount}">
+                    <input type="hidden" name="Investigations[${idx}].InvestigationType" value="${type}" />
+                    <input type="hidden" name="Investigations[${idx}].TestName" value="${testName}" />
+                    <input type="hidden" name="Investigations[${idx}].Priority" value="${priority}" />
+                    <input type="hidden" name="Investigations[${idx}].Instructions" value="${instructions}" />
+                </div>
+            `;
+
+            // Reset
+            document.getElementById('invTestName').value = '';
+            document.getElementById('invInstructions').value = '';
+        }
+
+        function removeInvestigation(rowId, hiddenId) {
+            document.getElementById(rowId).remove();
+            document.getElementById(hiddenId).remove();
+        }
+
+    </script>
+}
+ *@

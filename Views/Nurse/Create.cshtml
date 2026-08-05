@@ -1,0 +1,115 @@
+﻿@using WebApplicationSampleTest2.Models
+@model NurseModel
+
+<h4 class="card-title">
+    @(Model.NurseId > 0 ? "Edit Nurse" : "Add Nurse")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="nurseForm" class="custom-validation" novalidate 
+                      asp-action="Create" method="post" asp-controller="Nurse">
+                    
+                    @Html.HiddenFor(model => model.NurseId, new { id = "NurseId" })
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text" asp-for="FirstName" value="@Model.FirstName" 
+                                       class="form-control" id="FirstName" placeholder="Enter First Name" required />
+                                <small class="text-danger" id="errFirstName"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" asp-for="LastName" value="@Model.LastName" 
+                                       class="form-control" id="LastName" placeholder="Enter Last Name" />
+                                <small class="text-danger" id="errLastName"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <select asp-for="Gender" class="form-select" id="Gender">
+                                    <option value="">Select Gender</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                                <small class="text-danger" id="errGender"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" asp-for="PhoneNumber" value="@Model.PhoneNumber" 
+                                       class="form-control" id="PhoneNumber" placeholder="Enter Phone Number" required />
+                                <small class="text-danger" id="errPhoneNumber"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" asp-for="Email" value="@Model.Email" 
+                                       class="form-control" id="Email" placeholder="Enter Email" required />
+                                <small class="text-danger" id="errEmail"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Qualification</label>
+                                <input type="text" asp-for="Qualification" value="@Model.Qualification" 
+                                       class="form-control" id="Qualification" placeholder="Enter Qualification" />
+                                <small class="text-danger" id="errQualification"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department</label>
+                                <input type="text" asp-for="Department" value="@Model.Department" 
+                                       class="form-control" id="Department" placeholder="Enter Department" />
+                                <small class="text-danger" id="errDepartment"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            @* <div class="mb-3">
+                                <label class="form-label">Active</label>
+                                <input type="checkbox" asp-for="IsActive" id="IsActive" 
+                                       @(Model.IsActive ? "checked" : "") />
+                            </div> *@
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary w-md">
+                            @(Model.NurseId > 0 ? "Update" : "Submit")
+                        </button>
+                        <a class="btn btn-secondary waves-effect" asp-controller="Nurse" asp-action="Index">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+
+   <script src="/js/NurseValidation.js"></script>
+}

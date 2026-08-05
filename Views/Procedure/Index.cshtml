@@ -1,0 +1,1089 @@
+@{
+    var patientId = ViewBag.PatientId ?? 0;
+    var visitContextType = ViewBag.VisitContextType ?? "IPD";
+    var visitContextId = ViewBag.VisitContextId ?? 0;
+}
+
+@if ((string)visitContextType == "IPD")
+{
+    <div class="container-fluid mt-3">
+        @await Html.PartialAsync("_IPDTabs", "Procedures")
+    </div>
+}
+
+<div class="container-fluid py-3">
+
+    <!-- ============ Section Header ============ -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-0 fw-semibold">Procedures</h5>
+            <small class="text-muted">Requests, scheduling, documentation and history for this patient</small>
+        </div>
+        <button class="btn btn-primary" id="btnNewProcedure">
+            <i class="fas fa-plus me-1"></i> New Procedure
+        </button>
+    </div>
+
+    <!-- ============ Filter Bar ============ -->
+    <div class="card border shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <select id="fltStatus" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        <option>Requested</option>
+                        <option>Scheduled</option>
+                        <option>Confirmed</option>
+                        <option>In Progress</option>
+                        <option>Completed</option>
+                        <option>Cancelled</option>
+                        <option>Postponed</option>
+                        <option>Failed</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <select id="fltCategory" class="form-select form-select-sm">
+                        <option value="">All Categories</option>
+                        <option value="Surgical">Surgical</option>
+                        <option value="Diagnostic">Diagnostic</option>
+                        <option value="Therapeutic">Therapeutic</option>
+                        <option value="Minor">Minor</option>
+                        <option value="Emergency">Emergency</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="fltDateFrom" class="form-control form-control-sm" title="From date" />
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="fltDateTo" class="form-control form-control-sm" title="To date" />
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnClearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Procedure List ============ -->
+    <div class="card border shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="fw-semibold text-dark">Procedure List</span>
+            <span class="text-muted small" id="procedureCount"></span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Procedure</th>
+                        <th>Category</th>
+                        <th>Planned Date</th>
+                        <th>Primary Doctor</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="procedureTableBody">
+                    <tr id="noDataRow">
+                        <td colspan="6" class="text-center text-muted py-4">No procedures added yet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- =====================================================================
+     PROCEDURE WORKSPACE MODAL  (Request → Team → Prepare → Execute →
+     Document → Complete)
+====================================================================== -->
+<div class="modal fade" id="procedureWorkspaceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="modal-title mb-0" id="workspaceTitle">New Procedure</h5>
+                    <span class="badge bg-light text-secondary border" id="workspaceUidBadge" style="display:none;"></span>
+                    <span class="badge" id="workspaceStatusBadge" style="display:none;"></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Lifecycle action toolbar -->
+            <div class="px-3 pt-2 pb-1 border-bottom bg-light-subtle d-flex flex-wrap gap-2" id="lifecycleToolbar" style="display:none !important;">
+                <div class="input-group input-group-sm" style="width:230px;" id="scheduleGroup">
+                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    <input type="datetime-local" id="txtPlannedDate" class="form-control" />
+                    <button class="btn btn-outline-primary" id="btnSchedule">Schedule</button>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" id="btnConfirm"><i class="fas fa-check me-1"></i>Confirm</button>
+                <button class="btn btn-sm btn-outline-success" id="btnStart"><i class="fas fa-play me-1"></i>Start Procedure</button>
+                <button class="btn btn-sm btn-outline-secondary" id="btnPostpone"><i class="fas fa-clock me-1"></i>Postpone</button>
+                <button class="btn btn-sm btn-outline-danger" id="btnCancel"><i class="fas fa-ban me-1"></i>Cancel</button>
+                <div class="ms-auto text-muted small d-flex align-items-center" id="lastUpdatedText"></div>
+            </div>
+
+            <div class="modal-body p-0">
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs px-3 pt-2 bg-white sticky-top" id="workspaceTabs" style="top:0;z-index:5;">
+                    <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#tabDetails">1. Details</button></li>
+                    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabTeam">2. Team &amp; Anaesthesia</button></li>
+                    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabPrep">3. Preparation</button></li>
+                    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabExec">4. Execution</button></li>
+                    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabDoc">5. Documentation</button></li>
+                    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabComplete">6. Completion</button></li>
+                </ul>
+
+                <div class="tab-content p-3">
+
+                    <!-- ───────── TAB 1: DETAILS ───────── -->
+                    <div class="tab-pane fade show active" id="tabDetails">
+                        <form id="frmDetails">
+                            <input type="hidden" id="hidProcedureId" value="0" />
+                            <input type="hidden" id="hidPatientId" value="@patientId" />
+                            <input type="hidden" id="hidVisitContextType" value="@visitContextType" />
+                            <input type="hidden" id="hidVisitContextId" value="@visitContextId" />
+
+                            <div class="row">
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label fw-semibold">Procedure Name</label>
+                                    <input type="text" id="txtProcedureName" class="form-control" placeholder="e.g. Laparoscopic Cholecystectomy" />
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label fw-semibold">Code</label>
+                                    <input type="text" id="txtProcedureCode" class="form-control" placeholder="SURG-LAP-001" />
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-semibold">Category</label>
+                                    <select id="ddlCategory" class="form-select">
+                                        <option value="Surgical">Surgical</option>
+                                        <option value="Diagnostic">Diagnostic</option>
+                                        <option value="Therapeutic">Therapeutic</option>
+                                        <option value="Minor">Minor</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label fw-semibold">Priority</label>
+                                    <select id="ddlPriority" class="form-select">
+                                        <option value="Routine">Routine</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Reason for Procedure</label>
+                                    <textarea id="txtReason" rows="2" class="form-control"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Clinical Indication</label>
+                                    <textarea id="txtIndication" rows="2" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-primary" id="btnCreateRequest">
+                                    <i class="fas fa-paper-plane me-1"></i>Submit Request
+                                </button>
+                            </div>
+                        </form>
+                        <div class="alert alert-light border mt-3 small text-muted" id="detailsHint">
+                            <i class="fas fa-circle-info me-1"></i>
+                            Submitting the request creates the procedure record with status <b>Requested</b> and unlocks the remaining tabs.
+                        </div>
+                    </div>
+
+                    <!-- ───────── TAB 2: TEAM & ANAESTHESIA ───────── -->
+                    <div class="tab-pane fade" id="tabTeam">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <h6 class="fw-semibold mb-2"><i class="fas fa-user-md me-1 text-muted"></i>Procedure Team</h6>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-5">
+                                        <select id="ddlTeamStaff" class="form-select form-select-sm"><option value="">Select doctor / staff</option></select>
+                                    </div>
+                                    <div class="col-4">
+                                        <select id="ddlTeamRole" class="form-select form-select-sm">
+                                            <option value="Primary">Primary</option>
+                                            <option value="Assistant">Assistant</option>
+                                            <option value="Anaesthetist">Anaesthetist</option>
+                                            <option value="ScrubNurse">Scrub Nurse</option>
+                                            <option value="CirculatingNurse">Circulating Nurse</option>
+                                            <option value="Technician">Technician</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-3">
+                                        <button class="btn btn-sm btn-outline-primary w-100" id="btnAddTeamMember">Add</button>
+                                    </div>
+                                </div>
+                                <ul class="list-group" id="teamList"></ul>
+                            </div>
+
+                            <div class="col-md-5">
+                                <h6 class="fw-semibold mb-2"><i class="fas fa-syringe me-1 text-muted"></i>Anaesthesia</h6>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Type</label>
+                                    <select id="ddlAnaesthesiaType" class="form-select form-select-sm">
+                                        <option value="General">General</option>
+                                        <option value="Local">Local</option>
+                                        <option value="Regional">Regional</option>
+                                        <option value="Spinal">Spinal</option>
+                                        <option value="Sedation">Sedation</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Anaesthetist</label>
+                                    <select id="ddlAnaesthetist" class="form-select form-select-sm"><option value="">Select anaesthetist</option></select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Pre-Assessment Notes</label>
+                                    <textarea id="txtPreAssessment" rows="3" class="form-control form-control-sm"></textarea>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" id="btnSaveAnaesthesia">
+                                    <i class="fas fa-save me-1"></i>Save Anaesthesia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ───────── TAB 3: PREPARATION (CHECKLIST) ───────── -->
+                    <div class="tab-pane fade" id="tabPrep">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-semibold mb-0"><i class="fas fa-list-check me-1 text-muted"></i>Pre-Procedure Checklist</h6>
+                            <span class="small text-muted" id="checklistProgress"></span>
+                        </div>
+                        <ul class="list-group mb-3" id="checklistItems"></ul>
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <input type="text" id="txtNewChecklistItem" class="form-control form-control-sm" placeholder="Add a custom checklist item..." />
+                            </div>
+                            <div class="col-md-2">
+                                <select id="ddlNewChecklistMandatory" class="form-select form-select-sm">
+                                    <option value="1">Mandatory</option>
+                                    <option value="0">Optional</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-sm btn-outline-secondary w-100" id="btnAddChecklistItem">Add Item</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ───────── TAB 4: EXECUTION (TIMELINE) ───────── -->
+                    <div class="tab-pane fade" id="tabExec">
+                        <h6 class="fw-semibold mb-2"><i class="fas fa-stopwatch me-1 text-muted"></i>Timeline</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button class="btn btn-sm btn-outline-primary timeline-btn" data-event="PatientArrival"><i class="fas fa-door-open me-1"></i>Patient Arrived</button>
+                            <button class="btn btn-sm btn-outline-primary timeline-btn" data-event="RoomEntry"><i class="fas fa-door-closed me-1"></i>Room Entry</button>
+                            <button class="btn btn-sm btn-outline-primary timeline-btn" data-event="AnaesthesiaStart"><i class="fas fa-syringe me-1"></i>Anaesthesia Start</button>
+                            <button class="btn btn-sm btn-outline-primary timeline-btn" data-event="RecoveryStart"><i class="fas fa-bed me-1"></i>Recovery Start</button>
+                        </div>
+                        <small class="text-muted d-block mb-2">"Procedure Start" and "Procedure End" are recorded automatically by the Start / Complete actions above.</small>
+                        <ul class="list-group" id="timelineList"></ul>
+                    </div>
+
+                    <!-- ───────── TAB 5: DOCUMENTATION ───────── -->
+                    <div class="tab-pane fade" id="tabDoc">
+                        <div class="row">
+                            <div class="col-lg-9">
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-semibold mb-0"><i class="fas fa-notes-medical me-1 text-muted"></i>Operative Note</h6>
+                                    <span class="small text-muted" id="noteVersionText"></span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Procedure Steps Performed</label>
+                                    <textarea id="txtStepsPerformed" rows="6" class="form-control"></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-semibold">Key Observations</label>
+                                        <textarea id="txtObservations" rows="3" class="form-control"></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-semibold">Instruments Used</label>
+                                        <textarea id="txtInstruments" rows="3" class="form-control"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label small fw-semibold">Blood Loss (ml)</label>
+                                        <input type="number" id="txtBloodLoss" class="form-control" min="0" />
+                                    </div>
+                                    <div class="col-md-9 mb-2">
+                                        <label class="form-label small fw-semibold">Unexpected Events</label>
+                                        <input type="text" id="txtUnexpectedEvents" class="form-control" />
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mb-4" id="btnSaveNote">
+                                    <i class="fas fa-save me-1"></i>Save Note
+                                </button>
+
+                                <hr />
+
+                                <!-- Complication -->
+                                <div class="row align-items-end mb-3">
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold">Complication?</label>
+                                        <select id="ddlComplicationOccurred" class="form-select form-select-sm">
+                                            <option value="0">No</option>
+                                            <option value="1">Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold">Type</label>
+                                        <input type="text" id="txtComplicationType" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold">Action Taken</label>
+                                        <input type="text" id="txtComplicationAction" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold">Outcome</label>
+                                        <input type="text" id="txtComplicationOutcome" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-sm btn-outline-secondary w-100" id="btnSaveComplication">Save</button>
+                                    </div>
+                                </div>
+
+                                <!-- Specimen -->
+                                <div class="row align-items-end mb-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold">Specimen?</label>
+                                        <select id="ddlSpecimenCollected" class="form-select form-select-sm">
+                                            <option value="0">No</option>
+                                            <option value="1">Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold">Type</label>
+                                        <input type="text" id="txtSpecimenType" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold">Description</label>
+                                        <input type="text" id="txtSpecimenDescription" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label small fw-semibold">To Lab</label>
+                                        <select id="ddlSpecimenToLab" class="form-select form-select-sm">
+                                            <option value="1">Yes</option>
+                                            <option value="0">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-sm btn-outline-secondary w-100" id="btnSaveSpecimen">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Panel -->
+                            <div class="col-lg-3">
+                                <div class="card h-100 border">
+                                    <div class="card-header bg-light py-2"><b class="small">Templates</b></div>
+                                    <div class="card-body p-2">
+                                        <input type="text" id="templateSearch" class="form-control form-control-sm mb-2" placeholder="Search template..." />
+                                        <div style="height:280px; overflow-y:auto;">
+                                            <ul class="list-group" id="templateList"></ul>
+                                        </div>
+                                        <hr class="my-2" />
+                                        <button type="button" class="btn btn-sm btn-outline-primary w-100" id="btnSaveAsTemplate">
+                                            <i class="fas fa-bookmark me-1"></i>Save Steps as Template
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ───────── TAB 6: COMPLETION ───────── -->
+                    <div class="tab-pane fade" id="tabComplete">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <h6 class="fw-semibold mb-2"><i class="fas fa-user-nurse me-1 text-muted"></i>Post-Procedure Care</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-semibold">Patient Condition After</label>
+                                        <input type="text" id="txtConditionAfter" class="form-control" />
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-semibold">Recovery Status</label>
+                                        <input type="text" id="txtRecoveryStatus" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Monitoring Instructions</label>
+                                    <textarea id="txtMonitoringInstructions" rows="2" class="form-control"></textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Follow-up Instructions</label>
+                                    <textarea id="txtFollowUpInstructions" rows="2" class="form-control"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Follow-up Date</label>
+                                    <input type="date" id="txtFollowUpDate" class="form-control" style="max-width:220px;" />
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" id="btnSavePostCare">
+                                    <i class="fas fa-save me-1"></i>Save Post-Care
+                                </button>
+                            </div>
+
+                            <div class="col-md-5">
+                                <h6 class="fw-semibold mb-2"><i class="fas fa-flag-checkered me-1 text-muted"></i>Outcome &amp; Sign-off</h6>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Outcome</label>
+                                    <select id="ddlOutcome" class="form-select">
+                                        <option value="">Select outcome</option>
+                                        <option value="Successful">Successful</option>
+                                        <option value="Partial">Partially Completed</option>
+                                        <option value="StoppedDueToComplication">Stopped Due To Complication</option>
+                                        <option value="Failed">Failed</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Final Remarks</label>
+                                    <textarea id="txtFinalRemarks" rows="2" class="form-control"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Doctor Conclusion</label>
+                                    <textarea id="txtDoctorConclusion" rows="2" class="form-control"></textarea>
+                                </div>
+                                <button class="btn btn-success w-100" id="btnCompleteProcedure">
+                                    <i class="fas fa-check-circle me-1"></i>Complete &amp; Sign
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <h6 class="fw-semibold mb-2 text-muted"><i class="fas fa-history me-1"></i>Status History</h6>
+                        <ul class="list-group" id="statusHistoryList"></ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================================
+     REASON MODAL (Cancel / Postpone)
+====================================================================== -->
+<div class="modal fade" id="reasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="reasonModalTitle">Reason</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="txtReasonInput" rows="3" class="form-control" placeholder="Enter a reason..."></textarea>
+            </div>
+            <div class="modal-footer py-2">
+                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm btn-primary" id="btnConfirmReason">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Minimal, single-accent styling on top of the existing project theme */
+    #procedureWorkspaceModal .nav-tabs .nav-link {
+        font-size: .875rem;
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+        #procedureWorkspaceModal .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            border-bottom: 2px solid var(--bs-primary);
+        }
+
+    .checklist-item.done {
+        background-color: #f6f9f6;
+    }
+
+    .team-member-item, .checklist-item, .timeline-item, .history-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+</style>
+
+@section scripts {
+    <script>
+        (function () {
+
+            var patientId = @patientId;
+            var visitContextType = "@visitContextType";
+            var visitContextId = @visitContextId;
+            var currentProcedureId = 0;
+            var currentStatus = "";
+            var reasonAction = null; // 'Cancel' | 'Postpone'
+
+            // ── Catch-all: any failed AJAX call anywhere in this module shows a toast.
+            // This is the single place error visibility is handled — individual calls
+            // below don't need their own error/.fail() callback.
+            $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
+                var detail = jqxhr.responseText || thrownError || jqxhr.statusText || 'Unknown error';
+                // MySql/.NET exceptions can dump a full stack trace as the response body — keep the toast readable.
+                var firstLine = String(detail).split(/\r?\n/)[0];
+                if (firstLine.length > 200) firstLine = firstLine.substring(0, 200) + '…';
+                toastr.error(firstLine, 'Request failed: ' + settings.url.replace('/Procedure/', ''));
+            });
+
+            // ── Status badge colours (kept to the app's existing bootstrap palette) ──
+            function statusBadge(status) {
+                var map = {
+                    "Requested": "bg-secondary",
+                    "Scheduled": "bg-info text-dark",
+                    "Confirmed": "bg-primary",
+                    "In Progress": "bg-warning text-dark",
+                    "Completed": "bg-success",
+                    "Cancelled": "bg-danger",
+                    "Postponed": "bg-secondary",
+                    "Failed": "bg-danger"
+                };
+                return '<span class="badge ' + (map[status] || "bg-secondary") + '">' + status + '</span>';
+            }
+
+            function fmtDate(d) {
+                if (!d) return '—';
+                var dt = new Date(d);
+                return dt.toLocaleString();
+            }
+
+            function esc(s) { return (s == null) ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+            // ── Load doctor / staff dropdowns ──────────────────────────────
+            function loadStaffDropdowns() {
+                $.get('/Procedure/GetDoctors', function (data) {
+                    var opts = '<option value="">Select</option>';
+                    $.each(data, function (i, d) {
+                        var id = d.doctor_Id !== undefined ? d.doctor_Id : d.Doctor_Id;
+                        var fn = d.firstName !== undefined ? d.firstName : d.FirstName;
+                        var ln = d.lastName !== undefined ? d.lastName : d.LastName;
+                        opts += '<option value="' + id + '">' + esc((fn || '') + ' ' + (ln || '')) + '</option>';
+                    });
+                    $('#ddlTeamStaff').html(opts);
+                    $('#ddlAnaesthetist').html(opts);
+                });
+            }
+
+            // ── Procedure list ──────────────────────────────────────────────
+            function loadProcedureList() {
+                $.get('/Procedure/GetProcedureList', {
+                    PatientId: patientId,
+                    Status: $('#fltStatus').val(),
+                    Category: $('#fltCategory').val(),
+                    DateFrom: $('#fltDateFrom').val(),
+                    DateTo: $('#fltDateTo').val()
+                }, function (data) {
+                    var tbody = $('#procedureTableBody').empty();
+                    $('#procedureCount').text(data.length ? (data.length + ' record(s)') : '');
+
+                    if (!data || !data.length) {
+                        tbody.html('<tr><td colspan="6" class="text-center text-muted py-4">No procedures added yet</td></tr>');
+                        return;
+                    }
+
+                    $.each(data, function (i, item) {
+                        tbody.append(
+                            '<tr>' +
+                            '<td><div class="fw-semibold">' + esc(item.procedureName) + '</div>' +
+                            '<div class="small text-muted">' + esc(item.procedureUID || '') + '</div></td>' +
+                            '<td><span class="badge bg-light text-dark border">' + esc(item.procedureCategory) + '</span></td>' +
+                            '<td>' + fmtDate(item.plannedDate) + '</td>' +
+                            '<td>' + esc(item.primaryDoctorName || '—') + '</td>' +
+                            '<td>' + statusBadge(item.status) + '</td>' +
+                            '<td class="text-end pe-3">' +
+                            '<button class="btn btn-sm btn-outline-primary" onclick="ProcedureModule.openWorkspace(' + item.procedureId + ')">' +
+                            '<i class="fas fa-folder-open me-1"></i>Open</button></td>' +
+                            '</tr>'
+                        );
+                    });
+                });
+            }
+
+            $('#btnClearFilters').on('click', function () {
+                $('#fltStatus, #fltCategory').val('');
+                $('#fltDateFrom, #fltDateTo').val('');
+                loadProcedureList();
+            });
+            $('#fltStatus, #fltCategory, #fltDateFrom, #fltDateTo').on('change', loadProcedureList);
+
+            // ── Reset workspace for a brand-new request ─────────────────────
+            function resetWorkspace() {
+                currentProcedureId = 0;
+                currentStatus = '';
+                $('#hidProcedureId').val(0);
+                $('#workspaceTitle').text('New Procedure');
+                $('#workspaceUidBadge, #workspaceStatusBadge').hide();
+                $('#lifecycleToolbar').hide();
+                $('#frmDetails')[0].reset();
+                $('#teamList, #checklistItems, #timelineList, #statusHistoryList').empty();
+                $('#noteVersionText').text('');
+                toggleTabs(false);
+                $('#workspaceTabs button').first().tab('show');
+            }
+
+            function toggleTabs(enabled) {
+                $('#workspaceTabs button').not(':first').prop('disabled', !enabled)
+                    .toggleClass('disabled', !enabled);
+            }
+
+            // ── Open New Procedure ───────────────────────────────────────────
+            $('#btnNewProcedure').on('click', function () {
+                resetWorkspace();
+                loadStaffDropdowns();
+                $('#procedureWorkspaceModal').modal('show');
+            });
+
+            // ── Submit Request (creates the record) ─────────────────────────
+            $('#btnCreateRequest').on('click', function () {
+                var name = $('#txtProcedureName').val().trim();
+                if (!name) { toastr.warning('Procedure name is required'); return; }
+
+                var payload = {
+                    PatientId: patientId,
+                    VisitContextType: visitContextType,
+                    VisitContextId: visitContextId,
+                    ProcedureCode: $('#txtProcedureCode').val(),
+                    ProcedureName: name,
+                    ProcedureCategory: $('#ddlCategory').val(),
+                    Priority: $('#ddlPriority').val(),
+                    ReasonForProcedure: $('#txtReason').val(),
+                    ClinicalIndication: $('#txtIndication').val()
+                };
+
+                $.ajax({
+                    url: '/Procedure/RequestProcedure', type: 'POST', contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success('Procedure request created (' + res.uid + ')');
+                            currentProcedureId = res.procedureId;
+                            currentStatus = 'Requested';
+                            $('#hidProcedureId').val(res.procedureId);
+                            toggleTabs(true);               // unlock tabs right away
+                            openWorkspace(res.procedureId);  // then hydrate the workspace with full detail
+                            loadProcedureList();
+                        } else {
+                            toastr.error('Could not create request');
+                        }
+                    }
+                });
+            });
+
+            // ── Open an existing procedure (full detail) ─────────────────────
+            function openWorkspace(id) {
+                currentProcedureId = id;
+                $.get('/Procedure/GetProcedureDetail', { procedureId: id })
+                    .done(function (vm) {
+                    if (!vm || !vm.master) {
+                        toastr.error('Procedure detail came back empty — please reopen it from the list.');
+                        return;
+                    }
+                    resetWorkspace();
+                    currentProcedureId = id;
+                    $('#hidProcedureId').val(id);
+                    toggleTabs(true);
+                    loadStaffDropdowns();
+
+                    var m = vm.master;
+                    currentStatus = m.status;
+                    $('#workspaceTitle').text(m.procedureName);
+                    $('#workspaceUidBadge').text(m.procedureUID).show();
+                    $('#workspaceStatusBadge').removeClass().addClass('badge').addClass(
+                        { "Requested":"bg-secondary","Scheduled":"bg-info text-dark","Confirmed":"bg-primary",
+                          "In Progress":"bg-warning text-dark","Completed":"bg-success","Cancelled":"bg-danger",
+                          "Postponed":"bg-secondary","Failed":"bg-danger" }[m.status] || "bg-secondary"
+                    ).text(m.status).show();
+
+                    $('#txtProcedureName').val(m.procedureName);
+                    $('#txtProcedureCode').val(m.procedureCode);
+                    $('#ddlCategory').val(m.procedureCategory);
+                    $('#ddlPriority').val(m.priority);
+                    if (vm.details) {
+                        $('#txtReason').val(vm.details.reasonForProcedure);
+                        $('#txtIndication').val(vm.details.clinicalIndication);
+                    }
+                    if (m.plannedDate) $('#txtPlannedDate').val(m.plannedDate.substring(0,16));
+
+                    $('#lifecycleToolbar').show().css('display','flex');
+                    refreshToolbarButtons();
+                    $('#lastUpdatedText').text(m.updatedDate ? ('Last updated ' + fmtDate(m.updatedDate)) : '');
+
+                    // Team
+                    $.each(vm.team || [], function (i, t) {
+                        addTeamRow(t);
+                    });
+
+                    // Anaesthesia
+                    if (vm.anaesthesia) {
+                        $('#ddlAnaesthesiaType').val(vm.anaesthesia.anaesthesiaType);
+                        $('#ddlAnaesthetist').val(vm.anaesthesia.anaesthetistId);
+                        $('#txtPreAssessment').val(vm.anaesthesia.preAssessmentNotes);
+                    }
+
+                    // Checklist
+                    renderChecklist(vm.checklist || []);
+
+                    // Timeline
+                    $.each(vm.timeline || [], function (i, t) { addTimelineRow(t); });
+
+                    // Latest note
+                    if (vm.latestNote) {
+                        $('#txtStepsPerformed').val(vm.latestNote.procedureStepsPerformed);
+                        $('#txtObservations').val(vm.latestNote.keyObservations);
+                        $('#txtInstruments').val(vm.latestNote.instrumentsUsed);
+                        $('#txtBloodLoss').val(vm.latestNote.bloodLossMl);
+                        $('#txtUnexpectedEvents').val(vm.latestNote.unexpectedEvents);
+                        $('#noteVersionText').text('Version ' + vm.latestNote.version);
+                    }
+
+                    // Post-care
+                    if (vm.postCare) {
+                        $('#txtConditionAfter').val(vm.postCare.patientConditionAfter);
+                        $('#txtRecoveryStatus').val(vm.postCare.recoveryStatus);
+                        $('#txtMonitoringInstructions').val(vm.postCare.monitoringInstructions);
+                        $('#txtFollowUpInstructions').val(vm.postCare.followUpInstructions);
+                        if (vm.postCare.followUpDate) $('#txtFollowUpDate').val(vm.postCare.followUpDate.substring(0,10));
+                    }
+
+                    // Outcome
+                    if (vm.outcome) {
+                        $('#ddlOutcome').val(vm.outcome.outcome);
+                        $('#txtFinalRemarks').val(vm.outcome.finalRemarks);
+                        $('#txtDoctorConclusion').val(vm.outcome.doctorConclusion);
+                    }
+
+                    // Status history
+                    $.each(vm.statusHistory || [], function (i, h) {
+                        $('#statusHistoryList').append(
+                            '<li class="list-group-item history-item small">' +
+                            '<span>' + esc(h.fromStatus || 'New') + ' → <b>' + esc(h.toStatus) + '</b>' +
+                            (h.reason ? (' — ' + esc(h.reason)) : '') + '</span>' +
+                            '<span class="text-muted">' + fmtDate(h.changedDate) + '</span></li>'
+                        );
+                    });
+
+                    loadTemplates();
+                    $('#procedureWorkspaceModal').modal('show');
+                });
+            }
+
+            function refreshToolbarButtons() {
+                var terminal = (currentStatus === 'Completed' || currentStatus === 'Failed' || currentStatus === 'Cancelled');
+                $('#scheduleGroup, #btnConfirm, #btnPostpone, #btnCancel').toggle(!terminal);
+                $('#btnStart').toggle(currentStatus === 'Confirmed');
+                $('#btnConfirm').toggle(currentStatus === 'Scheduled');
+
+                // Timeline events only make sense once a date is set and the request
+                // is confirmed — not while still sitting at "Requested".
+                var timelineAllowed = ['Scheduled', 'Confirmed', 'In Progress'].indexOf(currentStatus) > -1;
+                $('.timeline-btn').prop('disabled', !timelineAllowed)
+                    .attr('title', timelineAllowed ? '' : 'Schedule and confirm the procedure first');
+            }
+
+            // ── Team ─────────────────────────────────────────────────────────
+            function addTeamRow(t) {
+                $('#teamList').append(
+                    '<li class="list-group-item team-member-item" data-id="' + t.teamMemberId + '">' +
+                    '<span><span class="badge bg-light text-dark border me-2">' + esc(t.roleInTeam) + '</span>' + esc(t.staffName || ('#' + t.staffId)) + '</span>' +
+                    '<button class="btn btn-sm btn-link text-danger p-0" onclick="ProcedureModule.removeTeamMember(' + t.teamMemberId + ', this)"><i class="fas fa-times"></i></button>' +
+                    '</li>'
+                );
+            }
+
+            $('#btnAddTeamMember').on('click', function () {
+                var staffId = $('#ddlTeamStaff').val();
+                var role = $('#ddlTeamRole').val();
+                if (!staffId) { toastr.warning('Select a doctor / staff member'); return; }
+                $.post('/Procedure/AddTeamMember', { procedureId: currentProcedureId, staffId: staffId, roleInTeam: role }, function (res) {
+                    if (res.success) {
+                        addTeamRow({ teamMemberId: res.teamMemberId, staffId: staffId, roleInTeam: role, staffName: $('#ddlTeamStaff option:selected').text() });
+                    } else { toastr.error('Could not add team member'); }
+                });
+            });
+
+            function removeTeamMember(id, el) {
+                $.post('/Procedure/RemoveTeamMember', { teamMemberId: id }, function (res) {
+                    if (res.success) $(el).closest('li').remove();
+                });
+            }
+
+            $('#btnSaveAnaesthesia').on('click', function () {
+                var payload = {
+                    ProcedureId: currentProcedureId,
+                    AnaesthesiaType: $('#ddlAnaesthesiaType').val(),
+                    AnaesthetistId: $('#ddlAnaesthetist').val() || null,
+                    PreAssessmentNotes: $('#txtPreAssessment').val()
+                };
+                $.post('/Procedure/SaveAnaesthesia', payload, function (res) {
+                    res.success ? toastr.success('Anaesthesia saved') : toastr.error('Save failed');
+                });
+            });
+
+            // ── Checklist ────────────────────────────────────────────────────
+            function renderChecklist(items) {
+                var list = $('#checklistItems').empty();
+                var mandatoryTotal = 0, mandatoryDone = 0;
+                $.each(items, function (i, c) {
+                    if (c.isMandatory) { mandatoryTotal++; if (c.isChecked) mandatoryDone++; }
+                    list.append(
+                        '<li class="list-group-item checklist-item ' + (c.isChecked ? 'done' : '') + '" data-id="' + c.checklistItemId + '">' +
+                        '<span><input type="checkbox" class="form-check-input me-2 chk-item" data-id="' + c.checklistItemId + '" ' + (c.isChecked ? 'checked' : '') + '> ' +
+                        esc(c.itemText) + (c.isMandatory ? ' <span class="badge bg-light text-dark border ms-1">required</span>' : '') + '</span>' +
+                        '</li>'
+                    );
+                });
+                $('#checklistProgress').text(mandatoryTotal ? (mandatoryDone + ' / ' + mandatoryTotal + ' mandatory items complete') : 'No mandatory items');
+            }
+
+            $(document).on('change', '.chk-item', function () {
+                var id = $(this).data('id');
+                var checked = $(this).is(':checked');
+                $.post('/Procedure/UpdateChecklistItem', { checklistItemId: id, isChecked: checked }, function (res) {
+                    if (res.success) {
+                        $(this).closest('li').toggleClass('done', checked);
+                    } else { toastr.error('Update failed'); }
+                }.bind(this));
+            });
+
+            $('#btnAddChecklistItem').on('click', function () {
+                var text = $('#txtNewChecklistItem').val().trim();
+                if (!text) return;
+                $.post('/Procedure/AddChecklistItem', { procedureId: currentProcedureId, itemText: text, isMandatory: $('#ddlNewChecklistMandatory').val() === '1' }, function (res) {
+                    if (res.success) {
+                        $('#txtNewChecklistItem').val('');
+                        $.get('/Procedure/GetChecklist', { procedureId: currentProcedureId }, function (items) {
+                            renderChecklist(items);
+                        });
+                    } else { toastr.error('Could not add item'); }
+                });
+            });
+
+            // ── Timeline ─────────────────────────────────────────────────────
+            function addTimelineRow(t) {
+                $('#timelineList').append(
+                    '<li class="list-group-item timeline-item small"><span>' + esc(t.eventType) + '</span><span class="text-muted">' + fmtDate(t.eventTime) + '</span></li>'
+                );
+            }
+
+            $('.timeline-btn').on('click', function () {
+                var evt = $(this).data('event');
+                $.post('/Procedure/RecordTimelineEvent', { procedureId: currentProcedureId, eventType: evt }, function (res) {
+                    if (res.success) { addTimelineRow({ eventType: evt, eventTime: new Date() }); toastr.success('Recorded'); }
+                    else { toastr.warning(res.message || 'Could not record event'); }
+                });
+            });
+
+            // ── Documentation: note / complication / specimen ────────────────
+            $('#btnSaveNote').on('click', function () {
+                var payload = {
+                    ProcedureId: currentProcedureId,
+                    ProcedureStepsPerformed: $('#txtStepsPerformed').val(),
+                    KeyObservations: $('#txtObservations').val(),
+                    InstrumentsUsed: $('#txtInstruments').val(),
+                    BloodLossMl: $('#txtBloodLoss').val() || null,
+                    UnexpectedEvents: $('#txtUnexpectedEvents').val()
+                };
+                $.post('/Procedure/SaveOperativeNote', payload, function (res) {
+                    if (res.success) { $('#noteVersionText').text('Version ' + res.version); toastr.success('Note saved'); }
+                    else toastr.error('Save failed');
+                });
+            });
+
+            $('#btnSaveComplication').on('click', function () {
+                var payload = {
+                    ProcedureId: currentProcedureId,
+                    Occurred: $('#ddlComplicationOccurred').val() === '1',
+                    ComplicationType: $('#txtComplicationType').val(),
+                    ActionTaken: $('#txtComplicationAction').val(),
+                    Outcome: $('#txtComplicationOutcome').val()
+                };
+                $.post('/Procedure/SaveComplication', payload, function (res) {
+                    res.success ? toastr.success('Complication recorded') : toastr.error('Save failed');
+                });
+            });
+
+            $('#btnSaveSpecimen').on('click', function () {
+                var payload = {
+                    ProcedureId: currentProcedureId,
+                    Collected: $('#ddlSpecimenCollected').val() === '1',
+                    SpecimenType: $('#txtSpecimenType').val(),
+                    Description: $('#txtSpecimenDescription').val(),
+                    SentToLab: $('#ddlSpecimenToLab').val() === '1'
+                };
+                $.post('/Procedure/SaveSpecimen', payload, function (res) {
+                    res.success ? toastr.success('Specimen recorded') : toastr.error('Save failed');
+                });
+            });
+
+            // ── Post-care ────────────────────────────────────────────────────
+            $('#btnSavePostCare').on('click', function () {
+                var payload = {
+                    ProcedureId: currentProcedureId,
+                    PatientConditionAfter: $('#txtConditionAfter').val(),
+                    RecoveryStatus: $('#txtRecoveryStatus').val(),
+                    MonitoringInstructions: $('#txtMonitoringInstructions').val(),
+                    FollowUpInstructions: $('#txtFollowUpInstructions').val(),
+                    FollowUpDate: $('#txtFollowUpDate').val() || null
+                };
+                $.post('/Procedure/SavePostCare', payload, function (res) {
+                    res.success ? toastr.success('Post-care saved') : toastr.error('Save failed');
+                });
+            });
+
+            // ── Templates ────────────────────────────────────────────────────
+            function loadTemplates(category) {
+                $.get('/Procedure/GetTemplates', { category: category || $('#ddlCategory').val() }, function (data) {
+                    var list = $('#templateList').empty();
+                    $.each(data, function (i, t) {
+                        list.append(
+                            '<li class="list-group-item list-group-item-action" style="cursor:pointer" data-id="' + t.templateId + '">' +
+                            esc(t.templateName) + ' <span class="text-muted small">(' + t.usageCount + ')</span></li>'
+                        );
+                    });
+                });
+            }
+
+            $(document).on('click', '#templateList li', function () {
+                var id = $(this).data('id');
+                $.get('/Procedure/GetTemplateById', { templateId: id }, function (t) {
+                    var steps = (t.steps || []).map(function (s) { return s.stepText; }).join('\n');
+                    $('#txtStepsPerformed').val(steps);
+                    toastr.info('Template loaded — edit as needed for this patient');
+                });
+            });
+
+            $('#templateSearch').on('input', function () {
+                var q = $(this).val().toLowerCase();
+                $('#templateList li').each(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(q) > -1);
+                });
+            });
+
+            $('#btnSaveAsTemplate').on('click', function () {
+                var steps = $('#txtStepsPerformed').val();
+                if (!steps.trim()) { toastr.warning('Nothing to save — write the steps first'); return; }
+                var name = prompt('Template name:');
+                if (!name) return;
+                var payload = {
+                    TemplateName: name,
+                    Category: $('#ddlCategory').val(),
+                    Steps: steps.split('\n').filter(function (s) { return s.trim(); }).map(function (s) { return { StepText: s }; })
+                };
+                $.ajax({
+                    url: '/Procedure/CreateTemplate', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload),
+                    success: function (res) {
+                        if (res.success) { toastr.success('Template saved'); loadTemplates(); }
+                        else { toastr.error('Could not save template'); }
+                    }
+                });
+            });
+
+            // ── Lifecycle actions ────────────────────────────────────────────
+            $('#btnSchedule').on('click', function () {
+                var d = $('#txtPlannedDate').val();
+                if (!d) { toastr.warning('Pick a date/time'); return; }
+                $.post('/Procedure/ScheduleProcedure', { procedureId: currentProcedureId, plannedDate: d }, function (res) {
+                    if (res.success) { toastr.success('Scheduled'); currentStatus = 'Scheduled'; refreshBadgeAndToolbar(); loadProcedureList(); }
+                    else toastr.error(res.message || 'Failed');
+                });
+            });
+
+            $('#btnConfirm').on('click', function () {
+                $.post('/Procedure/ConfirmProcedure', { procedureId: currentProcedureId }, function (res) {
+                    if (res.success) { toastr.success('Confirmed'); currentStatus = 'Confirmed'; refreshBadgeAndToolbar(); loadProcedureList(); }
+                    else toastr.error(res.message || 'Failed');
+                });
+            });
+
+            $('#btnStart').on('click', function () {
+                $.post('/Procedure/StartProcedure', { procedureId: currentProcedureId }, function (res) {
+                    if (res.success) {
+                        toastr.success('Procedure started'); currentStatus = 'In Progress'; refreshBadgeAndToolbar(); loadProcedureList();
+                    } else {
+                        toastr.error((res.message || 'Cannot start') + (res.pendingCount ? (' (' + res.pendingCount + ' item(s) pending)') : ''));
+                        $('a[data-bs-target="#tabPrep"]').tab('show');
+                    }
+                });
+            });
+
+            $('#btnPostpone').on('click', function () { openReasonModal('Postpone'); });
+            $('#btnCancel').on('click', function () { openReasonModal('Cancel'); });
+
+            function openReasonModal(action) {
+                reasonAction = action;
+                $('#reasonModalTitle').text(action + ' Procedure');
+                $('#txtReasonInput').val('');
+                $('#reasonModal').modal('show');
+            }
+
+            $('#btnConfirmReason').on('click', function () {
+                var reason = $('#txtReasonInput').val().trim();
+                if (!reason) { toastr.warning('A reason is required'); return; }
+                var url = reasonAction === 'Cancel' ? '/Procedure/CancelProcedure' : '/Procedure/PostponeProcedure';
+                $.post(url, { procedureId: currentProcedureId, reason: reason }, function (res) {
+                    if (res.success) {
+                        toastr.success(reasonAction + 'd');
+                        currentStatus = reasonAction === 'Cancel' ? 'Cancelled' : 'Postponed';
+                        refreshBadgeAndToolbar();
+                        $('#reasonModal').modal('hide');
+                        loadProcedureList();
+                    } else { toastr.error(res.message || 'Failed'); }
+                });
+            });
+
+            $('#btnCompleteProcedure').on('click', function () {
+                var outcome = $('#ddlOutcome').val();
+                if (!outcome) { toastr.warning('Select an outcome'); return; }
+                var payload = {
+                    procedureId: currentProcedureId,
+                    outcome: outcome,
+                    finalRemarks: $('#txtFinalRemarks').val(),
+                    doctorConclusion: $('#txtDoctorConclusion').val()
+                };
+                $.post('/Procedure/CompleteProcedure', payload, function (res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        currentStatus = outcome === 'Failed' ? 'Failed' : 'Completed';
+                        refreshBadgeAndToolbar();
+                        loadProcedureList();
+                    } else { toastr.error(res.message || 'Cannot complete'); }
+                });
+            });
+
+            function refreshBadgeAndToolbar() {
+                $('#workspaceStatusBadge').removeClass().addClass('badge').addClass(
+                    { "Requested":"bg-secondary","Scheduled":"bg-info text-dark","Confirmed":"bg-primary",
+                      "In Progress":"bg-warning text-dark","Completed":"bg-success","Cancelled":"bg-danger",
+                      "Postponed":"bg-secondary","Failed":"bg-danger" }[currentStatus] || "bg-secondary"
+                ).text(currentStatus);
+                refreshToolbarButtons();
+            }
+
+            // Expose the handful of functions used from inline HTML attributes
+            window.ProcedureModule = {
+                openWorkspace: openWorkspace,
+                removeTeamMember: removeTeamMember
+            };
+
+            $(document).ready(function () {
+                loadProcedureList();
+                loadTemplates();
+            });
+
+        })();
+    </script>
+}

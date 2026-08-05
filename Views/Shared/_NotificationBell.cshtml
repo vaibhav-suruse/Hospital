@@ -1,0 +1,588 @@
+﻿@Html.Raw(@"<style>
+/* ═══════════════════════════════════════════════
+   NOTIFICATION BELL + PANEL
+   Following reference HTML theme
+═══════════════════════════════════════════════ */
+
+/* Bell button */
+.notif-bell-btn {
+    position: relative;
+    width: 38px; height: 38px;
+    background: #f5f7fa;
+    border: none; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #555;
+    font-size: 1rem;
+    transition: background .15s;
+}
+.notif-bell-btn:hover { background: #eef1ff; color: #0A4FA6; }
+
+.notif-bell-count {
+    position: absolute; top: -2px; right: -2px;
+    background: #EF4444; color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 17px; height: 17px;
+    border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #fff;
+    animation: badgePulse 2s infinite;
+    display: none;
+}
+.notif-bell-count.visible { display: flex; }
+
+@keyframes badgePulse {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.15); }
+}
+
+/* Notification panel */
+.notif-panel {
+    position: fixed; top: 68px; right: 18px;
+    width: 380px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 40px rgba(10,79,166,0.18);
+    border: 1.5px solid #E2EAF4;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    max-height: 520px;
+    overflow: hidden;
+    animation: notifSlideDown .2s ease;
+}
+.notif-panel.open { display: flex; }
+
+@keyframes notifSlideDown {
+    from { opacity:0; transform: translateY(-12px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+/* Panel header */
+.notif-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid #E2EAF4;
+    display: flex; align-items: center; gap: 10px;
+    background: #071E3D; color: #fff;
+    border-radius: 14px 14px 0 0;
+}
+.notif-head-title {
+    font-size: .92rem; font-weight: 700; flex: 1;
+    display: flex; align-items: center; gap: 8px;
+}
+.notif-live-dot {
+    width: 7px; height: 7px; background: #00C9A7;
+    border-radius: 50%;
+    animation: blink 1.5s infinite;
+}
+@keyframes blink {
+    0%,100% { opacity:1; } 50% { opacity:.2; }
+}
+.notif-head-count {
+    background: #EF4444; color: #fff;
+    font-size: .7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 99px;
+}
+.notif-mark-all {
+    font-size: .72rem; color: #00C9A7; font-weight: 600;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.notif-mark-all:hover { color: #4ade80; }
+
+/* Tab strip */
+.notif-tabs {
+    display: flex; background: #f0f4fb;
+    border-bottom: 1px solid #E2EAF4;
+}
+.notif-tab {
+    flex: 1; padding: 9px 0;
+    font-size: .78rem; font-weight: 600;
+    text-align: center; cursor: pointer;
+    color: #5A7090; border-bottom: 2px solid transparent;
+    transition: all .15s; background: none; border-top: none;
+    border-left: none; border-right: none;
+}
+.notif-tab.active {
+    color: #0A4FA6;
+    border-bottom-color: #0A4FA6;
+    background: #fff;
+}
+
+/* List */
+.notif-list {
+    overflow-y: auto; flex: 1;
+}
+.notif-list::-webkit-scrollbar { width: 4px; }
+.notif-list::-webkit-scrollbar-thumb { background: #c0cfdf; border-radius: 4px; }
+
+/* Item */
+.notif-item {
+    padding: 13px 16px;
+    border-bottom: 1px solid #E2EAF4;
+    display: flex; gap: 12px; align-items: flex-start;
+    transition: background .15s;
+    animation: notifPop .4s ease;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: #f8faff; }
+.notif-item.pending-item { background: rgba(10,79,166,.03); }
+
+@keyframes notifPop {
+    from { background: rgba(0,201,167,.15); }
+    to   { background: rgba(10,79,166,.03); }
+}
+
+.notif-icon {
+    width: 38px; height: 38px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; flex-shrink: 0;
+}
+.notif-icon.opd-icon { background: #eef1ff; color: #0A4FA6; }
+.notif-icon.ipd-icon { background: #f0fff6; color: #16A34A; }
+
+.notif-body { flex: 1; min-width: 0; }
+.notif-patient {
+    font-size: .82rem; font-weight: 700; color: #1A2B4A;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.notif-patient span {
+    font-size: .73rem; font-weight: 500; color: #5A7090;
+    margin-left: 5px;
+}
+.notif-medicines {
+    font-size: .75rem; color: #5A7090;
+    margin: 3px 0 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.notif-meta {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+
+/* Status badges — from reference HTML */
+.n-badge {
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 9px; border-radius: 99px;
+    display: inline-flex; align-items: center; gap: 3px;
+}
+.n-badge-pending    { background: rgba(245,158,11,.12); color: #D97706; }
+.n-badge-dispensed  { background: rgba(34,197,94,.12);  color: #16A34A; }
+.n-badge-cancelled  { background: rgba(100,116,139,.12); color: #475569; }
+.n-badge-opd        { background: rgba(10,79,166,.1);   color: #0A4FA6; }
+.n-badge-ipd        { background: rgba(0,201,167,.1);   color: #059669; }
+
+.notif-time { font-size: .7rem; color: #8FA5C0; }
+
+/* Action buttons */
+.notif-actions { display: flex; gap: 5px; margin-top: 7px; }
+.notif-btn {
+    font-size: .7rem; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px; border: none; cursor: pointer; transition: all .15s;
+}
+.notif-btn-dispense {
+    background: #0A4FA6; color: #fff;
+}
+.notif-btn-dispense:hover { background: #063580; }
+.notif-btn-cancel {
+    background: #f0f4fb; color: #5A7090;
+    border: 1px solid #E2EAF4;
+}
+.notif-btn-cancel:hover { background: #fee2e2; color: #DC2626; border-color: #fca5a5; }
+
+/* Empty state */
+.notif-empty {
+    padding: 40px 20px; text-align: center; color: #8FA5C0;
+}
+.notif-empty i { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+.notif-empty p { font-size: .82rem; }
+
+/* Footer */
+.notif-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #E2EAF4;
+    text-align: center;
+    font-size: .75rem; color: #5A7090;
+    background: #f8faff;
+}
+
+/* ── TOAST CONTAINER ── */
+.erp-toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 99999;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.erp-toast {
+    background: #071E3D; color: #fff;
+    padding: 13px 18px; border-radius: 12px;
+    display: flex; align-items: flex-start; gap: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.28);
+    min-width: 300px; max-width: 380px;
+    border-left: 4px solid #00C9A7;
+    animation: toastIn .3s ease;
+    position: relative;
+}
+.erp-toast.toast-warning { border-left-color: #F59E0B; }
+@keyframes toastIn  { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+@keyframes toastOut { from{opacity:1;transform:translateX(0)}     to{opacity:0;transform:translateX(30px)} }
+
+.toast-ico {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+.toast-body { flex: 1; }
+.toast-title { font-size: .82rem; font-weight: 700; margin-bottom: 2px; }
+.toast-msg   { font-size: .76rem; color: rgba(255,255,255,.7); line-height: 1.4; }
+.toast-close {
+    background: none; border: none; color: rgba(255,255,255,.5);
+    cursor: pointer; font-size: .85rem; padding: 0; line-height: 1;
+    position: absolute; top: 10px; right: 12px;
+}
+.toast-close:hover { color: #fff; }
+</style>")
+
+<!-- ═══════════════════════════════
+     BELL BUTTON
+     Drop this inside your _topbar.cshtml
+     Replace your existing bell button
+═══════════════════════════════ -->
+<button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="Medicine Notifications">
+    <i class="bx bx-bell"></i>
+    <span class="notif-bell-count" id="notifBellCount">0</span>
+</button>
+
+<!-- ═══════════════════════════════
+     NOTIFICATION PANEL
+═══════════════════════════════ -->
+<div class="notif-panel" id="notifPanel">
+
+    <!-- Header -->
+    <div class="notif-head">
+        <div class="notif-head-title">
+            <span class="notif-live-dot"></span>
+            💊 Medicine Notifications
+        </div>
+        <span class="notif-head-count" id="panelPendingCount">0</span>
+        <a class="notif-mark-all ms-2" onclick="markAllDispensed()" title="Mark all pending as dispensed">
+            Mark all ✓
+        </a>
+    </div>
+
+    <!-- Tabs: All | Pending | Dispensed -->
+    <div class="notif-tabs">
+        <button class="notif-tab active" id="tabAll"       onclick="filterNotif('all')">All</button>
+        <button class="notif-tab"        id="tabPending"   onclick="filterNotif('Pending')">
+            Pending <span id="tabPendingCnt" style="font-size:.68rem;"></span>
+        </button>
+        <button class="notif-tab"        id="tabDispensed" onclick="filterNotif('Dispensed')">Dispensed</button>
+    </div>
+
+    <!-- List -->
+    <div class="notif-list" id="notifList">
+        <div class="notif-empty">
+            <i class="bx bx-bell-off"></i>
+            <p>No notifications yet</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="notif-footer">
+        <span class="notif-live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00C9A7;margin-right:5px;animation:blink 1.5s infinite;vertical-align:middle;"></span>
+        Live — refreshes every 8 seconds
+    </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TOAST CONTAINER
+═══════════════════════════════ -->
+<div class="erp-toast-container" id="erpToastContainer"></div>
+
+<!-- ═══════════════════════════════
+     NOTIFICATION SCRIPT
+═══════════════════════════════ -->
+<script>
+(function () {
+
+    // ─── STATE ───────────────────────────────────────
+    let allNotifications = [];
+    let currentFilter    = 'all';
+    let lastPollTime     = new Date().toISOString();
+    let panelOpen        = false;
+
+    // ─── TOGGLE PANEL ────────────────────────────────
+    window.toggleNotifPanel = function () {
+        panelOpen = !panelOpen;
+        const panel = document.getElementById('notifPanel');
+        panel.classList.toggle('open', panelOpen);
+        if (panelOpen) loadAllNotifications();
+    };
+
+    // Close panel when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!panelOpen) return;
+        const panel = document.getElementById('notifPanel');
+        const bell  = document.getElementById('notifBellBtn');
+        if (!panel.contains(e.target) && !bell.contains(e.target)) {
+            panelOpen = false;
+            panel.classList.remove('open');
+        }
+    });
+
+    // ─── FILTER TABS ─────────────────────────────────
+    window.filterNotif = function (filter) {
+        currentFilter = filter;
+        ['tabAll','tabPending','tabDispensed'].forEach(id =>
+            document.getElementById(id).classList.remove('active'));
+        const map = { all:'tabAll', Pending:'tabPending', Dispensed:'tabDispensed' };
+        if (map[filter]) document.getElementById(map[filter]).classList.add('active');
+        renderList();
+    };
+
+    // ─── LOAD ALL NOTIFICATIONS ───────────────────────
+    function loadAllNotifications() {
+        $.ajax({
+            url:  '/Notification/GetAll',
+            type: 'GET',
+            success: function (data) {
+                allNotifications = data || [];
+                renderList();
+                updateBadge();
+            }
+        });
+    }
+
+    // ─── RENDER LIST ─────────────────────────────────
+    function renderList() {
+        const list = document.getElementById('notifList');
+
+        let filtered = allNotifications;
+        if (currentFilter !== 'all') {
+            filtered = allNotifications.filter(n =>
+                n.status.toLowerCase() === currentFilter.toLowerCase());
+        }
+
+        const pendingCount = allNotifications.filter(n => n.status === 'Pending').length;
+        document.getElementById('panelPendingCount').textContent = pendingCount;
+        const cntEl = document.getElementById('tabPendingCnt');
+        if (cntEl) cntEl.textContent = pendingCount > 0 ? '(' + pendingCount + ')' : '';
+
+        if (!filtered.length) {
+            list.innerHTML = '<div class="notif-empty"><i class="bx bx-bell-off"></i><p>No notifications in this category</p></div>';
+            return;
+        }
+
+        list.innerHTML = filtered.map(n => buildItem(n)).join('');
+    }
+
+    // ─── BUILD SINGLE ITEM HTML ───────────────────────
+    function buildItem(n) {
+        const isPending    = n.status === 'Pending';
+        const isDispensed  = n.status === 'Dispensed';
+        const isCancelled  = n.status === 'Cancelled';
+
+        const iconClass  = n.type === 'IPD' ? 'ipd-icon' : 'opd-icon';
+        const iconChar   = n.type === 'IPD' ? '🛏' : '💊';
+        const typeClass  = n.type === 'IPD' ? 'n-badge-ipd' : 'n-badge-opd';
+
+        let statusBadge = '';
+        if (isPending)   statusBadge = '<span class="n-badge n-badge-pending">⏳ Pending</span>';
+        if (isDispensed) statusBadge = '<span class="n-badge n-badge-dispensed">✔ Dispensed</span>';
+        if (isCancelled) statusBadge = '<span class="n-badge n-badge-cancelled">✕ Cancelled</span>';
+
+        let actions = '';
+        if (isPending) {
+            actions = `
+                <div class="notif-actions">
+                    <button class="notif-btn notif-btn-dispense"
+                        onclick="dispense(${n.notificationId}, this)">
+                        ✓ Mark Dispensed
+                    </button>
+                    <button class="notif-btn notif-btn-cancel"
+                        onclick="cancelNotif(${n.notificationId}, this)">
+                        Cancel
+                    </button>
+                </div>`;
+        }
+
+        const doctor = n.doctorName ? `<small style="color:#5A7090">by ${n.doctorName}</small>` : '';
+
+        return `
+            <div class="notif-item ${isPending ? 'pending-item' : ''}" id="notif-item-${n.notificationId}">
+                <div class="notif-icon ${iconClass}">${iconChar}</div>
+                <div class="notif-body">
+                    <div class="notif-patient">
+                        ${escHtml(n.patientName)}
+                        <span>ID: ${n.patientId}</span>
+                    </div>
+                    <div class="notif-medicines">
+                        💊 ${n.medicineCount} medicine${n.medicineCount !== 1 ? 's' : ''} —
+                        ${escHtml(n.medicinesSummary || '')}
+                    </div>
+                    <div class="notif-meta">
+                        ${statusBadge}
+                        <span class="n-badge ${typeClass}">${n.type}</span>
+                        ${doctor}
+                        <span class="notif-time">${n.timeAgo || 'Just now'}</span>
+                    </div>
+                    ${actions}
+                </div>
+            </div>`;
+    }
+
+    // ─── MARK DISPENSED ──────────────────────────────
+    window.dispense = function (id, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        $.ajax({
+            url:  '/Notification/MarkDispensed?id=' + id,
+            type: 'GET',
+            success: function (res) {
+                if (res.success) {
+                    // Update local state instantly
+                    const n = allNotifications.find(x => x.notificationId === id);
+                    if (n) { n.status = 'Dispensed'; n.timeAgo = 'Just now'; }
+                    renderList();
+                    updateBadge();
+                    showToast('Dispensed', 'Medicine marked as dispensed successfully.', 'success');
+                }
+            },
+            error: function () { btn.disabled = false; btn.textContent = '✓ Mark Dispensed'; }
+        });
+    };
+
+    // ─── MARK CANCELLED ──────────────────────────────
+    window.cancelNotif = function (id, btn) {
+        btn.disabled = true;
+        $.ajax({
+            url:  '/Notification/MarkCancelled?id=' + id,
+            type: 'GET',
+            success: function (res) {
+                if (res.success) {
+                    const n = allNotifications.find(x => x.notificationId === id);
+                    if (n) n.status = 'Cancelled';
+                    renderList();
+                    updateBadge();
+                }
+            },
+            error: function () { btn.disabled = false; }
+        });
+    };
+
+    // ─── MARK ALL PENDING AS DISPENSED ───────────────
+    window.markAllDispensed = function () {
+        const pending = allNotifications.filter(n => n.status === 'Pending');
+        if (!pending.length) return;
+        pending.forEach(n => {
+            $.ajax({ url: '/Notification/MarkDispensed?id=' + n.notificationId, type: 'GET' });
+            n.status = 'Dispensed';
+        });
+        renderList();
+        updateBadge();
+        showToast('All Dispensed', `${pending.length} medicine${pending.length > 1 ? 's' : ''} marked as dispensed.`, 'success');
+    };
+
+    // ─── UPDATE BELL BADGE ────────────────────────────
+    function updateBadge() {
+        const count   = allNotifications.filter(n => n.status === 'Pending').length;
+        const badge   = document.getElementById('notifBellCount');
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.toggle('visible', count > 0);
+    }
+
+    // ─── POLL — COUNT every 8s ────────────────────────
+    function pollCount() {
+        $.ajax({
+            url:  '/Notification/GetPendingCount',
+            type: 'GET',
+            success: function (res) {
+                const count = res.count || 0;
+                const badge = document.getElementById('notifBellCount');
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.toggle('visible', count > 0);
+            }
+        });
+    }
+
+    // ─── POLL — NEW TOASTS every 8s ──────────────────
+    function pollNew() {
+        $.ajax({
+            url:  '/Notification/GetNewSince?since=' + encodeURIComponent(lastPollTime),
+            type: 'GET',
+            success: function (data) {
+                if (data && data.length > 0) {
+                    lastPollTime = new Date().toISOString();
+
+                    // Merge new into allNotifications (prepend)
+                    data.forEach(n => {
+                        if (!allNotifications.find(x => x.notificationId === n.notificationId)) {
+                            allNotifications.unshift(n);
+                        }
+                    });
+
+                    // Refresh panel if open
+                    if (panelOpen) renderList();
+
+                    // Update badge
+                    updateBadge();
+
+                    // Show toast for each new notification
+                    data.forEach(n => {
+                        if (n.status === 'Pending') {
+                            showToast(
+                                '💊 ' + (n.patientName || 'Patient') + ' (ID: ' + n.patientId + ')',
+                                (n.medicineCount || 0) + ' medicine' + (n.medicineCount !== 1 ? 's' : '') +
+                                ' prescribed — ' + (n.medicinesSummary || '') +
+                                (n.doctorName ? ' by ' + n.doctorName : ''),
+                                'info'
+                            );
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    // ─── TOAST ───────────────────────────────────────
+    window.showToast = function (title, msg, type) {
+        const container = document.getElementById('erpToastContainer');
+        const div = document.createElement('div');
+        div.className = 'erp-toast' + (type === 'warning' ? ' toast-warning' : '');
+
+        div.innerHTML = `
+            <div class="toast-ico">
+                ${type === 'success' ? '✔' : type === 'warning' ? '⚠️' : '💊'}
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">${escHtml(title)}</div>
+                <div class="toast-msg">${escHtml(msg)}</div>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">✕</button>`;
+
+        container.prepend(div);
+
+        // Auto dismiss after 6s
+        setTimeout(() => {
+            div.style.animation = 'toastOut .3s ease forwards';
+            setTimeout(() => div.remove(), 300);
+        }, 6000);
+    };
+
+    // ─── ESCAPE HTML ─────────────────────────────────
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ─── START POLLING ────────────────────────────────
+    // Initial load
+    loadAllNotifications();
+    // Poll count every 8s
+    setInterval(pollCount, 8000);
+    // Poll new items every 8s (offset by 1s to avoid simultaneous requests)
+    setTimeout(function () {
+        pollNew();
+        setInterval(pollNew, 8000);
+    }, 1000);
+
+})();
+</script>

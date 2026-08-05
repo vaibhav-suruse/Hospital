@@ -1,0 +1,450 @@
+﻿@using WebApplicationSampleTest2.Models
+@model Patient
+
+<h4 class="card-title">
+    @(Model.isUpdate ? "Edit Patient" : "Add New Patient")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="patientForm" novalidate
+                      asp-action="CreatePatientDetails" method="post"
+                      asp-controller="Patient" enctype="multipart/form-data">
+
+                    @Html.HiddenFor(m => m.Id)
+                    @Html.HiddenFor(m => m.isUpdate)
+                    <input type="hidden" asp-for="ProfilePhoto" />
+                    @* Carries the page to return to after a successful edit *@
+                    <input type="hidden" id="hdnReturnUrl" name="ReturnUrl"
+                           value="@(TempData.Peek("EditReturnUrl") as string ?? "")" />
+
+                    <h5 class="mb-3 text-primary">Personal Details</h5>
+                    <hr class="mb-4" />
+
+                    @* Row 1: Salutation + Full Name *@
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label class="form-label">Salutation</label>
+                                <select asp-for="Salutation" id="Salutation" class="form-select">
+                                    <option value="">Select</option>
+                                    <option value="Mr">Mr</option>
+                                    <option value="Mrs">Mrs</option>
+                                    <option value="Ms">Ms</option>
+                                    <option value="Dr">Dr</option>
+                                    <option value="Baby">Baby</option>
+                                    <option value="Master">Master</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="FullName" id="FullName"
+                                       class="form-control" placeholder="Enter Full Name" />
+                                <small class="text-danger" id="errFullName"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 2: Mobile Number + Gender *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="PhoneNumber" id="PhoneNumber"
+                                       class="form-control" placeholder="Enter 10 Digit Number" />
+                                <small class="text-danger" id="errPhoneNumber"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-2 mt-1">
+                                    <button type="button" class="btn btn-outline-secondary gender-btn flex-fill @(Model.Gender == "Male" ? "active" : "")" data-value="Male">Male</button>
+                                    <button type="button" class="btn btn-outline-secondary gender-btn flex-fill @(Model.Gender == "Female" ? "active" : "")" data-value="Female">Female</button>
+                                    <button type="button" class="btn btn-outline-secondary gender-btn flex-fill @(Model.Gender == "Other" ? "active" : "")" data-value="Other">Other</button>
+                                </div>
+                                <input type="hidden" asp-for="Gender" id="Gender" />
+                                <small class="text-danger" id="errGender"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 3: Date of Birth + Age *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" asp-for="DateOfBirth" id="DateOfBirth"
+                                       class="form-control"
+                                       value="@(Model.DateOfBirth.HasValue? Model.DateOfBirth.Value.ToString("yyyy-MM-dd") : "")" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Age in Years &amp; Months <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-2">
+                                    <input type="text" asp-for="Age" id="Age"
+                                           class="form-control" placeholder="Years" />
+                                    <input type="text" asp-for="AgeMonths" id="AgeMonths"
+                                           class="form-control" placeholder="Months" />
+                                </div>
+                                <small class="text-danger" id="errAge"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 4: Address + Reference ID *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" asp-for="Address" id="Address"
+                                          placeholder="Enter Address" rows="3">@Model.Address</textarea>
+                                <small class="text-danger" id="errAddress"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Patient Reference ID</label>
+                                <input type="text" asp-for="ReferenceId" id="ReferenceId"
+                                       class="form-control" placeholder="Patient Reference ID" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3 mt-4 text-primary">Secondary Details</h5>
+                    <hr class="mb-4" />
+
+                    @* Row 5: Blood Group + Marital Status *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Blood Group</label>
+                                <select asp-for="BloodGroup" id="BloodGroup" class="form-select">
+                                    <option value="">Select Blood Group</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Marital Status</label>
+                                <select asp-for="MaritalStatus" id="MaritalStatus" class="form-select">
+                                    <option value="">Select Marital Status</option>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="Divorced">Divorced</option>
+                                    <option value="Widowed">Widowed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 6: Occupation + Email *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" asp-for="Occupation" id="Occupation"
+                                       class="form-control" placeholder="Enter Patient's Occupation" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email ID</label>
+                                <input type="email" asp-for="Email" id="Email"
+                                       class="form-control" placeholder="Enter Patient's Email ID" />
+                                <small class="text-danger" id="errEmail"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 7: Profile Photo *@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Profile Photo</label>
+                                <input type="file" name="ProfilePhotoFile" id="ProfilePhotoFile"
+                                       class="form-control" accept="image/*" />
+                                @if (!string.IsNullOrEmpty(Model.ProfilePhoto))
+                                {
+                                    <div class="mt-2">
+                                        <img src="@Model.ProfilePhoto" alt="Profile"
+                                             style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:2px solid #ccc;" />
+                                        <small class="d-block text-muted mt-1">Current photo</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Buttons — only shown for Add (isUpdate=false) and Edit *@
+                    <div class="mt-3">
+                        @if (Model.isUpdate)
+                        {
+                            <button type="submit" id="btnUpdatePatient" class="btn btn-primary w-md">
+                                Update Patient
+                            </button>
+                            <a class="btn btn-secondary waves-effect ms-2"
+                               href="@(TempData.Peek("EditReturnUrl") as string ?? Url.Action("PatientList", "Patient"))">
+                                Cancel
+                            </a>
+                        }
+                        else
+                        {
+                            
+                            <button type="button" id="btnAddPatientStandalone" class="btn btn-primary w-md">
+                                <span id="btnAddText">Add Patient</span>
+                                <span id="btnAddSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none;"></span>
+                            </button>
+                            <a class="btn btn-secondary waves-effect ms-2"
+                               asp-controller="Patient" asp-action="PatientList">Cancel</a>
+                        }
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* ═══════════════════════════════════════════════════
+   PATIENT ADDED POPUP  (only for new patient flow)
+   Consult  → /Patient/EditAsOPD?appointmentId=...
+   Close (X) → /WalkInConsultation/Index
+═══════════════════════════════════════════════════ *@
+@if (!Model.isUpdate)
+{
+    <div class="modal fade" id="patientAddedModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+            <div class="modal-content" style="border-radius:12px;">
+
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Patient Added</h5>
+                    <button type="button" class="btn-close" id="btnCloseAddedModal"></button>
+                </div>
+
+                <div class="modal-body pt-2 pb-0">
+                    <div class="d-flex align-items-center gap-2 p-3 rounded mb-3"
+                         style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                        <i class="mdi mdi-check-circle text-success font-size-20"></i>
+                        <span class="text-success fw-medium">Patient has been successfully added.</span>
+                    </div>
+                    <p class="text-muted mb-2 fw-semibold">Choose Action</p>
+                </div>
+
+                <div class="modal-footer border-0 pt-0 pb-4 px-3">
+                    <button type="button"
+                            id="btnConsultNow"
+                            class="btn btn-primary w-100 fw-semibold"
+                            style="border-radius:8px; font-size:15px;">
+                        Consult
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            var emailRegex = new RegExp("^[^\\s" + String.fromCharCode(64) + "]+" + String.fromCharCode(64) + "[^\\s" + String.fromCharCode(64) + "]+\\.[^\\s" + String.fromCharCode(64) + "]+$");
+            var isUpdate   = @(Model.isUpdate ? "true" : "false");
+            var newAppointmentId = 0;
+
+            // ── Gender toggle buttons ──────────────────────────────
+            $(".gender-btn").on("click", function () {
+                $(".gender-btn").removeClass("active btn-secondary").addClass("btn-outline-secondary");
+                $(this).removeClass("btn-outline-secondary").addClass("active btn-secondary");
+                $("#Gender").val($(this).data("value"));
+                $("#errGender").text("");
+            });
+
+            // ── Full Name: letters & spaces only ──────────────────
+            $("#FullName").on("input", function () {
+                var v = $(this).val().replace(/[^A-Za-z\s]/g, '');
+                $(this).val(v);
+                $("#errFullName").text(v.trim() === "" ? "Full Name is required" : "");
+            });
+
+            // ── Age Years: numbers only, 0-120 ────────────────────
+            $("#Age").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                $(this).val(v);
+                if (v === "" || parseInt(v) < 0 || parseInt(v) > 120)
+                    $("#errAge").text("Valid age (0-120) is required");
+                else
+                    $("#errAge").text("");
+            });
+
+            // ── Age Months: numbers only, 0-11 ────────────────────
+            $("#AgeMonths").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                if (parseInt(v) > 11) v = "11";
+                $(this).val(v);
+            });
+
+            // ── DOB → auto-fill Age ────────────────────────────────
+            $("#DateOfBirth").on("change", function () {
+                var dob = new Date($(this).val());
+                if (isNaN(dob.getTime())) return;
+                var today  = new Date();
+                var years  = today.getFullYear() - dob.getFullYear();
+                var months = today.getMonth() - dob.getMonth();
+                if (months < 0) { years--; months += 12; }
+                $("#Age").val(years);
+                $("#AgeMonths").val(months);
+                $("#errAge").text("");
+            });
+
+            // ── Phone: numbers only, 10 digits ────────────────────
+            $("#PhoneNumber").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                $(this).val(v);
+                $("#errPhoneNumber").text(v.length !== 10 ? "Mobile number must be 10 digits" : "");
+            });
+
+            // ── Email format ───────────────────────────────────────
+            $("#Email").on("input", function () {
+                var v = $(this).val().trim();
+                $("#errEmail").text(v !== "" && !emailRegex.test(v) ? "Enter a valid email address" : "");
+            });
+
+            // ── Address ───────────────────────────────────────────
+            $("#Address").on("input", function () {
+                var v = $(this).val().replace(/[^A-Za-z0-9\s,.\-\/]/g, '');
+                $(this).val(v);
+                if (v.trim().length > 0 && v.trim().length < 5)
+                    $("#errAddress").text("Address must be at least 5 characters");
+                else
+                    $("#errAddress").text("");
+            });
+
+            // ══════════════════════════════════════════════════════
+            // ADD PATIENT (new patient only) — AJAX submit
+            // Shows Consult popup on success instead of redirecting
+            // ══════════════════════════════════════════════════════
+            if (!isUpdate) {
+                $("#btnAddPatientStandalone").on("click", function () {
+                    if (!validateForm()) return;
+
+                    $("#btnAddText").text("Saving...");
+                    $("#btnAddSpinner").show();
+                    $("#btnAddPatientStandalone").prop("disabled", true);
+
+                    // Build FormData so file upload also works
+                    var fd = new FormData(document.getElementById("patientForm"));
+
+                    $.ajax({
+                        url: '/Patient/CreatePatientDetailsAjax',
+                        type: 'POST',
+                        data: fd,
+                        processData: false,
+                        contentType: false,
+                        success: function (res) {
+                            $("#btnAddText").text("Add Patient");
+                            $("#btnAddSpinner").hide();
+                            $("#btnAddPatientStandalone").prop("disabled", false);
+
+                            if (res.success) {
+                                newAppointmentId = res.appointmentId;
+                                new bootstrap.Modal(
+                                    document.getElementById('patientAddedModal')
+                                ).show();
+                            } else {
+                                alert(res.message || "Failed to add patient.");
+                            }
+                        },
+                        error: function () {
+                            $("#btnAddText").text("Add Patient");
+                            $("#btnAddSpinner").hide();
+                            $("#btnAddPatientStandalone").prop("disabled", false);
+                            alert("Something went wrong. Please try again.");
+                        }
+                    });
+                });
+
+                // ── Consult → go to OPD form ──────────────────────
+                $("#btnConsultNow").on("click", function () {
+                    if (newAppointmentId > 0) {
+                        window.location.href = '/Patient/EditAsOPD?appointmentId=' + newAppointmentId;
+                    }
+                });
+
+                // ── Close popup → go to Walk-In page ─────────────
+                $("#btnCloseAddedModal").on("click", function () {
+                    bootstrap.Modal.getInstance(
+                        document.getElementById('patientAddedModal')
+                    ).hide();
+                    window.location.href = '/WalkInConsultation/Index';
+                });
+            }
+
+            // ══════════════════════════════════════════════════════
+            // UPDATE (existing patient) — normal form submit
+            // No AJAX needed; form posts normally to CreatePatientDetails
+            // ══════════════════════════════════════════════════════
+            if (isUpdate) {
+                $("#patientForm").on("submit", function (e) {
+                    if (!validateForm()) e.preventDefault();
+                });
+            }
+
+            // ══════════════════════════════════════════════════════
+            // SHARED VALIDATION
+            // ══════════════════════════════════════════════════════
+            function validateForm() {
+                var isValid = true;
+
+                if ($("#FullName").val().trim() === "") {
+                    $("#errFullName").text("Full Name is required");
+                    isValid = false;
+                }
+                if ($("#Gender").val() === "") {
+                    $("#errGender").text("Gender is required");
+                    isValid = false;
+                }
+                var age = $("#Age").val();
+                if (age === "" || parseInt(age) < 0 || parseInt(age) > 120) {
+                    $("#errAge").text("Valid age (0-120) is required");
+                    isValid = false;
+                }
+                if ($("#PhoneNumber").val().length !== 10) {
+                    $("#errPhoneNumber").text("Mobile number must be 10 digits");
+                    isValid = false;
+                }
+                var email = $("#Email").val().trim();
+                if (email !== "" && !emailRegex.test(email)) {
+                    $("#errEmail").text("Enter a valid email address");
+                    isValid = false;
+                }
+                var address = $("#Address").val().trim();
+                if (address !== "" && address.length < 5) {
+                    $("#errAddress").text("Address must be at least 5 characters");
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+        });
+    </script>
+}

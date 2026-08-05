@@ -1,0 +1,330 @@
+﻿@* Views/BillingSheet/Index.cshtml *@
+@model WebApplicationSampleTest2.Models.BillingSheetVM
+@{
+    ViewData["Title"] = "Billing Sheet";
+    int ipdId = Model.Admission.IPDId;
+    ViewBag.IPDId = ipdId;
+    var services = ViewBag.Services as List<WebApplicationSampleTest2.Models.BillingMaster> ?? new List<WebApplicationSampleTest2.Models.BillingMaster>();
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-file-invoice me-1"></i>
+                <strong>Billing Sheet</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.Admission.PatientName
+                    <small>(Adm# @Model.Admission.AdmissionNumber)</small>
+                </span>
+            </div>
+            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <div class="btn-group" role="group" id="billingTypeToggle">
+                    <button type="button" class="btn btn-sm @(Model.ActiveTab == "Doctor" ? "btn-primary" : "btn-outline-primary") billing-tab-btn" data-type="Doctor">
+                        Doctor Billing
+                    </button>
+                    <button type="button" class="btn btn-sm @(Model.ActiveTab == "Nurse" ? "btn-primary" : "btn-outline-primary") billing-tab-btn" data-type="Nurse">
+                        Nurse Billing
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-primary" id="openAddBillBtn">
+                    <i class="fas fa-plus me-1"></i> Add New Bill
+                </button>
+            </div>
+
+            <div id="doctorBillingContainer" style="display:@(Model.ActiveTab == "Doctor" ? "block" : "none")">
+                <h6 class="mb-2"><i class="fas fa-user-md me-1 text-primary"></i> Doctor Billing Sheet</h6>
+                <div id="doctorBillingList">
+                    @{
+                        ViewBag.IPDId = ipdId; ViewBag.BillingType = "Doctor"; ViewBag.Total = Model.DoctorTotal;
+                    }
+                    @await Html.PartialAsync("_BillingListPartial", Model.DoctorEntries)
+                </div>
+            </div>
+
+            <div id="nurseBillingContainer" style="display:@(Model.ActiveTab == "Nurse" ? "block" : "none")">
+                <h6 class="mb-2"><i class="fas fa-user-nurse me-1 text-success"></i> Nurse Billing Sheet</h6>
+                <div id="nurseBillingList">
+                    @{
+                        ViewBag.IPDId = ipdId; ViewBag.BillingType = "Nurse"; ViewBag.Total = Model.NurseTotal;
+                    }
+                    @await Html.PartialAsync("_BillingListPartial", Model.NurseEntries)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@* ============================= ADD MODAL ============================= *@
+
+<div class="modal fade" id="addBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addBillForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IPDId" value="@ipdId" />
+                <input type="hidden" name="BillingType" id="addBillingType" value="@Model.ActiveTab" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBillModalTitle">Add New Billing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="EntryDate" id="addEntryDate" class="form-control" required
+                                   value="@DateTime.Now.ToString("yyyy-MM-dd")" max="@DateTime.Now.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="col-md-6 mb-2" id="addDoctorGroup">
+                            <label class="form-label">Doctor Name <span class="text-danger">*</span></label>
+                            <select name="DoctorId" class="form-select" asp-items="ViewBag.Doctors">
+                                <option value="">-- Select Doctor --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2" id="addNurseGroup" style="display:none">
+                            <label class="form-label">Nurse Name <span class="text-danger">*</span></label>
+                            <select name="NurseId" class="form-select" asp-items="ViewBag.Nurses">
+                                <option value="">-- Select Nurse --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="form-label">Services <span class="text-danger">*</span></label>
+                    <select id="addServiceSelect" class="form-select mb-1">
+                        <option value="">-- Select from list --</option>
+                        @foreach (var s in services)
+                        {
+                            <option value="@s.Id" data-name="@s.Name" data-amount="@s.Amount">@s.Name (₹@s.Amount)</option>
+                        }
+                        <option value="custom">Other / Type manually</option>
+                    </select>
+                    <input type="text" name="ServiceName" id="addServiceName" class="form-control mb-2" placeholder="Service name" style="display:none">
+                    <input type="hidden" name="BillingMasterId" id="addBillingMasterId">
+
+                    <label class="form-label">Charge <span class="text-danger">*</span></label>
+                    <input type="number" name="Charge" id="addCharge" class="form-control mb-2" step="0.01" min="0.01" placeholder="0.00" required>
+
+                    <label class="form-label">Remarks</label>
+                    <textarea name="Remarks" class="form-control" rows="2" placeholder="Optional remarks"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="addBillSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Submit</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= EDIT MODAL ============================= *@
+
+<div class="modal fade" id="editBillModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editBillForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editBillId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Billing Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" name="EntryDate" id="editEntryDate" class="form-control mb-2" required max="@DateTime.Now.ToString("yyyy-MM-dd")">
+                    <label class="form-label">Services <span class="text-danger">*</span></label>
+                    <input type="text" name="ServiceName" id="editServiceName" class="form-control mb-2" required>
+                    <label class="form-label">Charge <span class="text-danger">*</span></label>
+                    <input type="number" name="Charge" id="editCharge" class="form-control mb-2" step="0.01" min="0.01" required>
+                    <label class="form-label">Remarks</label>
+                    <textarea name="Remarks" id="editRemarks" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="editBillSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+        var currentBillingType = '@Model.ActiveTab';
+
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 4000);
+        }
+        function ajaxSubmitForm(url, formEl, callback) {
+            var fd = new FormData(formEl);
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function ajaxPost(url, dataObj, callback) {
+            var fd = new FormData();
+            for (var k in dataObj) fd.append(k, dataObj[k]);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+
+        // ── Modal defensive cleanup (fixes backdrop freeze after AJAX submit) ──
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            var inst = bootstrap.Modal.getInstance(el);
+            if (inst) { inst.hide(); }
+            cleanupStrayModalBackdrops();
+        }
+        function cleanupStrayModalBackdrops() {
+            setTimeout(function () {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function (bd) { bd.remove(); });
+                }
+            }, 350);
+        }
+        document.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrops);
+
+        var listPartialUrl = '@Url.Action("ListPartial", "BillingSheet")';
+
+        function reloadList(billingType) {
+            var containerId = billingType === 'Nurse' ? 'nurseBillingList' : 'doctorBillingList';
+            fetch(listPartialUrl + '?ipdId=' + ipdId + '&billingType=' + billingType, { cache: 'no-store' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { document.getElementById(containerId).innerHTML = html; })
+                .catch(function () { showAlert('Could not refresh billing sheet. Please reload the page.', 'danger'); });
+        }
+
+        // ── Doctor Billing / Nurse Billing toggle ──────────────────────────
+        document.querySelectorAll('.billing-tab-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var type = btn.dataset.type;
+                currentBillingType = type;
+                document.querySelectorAll('.billing-tab-btn').forEach(function (b) {
+                    b.classList.toggle('btn-primary', b.dataset.type === type);
+                    b.classList.toggle('btn-outline-primary', b.dataset.type !== type);
+                });
+                document.getElementById('doctorBillingContainer').style.display = type === 'Doctor' ? 'block' : 'none';
+                document.getElementById('nurseBillingContainer').style.display = type === 'Nurse' ? 'block' : 'none';
+            });
+        });
+
+        // ── Add New Bill modal: pick Doctor/Nurse field based on active tab ──
+        document.getElementById('openAddBillBtn').addEventListener('click', function () {
+            document.getElementById('addBillingType').value = currentBillingType;
+            document.getElementById('addDoctorGroup').style.display = currentBillingType === 'Doctor' ? 'block' : 'none';
+            document.getElementById('addNurseGroup').style.display = currentBillingType === 'Nurse' ? 'block' : 'none';
+            document.getElementById('addBillModalTitle').textContent = 'Add New ' + currentBillingType + ' Billing';
+            new bootstrap.Modal(document.getElementById('addBillModal')).show();
+        });
+
+        // ── Service select: auto-fill charge, or reveal free-text box ───────
+        var addServiceSelect = document.getElementById('addServiceSelect');
+        var addServiceName = document.getElementById('addServiceName');
+        var addBillingMasterId = document.getElementById('addBillingMasterId');
+        var addCharge = document.getElementById('addCharge');
+
+        addServiceSelect.addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            if (this.value === 'custom') {
+                addServiceName.style.display = 'block';
+                addServiceName.value = '';
+                addServiceName.required = true;
+                addBillingMasterId.value = '';
+                addServiceName.focus();
+            } else if (this.value === '') {
+                addServiceName.style.display = 'none';
+                addServiceName.required = false;
+                addBillingMasterId.value = '';
+            } else {
+                addServiceName.style.display = 'none';
+                addServiceName.required = false;
+                addServiceName.value = opt.dataset.name;
+                addBillingMasterId.value = this.value;
+                addCharge.value = opt.dataset.amount;
+            }
+        });
+
+        function resetAddBillForm() {
+            document.getElementById('addBillForm').reset();
+            addServiceName.style.display = 'none';
+            addBillingMasterId.value = '';
+        }
+
+        document.getElementById('addBillSubmitBtn').addEventListener('click', function () {
+            if (!addServiceName.value) {
+                showAlert('Please choose or type a service.', 'danger');
+                return;
+            }
+            ajaxSubmitForm('@Url.Action("AddEntry", "BillingSheet")', document.getElementById('addBillForm'), function () {
+                reloadList(currentBillingType);
+                showAlert('Billing entry added.');
+                closeModal('addBillModal');
+                resetAddBillForm();
+            });
+        });
+
+        // ── Edit / Delete (event delegation on both containers) ─────────────
+        function wireContainer(containerId, billingType) {
+            document.getElementById(containerId).addEventListener('click', function (e) {
+                var editBtn = e.target.closest('.bs-edit-btn');
+                if (editBtn) {
+                    document.getElementById('editBillId').value = editBtn.dataset.id;
+                    document.getElementById('editEntryDate').value = editBtn.dataset.entryDate;
+                    document.getElementById('editServiceName').value = editBtn.dataset.serviceName;
+                    document.getElementById('editCharge').value = editBtn.dataset.charge;
+                    document.getElementById('editRemarks').value = editBtn.dataset.remarks || '';
+                    new bootstrap.Modal(document.getElementById('editBillModal')).show();
+                    return;
+                }
+                var delBtn = e.target.closest('.bs-delete-btn');
+                if (delBtn) {
+                    if (!confirm('Remove this billing entry?')) return;
+                    ajaxPost('@Url.Action("DeleteEntry", "BillingSheet")',
+                        { id: delBtn.dataset.id, ipdId: ipdId, billingType: billingType },
+                        function () { reloadList(billingType); showAlert('Billing entry removed.'); });
+                }
+            });
+        }
+        wireContainer('doctorBillingList', 'Doctor');
+        wireContainer('nurseBillingList', 'Nurse');
+
+        document.getElementById('editBillSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("EditEntry", "BillingSheet")', document.getElementById('editBillForm'), function () {
+                reloadList(currentBillingType);
+                showAlert('Billing entry updated.');
+                closeModal('editBillModal');
+            });
+        });
+    </script>
+}

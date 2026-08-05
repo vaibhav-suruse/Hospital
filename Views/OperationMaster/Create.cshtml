@@ -1,0 +1,285 @@
+﻿@* Views/OperationMaster/Create.cshtml *@
+@model WebApplicationSampleTest2.Models.OperationMaster
+@{
+    ViewData["Title"] = Model.isUpdate
+        ? "Edit Operation" : "Add Operation";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>
+                    <i class="fas fa-procedures me-2"></i>
+                    @(Model.isUpdate ? "Edit Operation" : "Add Operation")
+                </h4>
+                <a asp-action="Index" class="btn btn-secondary btn-sm">
+                    ← Back
+                </a>
+            </div>
+            <hr />
+
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <input type="hidden" asp-for="isUpdate" />
+                <input type="hidden" asp-for="OperationId" />
+                @* Keep hidden so model binding doesnt break DB columns *@
+                <input type="hidden" asp-for="SurgeonCharge" value="0" />
+                <input type="hidden" asp-for="AnesthesiaCharge" value="0" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Operation Name <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="OperationName"
+                               class="form-control"
+                               placeholder="e.g. Appendectomy" />
+                        <span asp-validation-for="OperationName"
+                              class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Operation Code</label>
+                        <input asp-for="OperationCode"
+                               class="form-control"
+                               placeholder="e.g. OT001" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <select asp-for="Category" class="form-control">
+                            <option value="">-- Select --</option>
+                            <option>General Surgery</option>
+                            <option>Orthopaedic</option>
+                            <option>Gynaecology</option>
+                            <option>ENT</option>
+                            <option>Urology</option>
+                            <option>Neurosurgery</option>
+                            <option>Cardiothoracic</option>
+                            <option>Laparoscopy</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <div class="form-check mt-2">
+                            <input asp-for="IsActive"
+                                   class="form-check-input"
+                                   type="checkbox" />
+                            <label class="form-check-label">Active</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label">OT Charges (₹)</label>
+                        <input asp-for="OTCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Other Charge (₹)</label>
+                        <input asp-for="DefaultCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="alert alert-primary py-2 text-center">
+                            <strong>Total: ₹<span id="totalCharge">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        @(Model.isUpdate ? "Update" : "Save")
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function calcTotal() {
+            var ot  = parseFloat(document.getElementById('OTCharge').value) || 0;
+            var def = parseFloat(document.getElementById('DefaultCharge').value) || 0;
+            document.getElementById('totalCharge').innerText = (ot + def).toFixed(2);
+        }
+        document.addEventListener('DOMContentLoaded', calcTotal);
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+@* Views/OperationMaster/Create.cshtml 
+@model WebApplicationSampleTest2.Models.OperationMaster
+@{
+    ViewData["Title"] = Model.isUpdate
+        ? "Edit Operation" : "Add Operation";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>
+                    <i class="fas fa-procedures me-2"></i>
+                    @(Model.isUpdate ? "Edit Operation" : "Add Operation")
+                </h4>
+                <a asp-action="Index" class="btn btn-secondary btn-sm">
+                    ← Back
+                </a>
+            </div>
+            <hr />
+
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <input type="hidden" asp-for="isUpdate" />
+                <input type="hidden" asp-for="OperationId" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Operation Name <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="OperationName"
+                               class="form-control"
+                               placeholder="e.g. Appendectomy" />
+                        <span asp-validation-for="OperationName"
+                              class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Operation Code</label>
+                        <input asp-for="OperationCode"
+                               class="form-control"
+                               placeholder="e.g. OT001" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <select asp-for="Category" class="form-control">
+                            <option value="">-- Select --</option>
+                            <option>General Surgery</option>
+                            <option>Orthopaedic</option>
+                            <option>Gynaecology</option>
+                            <option>ENT</option>
+                            <option>Urology</option>
+                            <option>Neurosurgery</option>
+                            <option>Cardiothoracic</option>
+                            <option>Laparoscopy</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <div class="form-check mt-2">
+                            <input asp-for="IsActive"
+                                   class="form-check-input"
+                                   type="checkbox" />
+                            <label class="form-check-label">Active</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+                @* <h6 class="text-primary">
+                    <i class="fas fa-rupee-sign me-1"></i>
+                    Default Charge Breakdown
+                </h6>
+                <small class="text-muted">
+                    These are default charges.
+                    You can change them when adding to patient.
+                </small>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label">OT Charges (₹)</label>
+                        <input asp-for="OTCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Surgeon Charge (₹)</label>
+                        <input asp-for="SurgeonCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Anesthesia Charge (₹)</label>
+                        <input asp-for="AnesthesiaCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Other Charge (₹)</label>
+                        <input asp-for="DefaultCharge"
+                               class="form-control"
+                               type="number" min="0" step="0.01"
+                               onchange="calcTotal()" />
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="alert alert-primary py-2 text-center">
+                            <strong>Total: ₹<span id="totalCharge">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        @(Model.isUpdate ? "Update" : "Save")
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function calcTotal() {
+            var ot   = parseFloat(
+                document.getElementById('OTCharge').value) || 0;
+            var surg = parseFloat(
+                document.getElementById('SurgeonCharge').value) || 0;
+            var anes = parseFloat(
+                document.getElementById('AnesthesiaCharge').value) || 0;
+            var def  = parseFloat(
+                document.getElementById('DefaultCharge').value) || 0;
+            document.getElementById('totalCharge')
+                .innerText = (ot + surg + anes + def).toFixed(2);
+        }
+        // Calculate on load for edit mode
+        document.addEventListener('DOMContentLoaded', calcTotal);
+    </script>
+}*@

@@ -1,0 +1,159 @@
+﻿@model WebApplicationSampleTest2.Models.SuperAdminDashboardVM
+@using Newtonsoft.Json
+<div class="col-xl-12">
+    <div class="row">
+        <!-- Total Hospitals -->
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-medium">Total Hospitals</p>
+                        <h4 class="mb-0">@Model.TotalHospitals</h4>
+                    </div>
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-building-house"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sub-Hospitals -->
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-medium">Total Sub-Hospitals</p>
+                        <h4 class="mb-0">@Model.TotalSubHospitals</h4>
+                    </div>
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-building"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Users -->
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted fw-medium">Total Users</p>
+                        <h4 class="mb-0">@Model.TotalUsers</h4>
+                    </div>
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-user"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left: Tabs -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Hospital Dashboard</h4>
+
+                <ul class="nav nav-pills bg-light rounded" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#main-tab">Sub-Hospitals / Users </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#sub-tab">Main Hospitals</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-4">
+                    <div class="tab-pane active" id="main-tab">
+                        <div class="table-responsive" style="max-height:330px;">
+                            <table class="table">
+                                <tbody>
+                                    @foreach (var h in Model.Hospitals)
+                                    {
+                                        <tr>
+                                            <td><i class="bx bx-building-house text-primary"></i></td>
+                                            <td>
+                                                <h5>@h.HospitalName</h5>
+                                                <p>Sub-Hospitals: @h.SubHospitalCount | Users: @h.UserCount</p>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="sub-tab">
+                        <div class="table-responsive" style="max-height:330px;">
+                            <table class="table">
+                                <tbody>
+                                    @foreach (var h in Model.Hospitals)
+                                    {
+                                        @if (h.SubHospitals.Any())
+                                        {
+                                            <tr><td colspan="2" class="fw-bold">@h.HospitalName Sub-Hospitals</td></tr>
+                                            @foreach (var s in h.SubHospitals)
+                                            {
+                                                <tr>
+                                                    <td><i class="bx bx-building text-info"></i></td>
+                                                    <td>
+                                                        <h5>@s.SubHospitalName</h5>
+                                                        <p>Users: @s.UserCount</p>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Line Chart -->
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Hospital Users Overview</h4>
+                <div id="hospital-users-chart" class="apex-charts" dir="ltr"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        var hospitalNames = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                        Model.Hospitals.Select(h => h.HospitalName)
+                ));
+
+        var userCounts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                        Model.Hospitals.Select(h => h.UserCount)
+                ));
+
+        var options = {
+            chart: { type: 'line', height: 350 },
+            series: [{ name: 'Users', data: userCounts }],
+            xaxis: { categories: hospitalNames },
+            stroke: { curve: 'smooth' },
+            markers: { size: 5 },
+            colors: ['#34c38f']
+        };
+
+        var chart = new ApexCharts(document.querySelector("#hospital-users-chart"), options);
+        chart.render();
+    });
+</script>

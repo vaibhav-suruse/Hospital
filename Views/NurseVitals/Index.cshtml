@@ -1,0 +1,97 @@
+﻿@model List<WebApplicationSampleTest2.Models.IPDNurseVitals>
+
+@{
+    ViewBag.Title = "Nurse Vitals";
+}
+
+<h4>Nurse Vitals History</h4>
+
+<a asp-action="Create"
+   asp-route-ipdId="@ViewBag.IPDId"
+   asp-route-hospitalId="@ViewBag.HospitalId"
+   asp-route-subHospitalId="@ViewBag.SubHospitalId"
+   class="btn btn-primary mb-3">
+    Add New Vitals
+</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Date Time</th>
+            <th>Shift</th>
+            <th>Recorded By</th>
+            <th>Temp</th>
+            <th>Pulse</th>
+            <th>BP</th>
+            <th>RR</th>
+            <th>SpO2</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var item in Model)
+            {
+                <tr class="@(item.IsAbnormal ? "table-danger" : "")">
+                    <td>@item.RecordedDateTime</td>
+                    <td>@item.Shift</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.RecordedByName))
+                        {
+                            @item.RecordedByName
+                        }
+                        else
+                        {
+                            @(item.RecordedByRole == "Doctor" ? "Doctor" : "Nurse")
+                        }
+                        <span class="badge @(item.RecordedByRole == "Doctor" ? "bg-info" : "bg-secondary")">
+                            @item.RecordedByRole
+                        </span>
+                    </td>
+                    <td>@item.Temperature</td>
+                    <td>@item.Pulse</td>
+                    <td>@item.Systolic / @item.Diastolic</td>
+                    <td>@item.RespirationRate</td>
+                    <td>@item.OxygenSaturation</td>
+                    <td>
+                        @if (item.IsAbnormal)
+                        {
+                            <span class="badge bg-danger">Critical</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Normal</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit"
+                           asp-route-id="@item.VitalsId"
+                           class="btn btn-sm btn-warning">Edit</a>
+
+                        <form asp-action="Delete"
+                              method="post"
+                              style="display:inline;">
+                            <input type="hidden" name="vitalsId" value="@item.VitalsId" />
+                            <input type="hidden" name="ipdId" value="@item.IPDId" />
+                            <input type="hidden" name="hospitalId" value="@item.ParentHospitalId" />
+                            <input type="hidden" name="subHospitalId" value="@item.SubHospitalId" />
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure?');">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="10" class="text-center">No vitals found.</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,174 @@
+﻿@using WebApplicationSampleTest2.Models
+@model Doctor
+
+@{
+    ViewData["Title"] = Model.isUpdate ? "Edit Doctor" : "Create Doctor";
+}
+
+<h4 class="card-title">
+    @(Model.isUpdate ? "Edit Doctor" : "Create Doctor")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="doctorForm"
+                      asp-action="Create"
+                      asp-controller="Doctor"
+                      method="post"
+                      novalidate>
+
+                    @Html.HiddenFor(x => x.Doctor_Id)
+                    @Html.HiddenFor(x => x.isUpdate)
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text"
+                                       asp-for="FirstName"
+                                       class="form-control"
+                                       id="FirstName"
+                                       placeholder="Enter First Name">
+                                <small class="text-danger" id="errFirstName"></small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text"
+                                       asp-for="LastName"
+                                       class="form-control"
+                                       id="LastName"
+                                       placeholder="Enter Last Name">
+                                <small class="text-danger" id="errLastName"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <select asp-for="Gender" id="Gender" class="form-select">
+                                    <option value="">Select Gender</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                                <small class="text-danger" id="errGender"></small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Specialization</label>
+                                <input type="text"
+                                       asp-for="Specialization"
+                                       class="form-control"
+                                       id="Specialization"
+                                       placeholder="Eg. Cardiologist">
+                                <small class="text-danger" id="errSpecialization"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- 🔥 UPDATED EXPERIENCE FIELD -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Experience (Years)</label>
+                                <input type="text"
+                                       asp-for="ExperienceYears"
+                                       class="form-control"
+                                       id="ExperienceYears"
+                                       oninput="this.value = this.value.replace(/^0+(?=\d)/, '')">
+                                <small class="text-danger" id="errExperience"></small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mobile No</label>
+                                <input type="text"
+                                       asp-for="MobileNo"
+                                       class="form-control"
+                                       id="MobileNo"
+                                       placeholder="10 digit mobile">
+                                <small class="text-danger" id="errMobile"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email"
+                                       asp-for="Email"
+                                       class="form-control"
+                                       id="Email">
+                                <small class="text-danger" id="errEmail"></small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Education</label>
+                                <input type="text"
+                                       asp-for="Education"
+                                       class="form-control"
+                                       id="Education">
+                                <small class="text-danger" id="errEducation"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea asp-for="Address"
+                                  class="form-control"
+                                  id="Address"
+                                  rows="3"></textarea>
+                        <small class="text-danger" id="errAddress"></small>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.isUpdate ? "Update" : "Submit")
+                        </button>
+
+                        <a asp-action="Index"
+                           asp-controller="Doctor"
+                           class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="/js/DoctorValidation.js"></script>
+
+    <!-- 🔥 EXTRA SAFETY VALIDATION -->
+    <script>
+        $("#doctorForm").on("submit", function (e) {
+            let exp = $("#ExperienceYears").val().trim();
+
+            if (/^0[0-9]+/.test(exp)) {
+                $("#ExperienceYears").addClass("is-invalid");
+                $("#errExperience").text("Experience should not start with 0");
+                e.preventDefault();
+            }
+        });
+    </script>
+}

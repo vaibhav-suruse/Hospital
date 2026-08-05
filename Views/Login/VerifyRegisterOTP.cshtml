@@ -1,0 +1,126 @@
+﻿@{
+    ViewData["Title"] = "Verify Email";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+    string email = ViewBag.Email ?? "";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">
+                                        Verify Email
+                                    </h5>
+                                    <p>Enter OTP sent to your email</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png"
+                                     class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3">
+
+                            @if (ViewBag.Error != null)
+                            {
+                                <div class="alert alert-danger">
+                                    @ViewBag.Error
+                                </div>
+                            }
+
+                            @if (TempData["Success"] != null)
+                            {
+                                <div class="alert alert-success">
+                                    @TempData["Success"]
+                                </div>
+                            }
+
+                            <div class="text-center mb-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <span class="avatar-title rounded-circle
+                                                 bg-primary bg-soft">
+                                        <i class="mdi mdi-email-outline
+                                                   text-primary font-size-24"></i>
+                                    </span>
+                                </div>
+                                <p class="text-muted">
+                                    We sent a 6-digit OTP to
+                                </p>
+                                <h6 class="text-primary">@email</h6>
+                            </div>
+
+                            <form asp-action="VerifyRegisterOTP"
+                                  asp-controller="Login"
+                                  method="post">
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Enter OTP
+                                    </label>
+                                    <input type="text"
+                                           name="otp"
+                                           class="form-control
+                                                  form-control-lg
+                                                  text-center
+                                                  font-size-20"
+                                           maxlength="6"
+                                           placeholder="_ _ _ _ _ _"
+                                           style="letter-spacing:12px;
+                                                  font-size:24px;
+                                                  font-weight:500;"
+                                           required />
+                                    <small class="text-muted">
+                                        OTP is valid for 10 minutes
+                                    </small>
+                                </div>
+
+                                <div class="d-grid mt-3">
+                                    <button type="submit"
+                                            class="btn btn-primary">
+                                        Verify and Create Account
+                                    </button>
+                                </div>
+
+                            </form>
+
+                            <form asp-action="ResendOTP"
+                                  asp-controller="Login"
+                                  method="post"
+                                  class="mt-3 text-center">
+                                <input type="hidden"
+                                       name="purpose"
+                                       value="REGISTER" />
+                                <button type="submit"
+                                        class="btn btn-link
+                                               text-muted p-0">
+                                    Didn't receive OTP?
+                                    <span class="text-primary">
+                                        Resend OTP
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-3">
+                                <a asp-action="PatientRegister"
+                                   asp-controller="Login"
+                                   class="text-muted small">
+                                    <i class="mdi mdi-arrow-left me-1"></i>
+                                    Change email address
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

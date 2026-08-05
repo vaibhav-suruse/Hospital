@@ -1,0 +1,487 @@
+﻿@* Views/DoctorRound/PrintPrescription.cshtml *@
+@model WebApplicationSampleTest2.Models.IPDPrescriptionVM
+@{
+    Layout = null;
+    bool isSingle = ViewBag.PrintMode == "single";
+    var rounds = isSingle
+        ? new List<WebApplicationSampleTest2.Models.IPDRoundPrintVM> { Model.Round }
+        : Model.Rounds;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>IPD Prescription</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #222;
+            background: #fff;
+            padding: 20px;
+        }
+
+        .prescription-container {
+            width: 750px;
+            margin: 0 auto;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1f4e79;
+        }
+
+        .hospital-info img {
+            height: 70px;
+            margin-bottom: 5px;
+        }
+
+        .hospital-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1f4e79;
+        }
+
+        .hospital-sub {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .doctor-info {
+            text-align: right;
+        }
+
+        .doctor-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f4e79;
+        }
+
+        .doctor-sub {
+            font-size: 12px;
+            color: #555;
+        }
+
+        /* ===== PATIENT INFO ===== */
+        .patient-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #f0f4f8;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+            .patient-bar span {
+                margin-right: 15px;
+            }
+
+        /* ===== ROUND BLOCK ===== */
+        .round-block {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .round-header {
+            background: #1f4e79;
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            border-radius: 5px 5px 0 0;
+            font-size: 13px;
+        }
+
+        .round-body {
+            padding: 12px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #1f4e79;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 4px;
+            margin: 10px 0 6px 0;
+        }
+
+        /* ===== MEDICINES TABLE ===== */
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+            .med-table th {
+                background: #e8f0fe;
+                padding: 6px 8px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+            .med-table td {
+                padding: 6px 8px;
+                border: 1px solid #eee;
+            }
+
+            .med-table tr:nth-child(even) td {
+                background: #fafafa;
+            }
+
+        .check {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .dash {
+            color: #aaa;
+        }
+
+        /* ===== INVESTIGATION TABLE ===== */
+        .inv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+            .inv-table th {
+                background: #fff3cd;
+                padding: 6px 8px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }
+
+            .inv-table td {
+                padding: 6px 8px;
+                border: 1px solid #eee;
+            }
+
+        /* ===== SIGNATURE ===== */
+        .signature-box {
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+
+        /* ===== PAGE BREAK ===== */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-bar {
+            width: 750px;
+            margin: 15px auto;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            margin: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        .btn-print {
+            background: #1f4e79;
+        }
+
+        .btn-pdf {
+            background: #28a745;
+        }
+
+        .btn-back {
+            background: #6c757d;
+        }
+
+        @@media print {
+            .btn-bar {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="prescription-container" id="prescriptionContent">
+
+        @* ===== HOSPITAL HEADER ===== *@
+        <div class="header">
+            <div class="hospital-info">
+                @if (!string.IsNullOrEmpty(Model.HospitalLogo))
+                {
+                    <img src="/uploads/hospitals/@Model.HospitalLogo" alt="Logo" />
+                }
+                <div class="hospital-name">@Model.HospitalName</div>
+                <div class="hospital-sub">@Model.HospitalAddress</div>
+                <div class="hospital-sub">
+                    📞 @Model.HospitalPhone &nbsp;|&nbsp;
+                    ✉ @Model.HospitalEmail
+                </div>
+                @if (!string.IsNullOrEmpty(Model.HospitalRegNo))
+                {
+                    <div class="hospital-sub">Reg No: @Model.HospitalRegNo</div>
+                }
+            </div>
+
+            @* Doctor info from first round *@
+            @if (rounds != null && rounds.Count > 0)
+            {
+                var firstRound = rounds[0];
+                <div class="doctor-info">
+                    <div class="doctor-name">Dr. @firstRound.DoctorName</div>
+                    <div class="doctor-sub">@firstRound.Education</div>
+                    <div class="doctor-sub">@firstRound.Specialization</div>
+                </div>
+            }
+        </div>
+
+        @* ===== PATIENT BAR ===== *@
+        <div class="patient-bar">
+            <span><strong>Patient:</strong> @Model.PatientName</span>
+            <span><strong>Age/Sex:</strong> @Model.Age Y / @Model.Gender</span>
+            <span><strong>IPD No:</strong> @Model.AdmissionNumber</span>
+            <span><strong>Ward:</strong> @Model.WardName</span>
+            <span><strong>Bed:</strong> @Model.BedNumber</span>
+            <span><strong>Admitted:</strong> @Model.AdmissionDateTime.ToString("dd-MM-yyyy")</span>
+        </div>
+
+        @* ===== ROUNDS ===== *@
+        @if (rounds != null)
+        {
+            bool first = true;
+            foreach (var round in rounds)
+            {
+                if (!first && !isSingle)
+                {
+                    <div class="page-break"></div>
+                }
+                first = false;
+
+                <div class="round-block">
+
+                    @* Round Header *@
+                    <div class="round-header">
+                        <span>
+                            <strong>@round.RoundType Round</strong> &nbsp;|&nbsp;
+                            @round.RoundDateTime.ToString("dd-MM-yyyy HH:mm")
+                        </span>
+                        <span>Dr. @round.DoctorName — @round.Specialization</span>
+                    </div>
+
+                    <div class="round-body">
+
+                        @* Condition + Diagnosis *@
+                        @if (!string.IsNullOrEmpty(round.PatientCondition) || !string.IsNullOrEmpty(round.Diagnosis))
+                        {
+                            <div class="section-title">Clinical Notes</div>
+                            <div style="display:flex; gap:20px;">
+                                @if (!string.IsNullOrEmpty(round.PatientCondition))
+                                {
+                                    <div><strong>Condition:</strong> @round.PatientCondition</div>
+                                }
+                                @if (!string.IsNullOrEmpty(round.Diagnosis))
+                                {
+                                    <div><strong>Diagnosis:</strong> @round.Diagnosis</div>
+                                }
+                            </div>
+                        }
+
+                        @* Symptoms *@
+                        @if (round.Symptoms != null && round.Symptoms.Count > 0)
+                        {
+                            <div class="section-title">Symptoms</div>
+                            <div style="font-size:12px;">
+                                @string.Join(", ", round.Symptoms.Select(s =>
+                                string.IsNullOrEmpty(s.SubName) ? s.SymptomName : $"{s.SymptomName} ({s.SubName})"))
+                </div>
+                                }
+
+                        @* Medicines *@
+                        @if (round.Medicines != null && round.Medicines.Count > 0)
+                        {
+                            <div class="section-title">℞ Prescription</div>
+                            <table class="med-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Medicine</th>
+                                        <th>Type</th>
+                                        <th>Dosage</th>
+                                        <th>M</th>
+                                        <th>A</th>
+                                        <th>E</th>
+                                        <th>Days</th>
+                                        <th>Route</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int mi = 1;
+                                    }
+                                    @foreach (var med in round.Medicines)
+                                    {
+                                        <tr>
+                                            <td>@mi</td>
+                                            <td><strong>@med.MedicineName</strong></td>
+                                            <td>@med.MedicineType</td>
+                                            <td>@(med.Dosage ?? "-")</td>
+                                            <td class="@(med.Morning ? "check" : "dash")">
+                                                @(med.Morning ? "✔" : "–")
+                                            </td>
+                                            <td class="@(med.Afternoon ? "check" : "dash")">
+                                                @(med.Afternoon ? "✔" : "–")
+                                            </td>
+                                            <td class="@(med.Evening ? "check" : "dash")">
+                                                @(med.Evening ? "✔" : "–")
+                                            </td>
+                                            <td>@(med.Days.HasValue? med.Days + "d" : "-")</td>
+                                            <td>@(med.Route ?? "-")</td>
+                                        </tr>
+                                        mi++;
+                                    }
+                                </tbody>
+                            </table>
+                        }
+
+                        @* Investigations *@
+                        @if (round.Investigations != null && round.Investigations.Count > 0)
+                        {
+                            <div class="section-title">Investigations Ordered</div>
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Type</th>
+                                        <th>Test Name</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int ii = 1;
+                                    }
+                                    @foreach (var inv in round.Investigations)
+                                    {
+                                        <tr>
+                                            <td>@ii</td>
+                                            <td>@inv.InvestigationType</td>
+                                            <td>@inv.TestName</td>
+                                            <td>@inv.Priority</td>
+                                            <td>@inv.Status</td>
+                                        </tr>
+                                        ii++;
+                                    }
+                                </tbody>
+                            </table>
+                        }
+
+                        @* Instructions *@
+                        @if (!string.IsNullOrEmpty(round.Instructions))
+                        {
+                            <div class="section-title">Instructions</div>
+                            <div style="font-size:12px;">@round.Instructions</div>
+                        }
+
+                        @* Signature *@
+                        <div class="signature-box">
+                            <div style="font-size:13px; font-weight:bold;">Dr. @round.DoctorName</div>
+                            <div style="font-size:11px; color:#555;">@round.Specialization</div>
+                            <div style="font-size:11px; color:#999; margin-top:3px;">Signature</div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        }
+
+        @* ===== FOOTER ===== *@
+        <div class="footer">
+            This is a computer generated prescription. &nbsp;|&nbsp;
+            @Model.HospitalName &nbsp;|&nbsp;
+            Printed on: @DateTime.Now.ToString("dd-MM-yyyy HH:mm")
+        </div>
+
+    </div>
+
+    @* ===== BUTTONS ===== *@
+    <div class="btn-bar">
+        <button class="btn btn-print" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-pdf" onclick="downloadPDF()">⬇ Download PDF</button>
+        <button class="btn btn-back" onclick="window.close()">✕ Close</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+               function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('prescriptionContent');
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pageWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // ✅ FIX
+                var admissionNumber = '@Model.AdmissionNumber';
+                pdf.save('IPD_Prescription_' + admissionNumber + '.pdf');
+            });
+        }
+    </script>
+
+</body>
+</html>

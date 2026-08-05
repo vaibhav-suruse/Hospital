@@ -1,0 +1,572 @@
+﻿@model List<WebApplicationSampleTest2.Models.IPDNurseVitals>
+@{
+    Layout = null;
+    var admission = (WebApplicationSampleTest2.Models.IPDAdmissionModel)ViewBag.Admission;
+    int dayNumber = (int)ViewBag.DayNumber;
+    DateTime dayDate = (DateTime)ViewBag.DayDate;
+
+    var hospitalName = (string)ViewBag.HospitalName;
+    var hospitalAddress = (string)ViewBag.HospitalAddress;
+    var hospitalPhone = (string)ViewBag.HospitalPhone;
+    var hospitalEmail = (string)ViewBag.HospitalEmail;
+    var hospitalLogo = (string)ViewBag.HospitalLogo;
+    var hospitalRegNo = (string)ViewBag.HospitalRegNo;
+    var patientAge = (string)ViewBag.PatientAge;
+    var patientGender = (string)ViewBag.PatientGender;
+
+    // Day summary - computed server-side for the top summary strip
+    var validTemps = Model?.Where(v => v.Temperature.HasValue).Select(v => v.Temperature.Value).ToList() ?? new List<decimal>();
+    var validPulses = Model?.Where(v => v.Pulse.HasValue).Select(v => (decimal)v.Pulse.Value).ToList() ?? new List<decimal>();
+    var validRRs = Model?.Where(v => v.RespirationRate.HasValue).Select(v => (decimal)v.RespirationRate.Value).ToList() ?? new List<decimal>();
+    var validSpO2 = Model?.Where(v => v.OxygenSaturation.HasValue).Select(v => v.OxygenSaturation.Value).ToList() ?? new List<int>();
+    var validSys = Model?.Where(v => v.Systolic.HasValue).Select(v => v.Systolic.Value).ToList() ?? new List<int>();
+    var validDia = Model?.Where(v => v.Diastolic.HasValue).Select(v => v.Diastolic.Value).ToList() ?? new List<int>();
+
+    string Avg(List<decimal> list) => list.Count > 0 ? list.Average().ToString("0.0") : "—";
+    string MinMax(List<decimal> list) => list.Count > 0 ? $"{Min(list):0.0}–{Max(list):0.0}" : "—";
+    string MinMaxInt(List<int> list) => list.Count > 0 ? $"{MinI(list)}–{MaxI(list)}" : "—";
+    decimal Min(List<decimal> list) => list.Min();
+    decimal Max(List<decimal> list) => list.Max();
+    int MinI(List<int> list) => list.Min();
+    int MaxI(List<int> list) => list.Max();
+
+    string patientTitle = string.IsNullOrWhiteSpace(patientGender) ? "" : patientGender;
+    string ageText = string.IsNullOrWhiteSpace(patientAge) ? "" : $"/ {patientAge} yrs";
+    string patientAgeSex = (patientTitle + " " + ageText).Trim();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Vital Parameters - Day @dayNumber</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+            background: #f0f2f5;
+            padding: 24px;
+        }
+
+        .sheet {
+            width: 820px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #d8dde4;
+            border-radius: 6px;
+            padding: 22px 26px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.08);
+        }
+
+        /* ===== HOSPITAL LETTERHEAD ===== */
+        .letterhead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #1f4e79;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+
+        .letterhead-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .letterhead-logo {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .hospital-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f4e79;
+            letter-spacing: .3px;
+        }
+
+        .hospital-address {
+            font-size: 11px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        .hospital-line {
+            font-size: 11px;
+            color: #555;
+            margin-top: 1px;
+        }
+
+        .letterhead-right {
+            text-align: right;
+            font-size: 11px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .letterhead-right strong {
+            color: #1f4e79;
+        }
+
+        .doc-title {
+            background: #1f4e79;
+            color: #fff;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 7px 0;
+            border-radius: 4px;
+            margin-bottom: 14px;
+        }
+
+        /* ===== PATIENT INFO BAR ===== */
+        .patient-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: #f4f7fb;
+            border: 1px solid #dde5ee;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+        }
+
+        .patient-bar .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: #7a8794;
+            margin-bottom: 2px;
+        }
+
+        .patient-bar .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2d3d;
+        }
+
+        /* ===== SUMMARY STRIP ===== */
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .summary-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 8px;
+            text-align: center;
+        }
+
+        .summary-card .s-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: #7a8794;
+        }
+
+        .summary-card .s-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f4e79;
+            margin-top: 2px;
+        }
+
+        .summary-card .s-sub {
+            font-size: 9px;
+            color: #8a94a0;
+            margin-top: 1px;
+        }
+
+        /* ===== VITALS TABLE ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+
+        th, td {
+            border: 1px solid #c9d2dc;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 11.5px;
+        }
+
+        thead th {
+            background: #eef2f7;
+            color: #1f2d3d;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .ref-row th {
+            background: #f7f9fb;
+            color: #6b7886;
+            font-weight: 600;
+            font-size: 10px;
+            border-top: none;
+        }
+
+        tbody tr {
+            background: #fff;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfd;
+        }
+
+        td.time {
+            font-weight: 600;
+            color: #1f2d3d;
+        }
+
+        .shift-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .shift-morning { background: #fff3cd; color: #856404; }
+        .shift-afternoon { background: #d1ecf1; color: #0c5460; }
+        .shift-night { background: #e2e3e5; color: #383d41; }
+
+        .abnormal {
+            background: #fdecec !important;
+            color: #b02a37;
+            font-weight: 700;
+        }
+
+        .abnormal-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #dc3545;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        .notes-cell {
+            text-align: left;
+            color: #444;
+            font-size: 11px;
+            max-width: 160px;
+        }
+
+        /* ===== SIGNATURES ===== */
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 40px;
+            padding-top: 8px;
+        }
+
+        .signature-box {
+            border-top: 1px solid #444;
+            padding-top: 8px;
+            text-align: center;
+        }
+
+        .signature-box .sig-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .signature-box .sig-sub {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+            font-size: 10px;
+            color: #7a8794;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .footer .ref {
+            margin-top: 6px;
+            font-size: 9.5px;
+            color: #98a2ad;
+        }
+
+        .no-print {
+            display: block;
+            margin: 16px auto 0;
+            padding: 9px 26px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #1f4e79;
+            color: #fff;
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .sheet {
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                border-radius: 0;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .abnormal {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sheet">
+        <!-- ══════════ HOSPITAL LETTERHEAD ══════════ -->
+        <div class="letterhead">
+            <div class="letterhead-left">
+                @if (!string.IsNullOrWhiteSpace(hospitalLogo))
+                {
+                    <img class="letterhead-logo" src="@Url.Content("~/" + hospitalLogo)" alt="Hospital Logo" />
+                }
+                <div>
+                    <div class="hospital-name">@hospitalName</div>
+                    <div class="hospital-address">@hospitalAddress</div>
+                    <div class="hospital-line">
+                        @if (!string.IsNullOrWhiteSpace(hospitalPhone))
+                        {
+                            <span>Ph: @hospitalPhone</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(hospitalEmail))
+                        {
+                            <span>&nbsp;|&nbsp; @hospitalEmail</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="letterhead-right">
+                @if (!string.IsNullOrWhiteSpace(hospitalRegNo))
+                {
+                    <div><strong>Reg No:</strong> @hospitalRegNo</div>
+                }
+                <div><strong>Day:</strong> Day @dayNumber</div>
+                <div><strong>Date:</strong> @dayDate.ToString("dd MMM yyyy")</div>
+            </div>
+        </div>
+
+        <!-- ══════════ DOCUMENT TITLE ══════════ -->
+        <div class="doc-title">VITAL PARAMETERS CHART</div>
+
+        <!-- ══════════ PATIENT INFO BAR ══════════ -->
+        <div class="patient-bar">
+            <div>
+                <div class="label">Patient Name</div>
+                <div class="value">@admission.PatientName</div>
+            </div>
+            <div>
+                <div class="label">Age / Sex</div>
+                <div class="value">@patientAgeSex</div>
+            </div>
+            <div>
+                <div class="label">IPD No.</div>
+                <div class="value">@admission.AdmissionNumber</div>
+            </div>
+            <div>
+                <div class="label">Primary Doctor</div>
+                <div class="value">@admission.DoctorName</div>
+            </div>
+            <div>
+                <div class="label">Admission Date</div>
+                <div class="value">@admission.AdmissionDateTime.ToString("dd MMM yyyy hh:mm tt")</div>
+            </div>
+            <div>
+                <div class="label">Admission Type</div>
+                <div class="value">@admission.AdmissionType</div>
+            </div>
+            <div>
+                <div class="label">Reason for Admission</div>
+                <div class="value">@admission.ReasonForAdmission</div>
+            </div>
+            <div>
+                <div class="label">Status</div>
+                <div class="value">@admission.Status</div>
+            </div>
+        </div>
+
+        <!-- ══════════ DAY SUMMARY ══════════ -->
+        <div class="summary-strip">
+            <div class="summary-card">
+                <div class="s-title">Temp Range</div>
+                <div class="s-value">@MinMax(validTemps)°C</div>
+                <div class="s-sub">Avg @Avg(validTemps)°C</div>
+            </div>
+            <div class="summary-card">
+                <div class="s-title">Pulse Range</div>
+                <div class="s-value">@MinMax(validPulses)</div>
+                <div class="s-sub">Avg @Avg(validPulses) bpm</div>
+            </div>
+            <div class="summary-card">
+                <div class="s-title">BP Range</div>
+                <div class="s-value">@MinMaxInt(validSys)/@MinMaxInt(validDia)</div>
+                <div class="s-sub">mmHg</div>
+            </div>
+            <div class="summary-card">
+                <div class="s-title">RR Range</div>
+                <div class="s-value">@MinMax(validRRs)</div>
+                <div class="s-sub">Avg @Avg(validRRs) /min</div>
+            </div>
+            <div class="summary-card">
+                <div class="s-title">SpO2 Range</div>
+                <div class="s-value">@MinMaxInt(validSpO2)%</div>
+                <div class="s-sub">Avg @Avg(validSpO2.Select(x => (decimal)x).ToList())%</div>
+            </div>
+            <div class="summary-card">
+                <div class="s-title">Readings</div>
+                <div class="s-value">@(Model?.Count ?? 0)</div>
+                <div class="s-sub">Total entries</div>
+            </div>
+        </div>
+
+        <!-- ══════════ VITALS TABLE ══════════ -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Shift</th>
+                    <th>Recorded By</th>
+                    <th>Temp (°C)</th>
+                    <th>Pulse (bpm)</th>
+                    <th>BP (mmHg)</th>
+                    <th>RR (/min)</th>
+                    <th>SpO₂ (%)</th>
+                    <th>Notes</th>
+                </tr>
+                <tr class="ref-row">
+                    <th colspan="3">Reference Range</th>
+                    <th>36.0–38.0</th>
+                    <th>60–100</th>
+                    <th>90/60–140/90</th>
+                    <th>12–20</th>
+                    <th>95–100</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="9" style="padding:20px;color:#888;font-size:12px;">
+                            No vitals recorded for this day.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var v in Model)
+                    {
+                        var shiftClass = v.Shift?.ToLower() switch
+                        {
+                            "morning" => "shift-morning",
+                            "afternoon" => "shift-afternoon",
+                            "night" => "shift-night",
+                            _ => "shift-morning"
+                        };
+                        var tempCell = v.Temperature.HasValue ? v.Temperature.Value.ToString("0.0") : "—";
+                        var pulseCell = v.Pulse.HasValue ? v.Pulse.Value.ToString() : "—";
+                        var bpCell = (v.Systolic.HasValue && v.Diastolic.HasValue) ? $"{v.Systolic}/{v.Diastolic}" : "—";
+                        var rrCell = v.RespirationRate.HasValue ? v.RespirationRate.Value.ToString() : "—";
+                        var spo2Cell = v.OxygenSaturation.HasValue ? v.OxygenSaturation.Value.ToString() : "—";
+                        var recordedBy = string.IsNullOrEmpty(v.RecordedByName) ? v.RecordedByRole : v.RecordedByName;
+
+                        <tr>
+                            <td class="time">
+                                @v.RecordedDateTime.ToString("hh:mm tt")
+                                @if (v.IsAbnormal)
+                                {
+                                    <span class="abnormal-dot" title="Abnormal reading"></span>
+                                }
+                            </td>
+                            <td>
+                                <span class="shift-badge @shiftClass">@v.Shift</span>
+                            </td>
+                            <td>@recordedBy</td>
+                            <td class="@(v.Temperature.HasValue && (v.Temperature < 36 || v.Temperature > 38) ? "abnormal" : "")">@tempCell</td>
+                            <td class="@(v.Pulse.HasValue && (v.Pulse < 60 || v.Pulse > 100) ? "abnormal" : "")">@pulseCell</td>
+                            <td class="@((v.Systolic.HasValue && (v.Systolic < 90 || v.Systolic > 140)) || (v.Diastolic.HasValue && (v.Diastolic < 60 || v.Diastolic > 90)) ? "abnormal" : "")">@bpCell</td>
+                            <td class="@(v.RespirationRate.HasValue && (v.RespirationRate < 12 || v.RespirationRate > 20) ? "abnormal" : "")">@rrCell</td>
+                            <td class="@(v.OxygenSaturation.HasValue && v.OxygenSaturation < 95 ? "abnormal" : "")">@spo2Cell</td>
+                            <td class="notes-cell">@v.Notes</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- ══════════ SIGNATURES ══════════ -->
+        <div class="signatures">
+            <div class="signature-box">
+                <div class="sig-label">Recorded By (Nurse)</div>
+                <div class="sig-sub">Name &amp; Signature</div>
+            </div>
+            <div class="signature-box">
+                <div class="sig-label">Primary Doctor</div>
+                <div class="sig-sub">@admission.DoctorName</div>
+            </div>
+            <div class="signature-box">
+                <div class="sig-label">Authorized Signatory</div>
+                <div class="sig-sub">Hospital Authority</div>
+            </div>
+        </div>
+
+        <!-- ══════════ FOOTER ══════════ -->
+        <div class="footer">
+            <div>
+                This is a computer-generated vital parameters record for patient <strong>@admission.PatientName</strong>
+                (IPD No: @admission.AdmissionNumber), Day @dayNumber.
+            </div>
+            <div>
+                Generated on: @DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+            </div>
+            <div class="ref">
+                <strong>Reference Ranges:</strong>
+                Temp 36.0–38.0 °C &nbsp;|&nbsp; Pulse 60–100 bpm &nbsp;|&nbsp;
+                BP 90/60–140/90 mmHg &nbsp;|&nbsp; RR 12–20 /min &nbsp;|&nbsp; SpO₂ 95–100 %
+                &nbsp;|&nbsp; <span style="color:#dc3545;">● Red = Abnormal</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="no-print" onclick="window.print()">🖨 Print Vital Chart</button>
+
+    <script>window.onload = function () { window.print(); };</script>
+</body>
+</html>

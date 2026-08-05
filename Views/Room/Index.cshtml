@@ -1,0 +1,84 @@
+﻿@model List<WebApplicationSampleTest2.Models.RoomListVM>
+
+
+@{
+    ViewBag.Title = "Rooms List";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Rooms</h4>
+                <p class="card-title-desc">Select a ward to see its rooms.</p>
+
+                <div class="row mb-3">
+                    <div class="col-12 d-flex justify-content-end">
+                        <a asp-action="Create" asp-route-wardId="@ViewBag.WardId" class="btn btn-primary mb-3">Add New Room</a>
+                    </div>
+                </div>
+
+                @* Ward selection dropdown using Razor tag helpers *@
+                <form method="get" asp-action="Index">
+                    <div class="row justify-content-end">
+                        <!-- makes content move to the right -->
+                        <div class="col-3">
+                            <!-- sets width to 3/12 of the row -->
+                            <div class="mb-3">
+                                @* <label for="wardDropdown" class="form-label">Select Ward:</label> *@
+                                <select id="wardDropdown" name="wardId" class="form-control" asp-items="ViewBag.Wards" onchange="this.form.submit()">
+                                    <option value="">-- Select Ward --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+
+
+
+
+
+
+
+                @if (Model != null && Model.Any())
+                {
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Ward Name</th>
+                                <th>Floor Number</th>
+                                <th>Room Number</th>
+                                <th>Room Type</th>
+                                <th>Total Beds</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var room in Model)
+                            {
+                                <tr>
+                                    <td>@room.WardName</td>
+                                    <td>@room.FloorNumber</td>
+                                    <td>@room.RoomNumber</td>
+                                    <td>@room.RoomType</td>
+                                    <td>@room.TotalBeds</td>
+                                    <td>@(room.IsActive ? "Active" : "Inactive")</td>
+                                    <td>
+                                        <a asp-action="Edit" asp-route-id="@room.RoomId" class="btn btn-primary btn-sm">Edit</a>
+                                        <a asp-action="Delete" asp-route-id="@room.RoomId" asp-route-wardId="@room.WardId" class="btn btn-danger btn-sm">Delete</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="alert alert-info">No rooms found for the selected ward.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

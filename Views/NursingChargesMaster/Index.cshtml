@@ -1,0 +1,106 @@
+﻿@* Views/NursingChargesMaster/Index.cshtml *@
+@model List<WebApplicationSampleTest2.Models.NursingChargesMaster>
+@{
+    ViewData["Title"] = "Nursing Charges Master";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>
+                    <i class="fas fa-user-nurse me-2"></i>
+                    Nursing Charges Master
+                </h4>
+                <a asp-action="Create" class="btn btn-primary btn-sm">
+                    + Add Charge
+                </a>
+            </div>
+            <hr />
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <table class="table table-bordered table-hover">
+                <thead >
+                    <tr>
+                        <th>#</th>
+                        <th>Charge Name</th>
+                        <th>Type</th>
+                        <th class="text-end">Default Charge</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        int i = 1;
+                        foreach (var n in Model)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td><strong>@n.ChargeName</strong></td>
+                                <td>
+                                    <span class="badge
+                                                @(n.ChargeType == "PerDay"
+                                                                                      ? "bg-info"
+                                                                                      : "bg-warning text-dark")">
+                                @n.ChargeType
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            ₹@n.DefaultCharge.ToString("0.00")
+                        </td>
+                        <td>
+                            @if (n.IsActive)
+                                    {
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Edit"
+                                       asp-route-id="@n.NursingId"
+                                       class="btn btn-sm btn-warning">
+                                        Edit
+                                    </a>
+                                    <a asp-action="Delete"
+                                       asp-route-id="@n.NursingId"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm(
+                                                   'Delete this charge?')">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted">
+                                No nursing charges found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

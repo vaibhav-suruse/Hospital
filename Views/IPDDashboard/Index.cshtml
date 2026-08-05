@@ -1,0 +1,328 @@
+﻿@model WebApplicationSampleTest2.Models.IPDDashboardVM
+@{
+    ViewBag.Title = "IPD Dashboard";
+}
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@* ===== ROW 1 - KEY STATS ===== *@
+<div class="row">
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Currently Admitted</p>
+                    <h4 class="mb-0">@Model.CurrentlyAdmitted</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-bed"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Today Admissions</p>
+                    <h4 class="mb-0">@Model.TodayAdmissions</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
+                        <span class="avatar-title"><i class="bx bx-log-in"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Today Discharges</p>
+                    <h4 class="mb-0">@Model.TodayDischarges</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
+                        <span class="avatar-title"><i class="bx bx-log-out"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Critical Patients</p>
+                    <h4 class="mb-0 text-danger">@Model.CriticalPatients</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-danger">
+                        <span class="avatar-title"><i class="bx bx-heart"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* ===== ROW 2 - BED STATS ===== *@
+<div class="row">
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Total Beds</p>
+                    <h4 class="mb-0">@Model.TotalBeds</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-bed"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Available Beds</p>
+                    <h4 class="mb-0 text-success">@Model.AvailableBeds</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
+                        <span class="avatar-title"><i class="bx bx-check-circle"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Occupied Beds</p>
+                    <h4 class="mb-0 text-warning">@Model.OccupiedBeds</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
+                        <span class="avatar-title"><i class="bx bx-user-check"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Pending Lab Tests</p>
+                    <h4 class="mb-0 text-danger">@Model.PendingLab</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-danger">
+                        <span class="avatar-title"><i class="bx bx-test-tube"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* ===== ROW 3 - ADMISSION STATS ===== *@
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Weekly Admissions</p>
+                    <h4 class="mb-0">@Model.WeeklyAdmissions</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-info">
+                        <span class="avatar-title"><i class="bx bx-calendar-week"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Monthly Admissions</p>
+                    <h4 class="mb-0">@Model.MonthlyAdmissions</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                        <span class="avatar-title"><i class="bx bx-calendar"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mini-stats-wid">
+            <div class="card-body d-flex">
+                <div class="flex-grow-1">
+                    <p class="text-muted fw-medium">Yearly Admissions</p>
+                    <h4 class="mb-0">@Model.YearlyAdmissions</h4>
+                </div>
+                <div class="flex-shrink-0 align-self-center">
+                    <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
+                        <span class="avatar-title"><i class="bx bx-calendar-check"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* ===== ROW 4 - CHARTS + TABLE ===== *@
+<div class="row mt-2">
+
+    @* Line Chart *@
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">
+                    Last 7 Days Admission Trend
+                </h4>
+                <div id="admissionTrendChart"></div>
+            </div>
+        </div>
+    </div>
+
+    @* Donut Chart - Bed Status *@
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Bed Status</h4>
+                <div id="bedStatusChart"></div>
+                <div class="text-center mt-3">
+                    <span class="badge bg-success me-2">Available: @Model.AvailableBeds</span>
+                    <span class="badge bg-warning me-2">Occupied: @Model.OccupiedBeds</span>
+                    <span class="badge bg-secondary">Maintenance: @Model.MaintenanceBeds</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* ===== ROW 5 - WARD TABLE ===== *@
+<div class="row mt-2">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Ward-wise Bed Status</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ward Name</th>
+                            <th>Total Beds</th>
+                            <th>Occupied</th>
+                            <th>Available</th>
+                            <th>Occupancy %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ward in Model.WardWiseBeds)
+                        {
+                            int available = ward.Total - ward.Occupied;
+                            int pct = ward.Total > 0
+                            ? (int)((double)ward.Occupied / ward.Total * 100) : 0;
+                            <tr>
+                                <td><strong>@ward.WardName</strong></td>
+                                <td>@ward.Total</td>
+                                <td>
+                                    <span class="badge bg-warning">@ward.Occupied</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">@available</span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height:20px;">
+                                        <div class="progress-bar
+                                                @(pct >= 90 ? "bg-danger" :
+                                                                                           pct >= 70 ? "bg-warning" : "bg-success")"
+                                         style="width:@pct%">
+                                        @pct%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                                                }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+    <script>
+
+        // ===== LINE CHART =====
+        var chartDates = @Html.Raw(
+                    Newtonsoft.Json.JsonConvert.SerializeObject(Model.ChartDates));
+    var chartCounts = @Html.Raw(
+                Newtonsoft.Json.JsonConvert.SerializeObject(Model.ChartCounts));
+
+    var lineOptions = {
+        chart: { type: 'line', height: 300, toolbar: { show: false } },
+        series: [{ name: 'Admissions', data: chartCounts }],
+        xaxis: { categories: chartDates },
+        stroke: { curve: 'smooth', width: 3 },
+        colors: ['#34c38f'],
+        markers: { size: 5 },
+        grid: { borderColor: '#f1f1f1' },
+        tooltip: { y: { formatter: val => val + ' admissions' } }
+    };
+    new ApexCharts(
+        document.querySelector("#admissionTrendChart"), lineOptions
+    ).render();
+
+        // ===== DONUT CHART =====
+        var donutOptions = {
+            chart: { type: 'donut', height: 250 },
+            series: [
+                @Model.AvailableBeds,
+                @Model.OccupiedBeds,
+                @Model.MaintenanceBeds
+            ],
+            labels: ['Available', 'Occupied', 'Maintenance'],
+            colors: ['#34c38f', '#f1b44c', '#74788d'],
+            legend: { show: false },
+            dataLabels: { enabled: true }
+        };
+        new ApexCharts(
+            document.querySelector("#bedStatusChart"), donutOptions
+        ).render();
+
+    </script>
+}

@@ -1,0 +1,61 @@
+﻿@* Views/BillingSheet/_BillingListPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.BillingSheetEntryModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+    string billingType = (string)ViewBag.BillingType;
+    decimal total = (decimal)ViewBag.Total;
+    string providerHeader = billingType == "Nurse" ? "Nurse" : "Doctor";
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Date</th>
+                <th>@providerHeader</th>
+                <th>Services</th>
+                <th class="text-end">Charges</th>
+                <th>Entered By</th>
+                <th>Remarks</th>
+                <th class="text-end">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-3">No Billing added</td></tr>
+            }
+            else
+            {
+                foreach (var b in Model)
+                {
+                    <tr>
+                        <td>@b.EntryDate.ToString("dd/MM/yyyy")</td>
+                        <td>@b.ProviderName</td>
+                        <td>@b.ServiceName</td>
+                        <td class="text-end">₹@b.Charge.ToString("0.00")</td>
+                        <td>@(string.IsNullOrWhiteSpace(b.EnteredByName) ? "-" : b.EnteredByName)</td>
+                        <td>@b.Remarks</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary bs-edit-btn" title="Edit"
+                                    data-id="@b.Id"
+                                    data-entry-date="@b.EntryDate.ToString("yyyy-MM-dd")"
+                                    data-service-name="@b.ServiceName"
+                                    data-charge="@b.Charge"
+                                    data-remarks="@b.Remarks">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger bs-delete-btn" title="Delete" data-id="@b.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr class="table-light fw-bold">
+                    <td colspan="3" class="text-end">Total</td>
+                    <td class="text-end">₹@total.ToString("0.00")</td>
+                    <td colspan="3"></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

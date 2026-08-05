@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\assets\libs\datatables.net-autofill\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\datatables.net-bs4\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\datatables.net-buttons\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\datatables.net-keytable\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\datatables.net-responsive\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\datatables.net-select\node_modules\datatables.net\License.txt" />
+    <Content Include="wwwroot\assets\libs\jquery.easing\bower_components\jquery\MIT-LICENSE.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\assets\libs\datatables.net-autofill\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\datatables.net-bs4\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\datatables.net-buttons\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\datatables.net-keytable\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\datatables.net-responsive\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\datatables.net-select\node_modules\datatables.net\js\jquery.dataTables.min.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\chalk\index.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\chalk\index.js.flow" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\chalk\license" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\chalk\templates.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\at-rule.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\comment.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\container.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\css-syntax-error.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\declaration.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\input.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\lazy-result.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\list.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\map-generator.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\node.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\parse.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\parser.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\postcss.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\previous-map.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\processor.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\result.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\root.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\rule.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\stringifier.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\stringify.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\terminal-highlight.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\tokenize.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\vendor.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\warn-once.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\postcss\lib\warning.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\bin\rtlcss.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\config-loader.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\config.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\directive-parser.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\plugin.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\rtlcss.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\state.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\rtlcss\lib\util.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\strip-json-comments\index.js" />
+    <None Include="wwwroot\assets\libs\gulp-rtlcss\node_modules\strip-json-comments\license" />
+    <None Include="wwwroot\assets\libs\jquery.easing\bower_components\jquery-easing-original\jquery.easing.compatibility.js" />
+    <None Include="wwwroot\assets\libs\jquery.easing\bower_components\jquery-easing-original\jquery.easing.min.js" />
+    <None Include="wwwroot\assets\libs\jquery.easing\bower_components\jquery\jquery.min.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.32" />
+    <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.2.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.31" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="QuestPDF" Version="2024.3.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="8.0.0-dev-02318" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\IPDNursingCharge\" />
+    <Folder Include="wwwroot\OPDReports\" />
+  </ItemGroup>
+
+</Project>

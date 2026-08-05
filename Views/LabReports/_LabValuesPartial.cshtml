@@ -1,0 +1,70 @@
+﻿@* Views/LabReports/_LabValuesPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.LabReportValueVM>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Category</th><th>Parameter</th><th>Value</th><th>Unit</th><th>Normal Range</th><th>Status</th><th>Entered By</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="8" class="text-center text-muted py-3">No lab values added for this day</td></tr>
+            }
+            else
+            {
+                foreach (var v in Model)
+                {
+                    <tr class="@(v.IsCritical && !v.IsNotified ? "table-danger" : "")">
+                        <td>@v.CategoryName</td>
+                        <td><strong>@v.ParameterName</strong></td>
+                        <td>@v.ResultValue</td>
+                        <td>@(string.IsNullOrWhiteSpace(v.Unit) ? "-" : v.Unit)</td>
+                        <td>@v.RangeDisplay</td>
+                        <td>
+                            @{
+                                string badge = v.AbnormalFlag switch
+                                {
+                                    "Critical" => "bg-danger",
+                                    "Normal" => "bg-success",
+                                    "High" => "bg-danger",
+                                    "Low" => "bg-warning text-dark",
+                                    "Abnormal" => "bg-danger",
+                                    _ => "bg-light text-dark border"
+                                };
+                            }
+                            <span class="badge @badge">@(v.AbnormalFlag == "Critical" ? "⚠ CRITICAL" : (v.AbnormalFlag ?? "-"))</span>
+                            @if (v.IsCritical)
+                            {
+                                if (v.IsNotified)
+                                {
+                                    <div class="small text-success mt-1"><i class="fas fa-check-circle"></i> Notified @v.NotifiedToDoctorName @v.NotifiedAt?.ToString("hh:mm tt, dd MMM")</div>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger mt-1 lv-notify-btn"
+                                            data-id="@v.Id" data-parameter-name="@v.ParameterName" data-value="@v.ResultValue" data-unit="@v.Unit">
+                                        <i class="fas fa-phone me-1"></i> Notify Doctor
+                                    </button>
+                                }
+                            }
+                        </td>
+                        <td>@(string.IsNullOrWhiteSpace(v.EnteredByName) ? "-" : v.EnteredByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary lv-edit-btn" title="Edit"
+                                    data-id="@v.Id" data-parameter-name="@v.ParameterName" data-value="@v.ResultValue">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger lv-delete-btn" title="Delete" data-id="@v.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+

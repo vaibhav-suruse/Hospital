@@ -1,0 +1,180 @@
+﻿@* ══════════════════════════════════════════════════════════
+   FILE: Views/PatientPortal/Billing.cshtml
+   ══════════════════════════════════════════════════════════ *@
+@model WebApplicationSampleTest2.Models.PatientBillingVM
+@{
+    ViewData["Title"] = "My Billing";
+    Layout = "~/Views/Shared/_PatientLayout.cshtml";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-0"><i class="bx bx-receipt text-primary me-2"></i>My Billing</h4>
+        <p class="text-muted small mt-1">OPD and IPD billing records</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <p class="text-muted mb-1">Total OPD Billed</p>
+                <h4 class="text-primary">₹@Model.TotalOPDAmount.ToString("0.00")</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <p class="text-muted mb-1">Total IPD Billed</p>
+                <h4 class="text-info">₹@Model.TotalIPDAmount.ToString("0.00")</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <p class="text-muted mb-1">Total Outstanding Due</p>
+                <h4 class="@(Model.TotalDue > 0 ? "text-danger" : "text-success")">
+                    ₹@Model.TotalDue.ToString("0.00")
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- OPD Bills -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            <i class="bx bx-clinic text-primary me-1"></i> OPD Bills
+            <span class="badge bg-primary ms-1">@Model.OPDBills.Count</span>
+        </h5>
+        @if (Model.OPDBills.Count == 0)
+        {
+            <p class="text-muted text-center py-3">No OPD bills found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Bill No</th>
+                            <th>Date</th>
+                            <th>Doctor</th>
+                            <th class="text-end">Consultation</th>
+                            <th class="text-end">Medicines</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Due</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bill in Model.OPDBills)
+                        {
+                            <tr>
+                                <td><code>@bill.BillNumber</code></td>
+                                <td>@bill.BillDate.ToString("dd MMM yyyy")</td>
+                                <td>Dr. @bill.DoctorName</td>
+                                <td class="text-end">₹@bill.ConsultationFee.ToString("0.00")</td>
+                                <td class="text-end">₹@bill.MedicineCharges.ToString("0.00")</td>
+                                <td class="text-end"><strong>₹@bill.TotalAmount.ToString("0.00")</strong></td>
+                                <td class="text-end text-success">₹@bill.PaidAmount.ToString("0.00")</td>
+                                <td class="text-end @(bill.DueAmount > 0 ? "text-danger fw-bold" : "text-success")">
+                                    ₹@bill.DueAmount.ToString("0.00")
+                                </td>
+                                <td>
+                                    @{
+                                        var badgeClass = bill.PaymentStatus switch
+                                        {
+                                            "Paid" => "bg-success",
+                                            "Partial" => "bg-warning",
+                                            _ => "bg-danger"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@bill.PaymentStatus</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold">₹@Model.TotalOPDAmount.ToString("0.00")</td>
+                            <td class="text-end fw-bold text-success">
+                                ₹@Model.OPDBills.Sum(b => b.PaidAmount).ToString("0.00")
+                            </td>
+                            <td class="text-end fw-bold text-danger">
+                                ₹@Model.OPDBills.Sum(b => b.DueAmount).ToString("0.00")
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- IPD Bills -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            <i class="bx bx-bed text-info me-1"></i> IPD Bills
+            <span class="badge bg-info ms-1">@Model.IPDBills.Count</span>
+        </h5>
+        @if (Model.IPDBills.Count == 0)
+        {
+            <p class="text-muted text-center py-3">No IPD bills found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Admission No</th>
+                            <th>Admission Date</th>
+                            <th>Discharge Date</th>
+                            <th>Days</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Due</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ipd in Model.IPDBills)
+                        {
+                            <tr>
+                                <td><code>@ipd.AdmissionNumber</code></td>
+                                <td>@ipd.AdmissionDateTime.ToString("dd MMM yyyy")</td>
+                                <td>@(ipd.DischargeDateTime.HasValue? ipd.DischargeDateTime.Value.ToString("dd MMM yyyy") : "—")</td>
+                                <td>@ipd.TotalDays</td>
+                                <td class="text-end"><strong>₹@ipd.TotalAmount.ToString("0.00")</strong></td>
+                                <td class="text-end text-success">₹@ipd.PaidAmount.ToString("0.00")</td>
+                                <td class="text-end @(ipd.DueAmount > 0 ? "text-danger fw-bold" : "text-success")">
+                                    ₹@ipd.DueAmount.ToString("0.00")
+                                </td>
+                                <td>
+                                    @{
+                                        var bc = ipd.PaymentStatus switch
+                                        {
+                                            "Paid" => "bg-success",
+                                            "Partial" => "bg-warning",
+                                            _ => "bg-danger"
+                                        };
+                                    }
+                                    <span class="badge @bc">@ipd.PaymentStatus</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

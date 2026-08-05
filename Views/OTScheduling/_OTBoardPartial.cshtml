@@ -1,0 +1,138 @@
+﻿@* Views/OTScheduling/_OTBoardPartial.cshtml *@
+@using System.Linq
+@model WebApplicationSampleTest2.Models.OTBoardVM
+
+@if (Model.Theatres == null || Model.Theatres.Count == 0)
+{
+    <div class="text-center text-muted py-5">
+        <i class="fas fa-door-open fa-2x mb-2"></i>
+        <p class="mb-0">No operation theatres configured yet.</p>
+        <p class="small">Use the <strong>Theatres</strong> button above to add your first theatre.</p>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var theatre in Model.Theatres)
+        {
+            var theatreBookings = Model.Bookings
+            .Where(b => b.TheatreId == theatre.TheatreId)
+            .OrderBy(b => b.ScheduledStart)
+            .ToList();
+
+            var statusBadge = theatre.Status == "Active" ? "success" : (theatre.Status == "Maintenance" ? "warning" : "secondary");
+
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 @(theatre.Status != "Active" ? "border-secondary" : "")">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <strong>@theatre.TheatreName</strong>
+                            @if (!string.IsNullOrEmpty(theatre.TheatreNumber))
+                            {
+                                <small class="text-muted">(@theatre.TheatreNumber)</small>
+                            }
+                        </div>
+                        <span class="badge bg-@statusBadge">@theatre.Status</span>
+                    </div>
+                    <div class="card-body p-2" style="min-height:120px">
+                        @if (theatre.Status != "Active")
+                        {
+                            <div class="text-muted small text-center py-3">Theatre unavailable (@theatre.Status)</div>
+                        }
+                        else if (theatreBookings.Count == 0)
+                        {
+                            <div class="text-muted small text-center py-3">No cases scheduled</div>
+                        }
+                        else
+                        {
+                            foreach (var b in theatreBookings)
+                            {
+                                var priorityBadge = b.Priority == "Emergency" ? "danger" : (b.Priority == "Urgent" ? "warning" : "secondary");
+                                var statusColor = b.Status == "Booked" ? "primary" : (b.Status == "InProgress" ? "info" : (b.Status == "Completed" ? "success" : "secondary"));
+                                <div class="border rounded p-2 mb-2 ot-case-card @(b.Status == "Cancelled" ? "bg-light text-muted" : "")"
+                                     data-booking-id="@b.BookingId" data-procedure-id="@b.ProcedureId" data-patient-id="@b.PatientId">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="fw-bold">@b.ScheduledStart.ToString("hh:mm tt") - @b.ScheduledEnd.ToString("hh:mm tt")</small>
+                                        <span class="badge bg-@statusColor">@b.Status</span>
+                                    </div>
+                                    <div class="fw-bold small">@b.ProcedureName</div>
+                                    <div class="small text-muted">@b.PatientName</div>
+                                    @if (!string.IsNullOrEmpty(b.PrimarySurgeonName))
+                                    {
+                                        <div class="small text-muted"><i class="fas fa-user-md"></i> @b.PrimarySurgeonName</div>
+                                    }
+                                    <span class="badge bg-@priorityBadge mt-1">@b.Priority</span>
+
+                                    @if (b.Status != "Cancelled")
+                                    {
+                                        <div class="mt-1 d-flex gap-1 flex-wrap">
+                                            <span class="badge @(b.ConsentRecorded ? "bg-success" : "border text-dark")" style="font-size:0.65rem;">
+                                                <i class="fas @(b.ConsentRecorded ? "fa-check" : "fa-file-signature")"></i> Consent
+                                            </span>
+                                            <span class="badge @(b.ChecklistComplete ? "bg-success" : "border text-dark")" style="font-size:0.65rem;" title="@b.MandatoryChecklistDone of @b.MandatoryChecklistCount mandatory items checked">
+                                                <i class="fas fa-clipboard-check"></i> Checklist @b.MandatoryChecklistDone/@b.MandatoryChecklistCount
+                                            </span>
+                                            @if (b.Status == "Completed")
+                                            {
+                                                <span class="badge @(b.ChargesRecorded ? "bg-success" : "bg-warning text-dark")" style="font-size:0.65rem;">
+                                                    <i class="fas fa-rupee-sign"></i> @(b.ChargesRecorded ? "Billed" : "Not Billed")
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (b.Status == "Cancelled" && !string.IsNullOrEmpty(b.CancelReason))
+                                    {
+                                        <div class="small text-danger mt-1"><i class="fas fa-info-circle"></i> @b.CancelReason</div>
+                                    }
+
+                                    <div class="mt-2 d-flex gap-1 flex-wrap">
+                                        @if (b.Status == "Booked" || b.Status == "InProgress")
+                                        {
+                                            <button type="button" class="btn btn-xs btn-outline-secondary ot-consent-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-file-signature"></i> Consent
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-outline-secondary ot-checklist-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-clipboard-check"></i> Checklist
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-outline-secondary ot-consumables-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-boxes"></i> Items
+                                            </button>
+                                        }
+                                        @if (b.Status == "Booked")
+                                        {
+                                            <button type="button" class="btn btn-xs btn-outline-info ot-start-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-play"></i> Start
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-outline-danger ot-cancel-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-ban"></i> Cancel
+                                            </button>
+                                        }
+                                        @if (b.Status == "InProgress")
+                                        {
+                                            <button type="button" class="btn btn-xs btn-outline-success ot-complete-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-check"></i> Complete
+                                            </button>
+                                        }
+                                        @if (b.Status == "Completed")
+                                        {
+                                            <button type="button" class="btn btn-xs btn-outline-secondary ot-consumables-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                <i class="fas fa-boxes"></i> Items
+                                            </button>
+                                            @if (!b.ChargesRecorded)
+                                            {
+                                                <button type="button" class="btn btn-xs btn-primary ot-charges-btn" style="font-size:0.7rem;padding:2px 6px;">
+                                                    <i class="fas fa-rupee-sign"></i> Record Charges
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

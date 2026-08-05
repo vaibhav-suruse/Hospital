@@ -1,0 +1,389 @@
+﻿@model DiagnosisPageVM
+
+<input type="hidden" id="hdnIpdId" value="@Model.IpdId" />
+<input type="hidden" id="hdnPatientId" value="@Model.PatientId" />
+
+<style>
+
+    .diagnosis-card {
+       
+    }
+
+    .diagnosis-section {
+        margin-bottom: 35px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .btn-diagnosis {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 5px;
+    }
+
+        .btn-diagnosis:hover {
+            background: #0b5ed7;
+        }
+
+    .table th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .delete-btn {
+        border: none;
+        background: #dc3545;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+
+    @@media(max-width:768px) {
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .table {
+            font-size: 13px;
+        }
+    }
+
+</style>
+
+<div class="diagnosis-card">
+
+    <h4 class="mb-4">
+        Diagnosis
+    </h4>
+
+    <!-- Admission Diagnosis -->
+
+    <div class="diagnosis-section">
+
+        <div class="section-header">
+
+            <h5 class="section-title">
+                On Admission Diagnosis
+            </h5>
+
+            <button class="btn-diagnosis"
+                    onclick="openAdmissionDiagnosisModal()">
+                Add Diagnosis
+            </button>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered">
+
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>Type</th>
+                        <th>Recorded By</th>
+                        <th>Date</th>
+                        <th width="100">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.AdmissionDiagnosis.Any())
+                    {
+                        foreach (var item in Model.AdmissionDiagnosis)
+                        {
+                            <tr>
+
+                                <td>@item.DiagnosisName</td>
+
+                                <td>@item.DiagnosisType</td>
+
+                                <td>@item.RecordedBy</td>
+
+                                <td>
+                                    @item.DiagnosisDate.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+
+                                    <button class="delete-btn"
+                                            onclick="deleteDiagnosis(@item.DiagnosisId)">
+                                        Delete
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+
+                            <td colspan="5"
+                                class="text-center text-muted">
+                                No admission diagnosis added
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- Discharge Diagnosis -->
+
+    <div class="diagnosis-section">
+
+        <div class="section-header">
+
+            <h5 class="section-title">
+                Discharge Diagnosis
+            </h5>
+
+            <button class="btn-diagnosis"
+                    onclick="openDischargeDiagnosisModal()">
+                Add Diagnosis
+            </button>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered">
+
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>Type</th>
+                        <th>Recorded By</th>
+                        <th>Date</th>
+                        <th width="100">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.DischargeDiagnosis.Any())
+                    {
+                        foreach (var item in Model.DischargeDiagnosis)
+                        {
+                            <tr>
+
+                                <td>@item.DiagnosisName</td>
+
+                                <td>@item.DiagnosisType</td>
+
+                                <td>@item.RecordedBy</td>
+
+                                <td>
+                                    @item.DiagnosisDate.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+
+                                    <button class="delete-btn"
+                                            onclick="deleteDiagnosis(@item.DiagnosisId)">
+                                        Delete
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+
+                            <td colspan="5"
+                                class="text-center text-muted">
+                                No discharge diagnosis added
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Modal -->
+
+<div class="modal fade"
+     id="diagnosisModal"
+     tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    Add Diagnosis
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden"
+                       id="diagnosisType" />
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Diagnosis
+                    </label>
+
+                    <textarea id="txtDiagnosis"
+                              class="form-control"
+                              rows="4">
+                    </textarea>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary"
+                        onclick="saveDiagnosis()">
+                    Save
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    var diagnosisModal =
+        new bootstrap.Modal(
+            document.getElementById('diagnosisModal')
+        );
+
+    function openAdmissionDiagnosisModal()
+    {
+        $("#diagnosisType").val("Admission");
+        $("#txtDiagnosis").val("");
+
+        diagnosisModal.show();
+    }
+
+    function openDischargeDiagnosisModal()
+    {
+        $("#diagnosisType").val("Discharge");
+        $("#txtDiagnosis").val("");
+
+        diagnosisModal.show();
+    }
+
+    function saveDiagnosis()
+    {
+        $.ajax({
+
+            url: '/Diagnosis/AddDiagnosis',
+            type: 'POST',
+
+            data:
+            {
+                IpdId:
+                $("#hdnIpdId").val(),
+
+                PatientId:
+                $("#hdnPatientId").val(),
+
+                DiagnosisName:
+                $("#txtDiagnosis").val(),
+
+                DiagnosisType:
+                $("#diagnosisType").val()
+            },
+
+            success: function ()
+            {
+                diagnosisModal.hide();
+
+                loadTab('Diagnosis');
+            },
+
+            error: function ()
+            {
+                alert('Error saving diagnosis');
+            }
+        });
+    }
+
+    function deleteDiagnosis(id)
+    {
+        if (!confirm('Delete Diagnosis ?'))
+            return;
+
+        $.ajax({
+
+            url: '/Diagnosis/DeleteDiagnosis',
+            type: 'POST',
+
+            data:
+            {
+                diagnosisId: id
+            },
+
+            success: function ()
+            {
+                loadTab('Diagnosis');
+            }
+        });
+    }
+
+</script>

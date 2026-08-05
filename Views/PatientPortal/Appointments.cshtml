@@ -1,0 +1,163 @@
+﻿@model List<WebApplicationSampleTest2.Models.PatientAppointmentVM>
+@{
+    ViewData["Title"] = "My Appointments";
+    Layout = "~/Views/Shared/_PatientLayout.cshtml";
+    var upcoming = ViewBag.Upcoming as List<WebApplicationSampleTest2.Models.PatientAppointmentVM>;
+    var past = ViewBag.Past as List<WebApplicationSampleTest2.Models.PatientAppointmentVM>;
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="bx bx-calendar text-primary me-2"></i>My Appointments</h4>
+        <a asp-action="BookAppointment" asp-controller="PatientPortal" class="btn btn-primary">
+            <i class="bx bx-plus me-1"></i> Book New Appointment
+        </a>
+    </div>
+</div>
+
+<!-- Upcoming Appointments -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title text-primary mb-3">
+            <i class="bx bx-time-five me-1"></i> Upcoming Appointments
+            <span class="badge bg-primary ms-1">@(upcoming?.Count ?? 0)</span>
+        </h5>
+
+        @if (upcoming == null || upcoming.Count == 0)
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bx bx-calendar-x font-size-36 d-block mb-2"></i>
+                No upcoming appointments.
+                <a asp-action="BookAppointment" asp-controller="PatientPortal">Book one now!</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Doctor</th>
+                            <th>Specialization</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int i = 1;
+                        }
+                        @foreach (var appt in upcoming)
+                        {
+                            <tr>
+                                <td>@i++</td>
+                                <td><strong>@appt.AppointmentDate.ToString("dd MMM yyyy")</strong></td>
+                                <td>@appt.AppointmentTime.ToString(@"hh\:mm")</td>
+                                <td>Dr. @appt.DoctorName</td>
+                                <td>@appt.DoctorSpecialization</td>
+                                <td><span class="badge bg-warning">@appt.Status</span></td>
+                                <td>
+                                    @if (appt.CanCancel)
+                                    {
+                                        <form asp-action="CancelAppointment" asp-controller="PatientPortal"
+                                              method="post" style="display:inline"
+                                              onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bx bx-x me-1"></i> Cancel
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Past Appointments -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title text-secondary mb-3">
+            <i class="bx bx-history me-1"></i> Past Appointments
+            <span class="badge bg-secondary ms-1">@(past?.Count ?? 0)</span>
+        </h5>
+
+        @if (past == null || past.Count == 0)
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bx bx-list-ul font-size-36 d-block mb-2"></i>
+                No past appointments found.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Doctor</th>
+                            <th>Specialization</th>
+                            <th>Status</th>
+                            <th>Prescription</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int j = 1;
+                        }
+                        @foreach (var appt in past)
+                        {
+                            <tr>
+                                <td>@j++</td>
+                                <td>@appt.AppointmentDate.ToString("dd MMM yyyy")</td>
+                                <td>@appt.AppointmentTime.ToString(@"hh\:mm")</td>
+                                <td>Dr. @appt.DoctorName</td>
+                                <td>@appt.DoctorSpecialization</td>
+                                <td>
+                                    @{
+                                        var badge = appt.Status switch
+                                        {
+                                            "OPD Completed" => "success",
+                                            "Cancelled" => "danger",
+                                            _ => "secondary"
+                                        };
+                                    }
+                                    <span class="badge bg-@badge">@appt.Status</span>
+                                </td>
+                                <td>
+                                    @if (appt.OPDId.HasValue)
+                                    {
+                                        <a asp-action="PrintPriscription" asp-controller="Patient"
+                                           asp-route-appointmentId="@appt.AppointmentId"
+                                           class="btn btn-sm btn-outline-success" target="_blank">
+                                            <i class="bx bx-printer me-1"></i> View
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not yet</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

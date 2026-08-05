@@ -1,0 +1,1126 @@
+﻿<div class="col-xl-12">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Patients</p>
+                            <h4 class="mb-0" id="totalPatients">0</h4>
+                        </div>
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                <span class="avatar-title">
+                                    <i class="fa-solid fa-users"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Today's Appointments</p>
+                            <h4 class="mb-0" id="totalAppointments">0</h4>
+                        </div>
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Completed Appointments</p>
+                            <h4 class="mb-0" id="completedAppointments">0</h4>
+                        </div>
+
+                        <div class="flex-shrink-0 align-self-center ">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-calendar-check"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Pending Appointments</p>
+                            <h4 class="mb-0" id="pendingAppointments">0</h4>
+                        </div>
+
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-clock"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+</div>
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Appointment</h4>
+
+                <!-- Tabs: Today / Yesterday / Tomorrow -->
+                <ul class="nav nav-pills bg-light rounded" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#hospital-today-tab" role="tab">Today</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#hospital-yesterday-tab" role="tab">Yesterday</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#hospital-tomorrow-tab" role="tab">Tomorrow</a>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content mt-4">
+
+                    <!-- TODAY -->
+                    <div class="tab-pane active" id="hospital-today-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="todayAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="todayIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="todayBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="todayJournalPatients">0</p>
+                                            </div>
+                                        </td>
+                                    </tr> *@
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- YESTERDAY -->
+                    <div class="tab-pane" id="hospital-yesterday-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="yesterdayAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="yesterdayIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="yesterdayBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="yesterdayJournalPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr> *@
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- TOMORROW -->
+                    <div class="tab-pane" id="hospital-tomorrow-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="tomorrowAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="tomorrowIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="tomorrowBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="tomorrowJournalPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr> *@
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div> <!-- end tab content -->
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-sm-flex flex-wrap">
+                    <h4 class="card-title mb-4">Appointment</h4>
+                    <div class="ms-auto">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                @* <a class="nav-link" href="#">Week</a> *@
+                            </li>
+                            <li class="nav-item">
+                                @* <a class="nav-link" href="#">Month</a> *@
+                            </li>
+                            <li class="nav-item">
+                                @* <a class="nav-link active" href="#">Year</a> *@
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="stacked-column-chart" class="apex-charts" dir="ltr"></div>
+                @* <div id="appointment-summary-chart" class="apex-charts mt-4"></div> *@
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<!-- JAVASCRIPT -->
+<script src="~/assets/libs/jquery/jquery.min.js"></script>
+<script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="~/assets/libs/metismenu/metisMenu.min.js"></script>
+<script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+<script src="~/assets/libs/node-waves/waves.min.js"></script>
+
+<!-- apexcharts -->
+<script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+<script src="~/assets/js/pages/dashboard.init.js"></script>
+
+<!-- App js -->
+<script src="~/assets/js/app.js"></script>
+
+
+
+<script>
+    $(document).ready(function () {
+
+        $.ajax({
+            url: '/DashBord/GetDashboardCounts',
+            type: 'GET',
+            success: function (data) {
+
+                console.log("Dashboard data:", data);
+
+              // Top Cards
+       // Top Cards
+    $('#totalPatients').text(data.totalPatients);
+    $('#totalAppointments').text(data.todayAppointments);
+    $("#completedAppointments").text(data.completedAppointments);
+    $("#pendingAppointments").text(data.pendingAppointments);
+
+    // Today
+    $('#todayAppointments').text(data.todayAppointments);
+    $("#todayCompleted").text(data.todayCompleted);
+    $("#todayPending").text(data.todayPending);
+    $("#todayAvailableDoctors").text(data.todayAvailableDoctors);
+
+    // Yesterday
+    $('#yesterdayAppointments').text(data.yesterdayAppointments);
+    $("#yesterdayCompleted").text(data.yesterdayCompleted);
+    $("#yesterdayPending").text(data.yesterdayPending);
+    $("#yesterdayAvailableDoctors").text(data.yesterdayAvailableDoctors);
+
+    // Tomorrow
+    $('#tomorrowAppointments').text(data.tomorrowAppointments);
+    $("#tomorrowCompleted").text(data.tomorrowCompleted);
+    $("#tomorrowPending").text(data.tomorrowPending);
+    $("#tomorrowAvailableDoctors").text(data.tomorrowAvailableDoctors);
+           // =============================
+    // Stacked Column Chart - Monthly
+    // =============================
+
+    var chartOptions = {
+        series: [
+            {
+                name: "Total",
+                data: data.monthlyTotal       // data.monthlyAppointments !
+            },
+            {
+                name: "Completed",
+                data: data.monthlyCompleted
+            },
+            {
+                name: "Pending",
+                data: data.monthlyPending
+            }
+        ],
+        chart: {
+            type: "bar",
+            height: 359,
+            stacked: false,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: {
+                columnWidth: "45%",
+                borderRadius: 4
+            }
+        },
+        colors: [
+            "#378ADD",  // Total - Blue
+            "#639922",  // Completed - Green
+            "#EF9F27"   // Pending - Yellow
+        ],
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+            ]
+        },
+        yaxis: {
+            title: { text: "Appointments" }
+        },
+        legend: {
+            position: "bottom",
+            markers: { radius: 4 }
+        },
+        tooltip: {
+            shared: true,
+            intersect: false
+        },
+        grid: {
+            borderColor: "#f1f1f1"
+        }
+    };
+
+    var chart = new ApexCharts(
+        document.querySelector("#stacked-column-chart"),
+        chartOptions
+    );
+    chart.render();
+            },
+            error: function (err) {
+                console.error("Error fetching dashboard data:", err);
+            }
+        });
+
+    });
+</script>
+
+
+
+@* <div class="col-xl-12">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Patient</p>
+                            <h4 class="mb-0" id="totalPatients"></h4>
+                        </div>
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                <span class="avatar-title">
+                                    <i class="fa-solid fa-users"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Appointment</p>
+                            <h4 class="mb-0" id="totalAppointments"></h4>
+                        </div>
+
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-calendar"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Completed Appointments</p>
+                            <h4 class="mb-0" id="completedAppointments">0</h4>
+                        </div>
+
+                        <div class="flex-shrink-0 align-self-center ">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-calendar-check"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Peding Appointments</p>
+                            <h4 class="mb-0" id="pendingAppointments">0</h4>
+                        </div>
+
+                        <div class="flex-shrink-0 align-self-center">
+                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                <span class="avatar-title rounded-circle bg-primary">
+                                    <i class="fa-regular fa-clock"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+</div>
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Appointment</h4>
+
+                <!-- Tabs: Today / Yesterday / Tomorrow -->
+                <ul class="nav nav-pills bg-light rounded" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#hospital-today-tab" role="tab">Today</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#hospital-yesterday-tab" role="tab">Yesterday</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#hospital-tomorrow-tab" role="tab">Tomorrow</a>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content mt-4">
+
+                    <!-- TODAY -->
+                    <div class="tab-pane active" id="hospital-today-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="todayCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="todayAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="todayIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="todayBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="todayJournalPatients">0</p>
+                                            </div>
+                                        </td>
+                                    </tr> *
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- YESTERDAY -->
+                    <div class="tab-pane" id="hospital-yesterday-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="yesterdayCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="yesterdayAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="yesterdayIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="yesterdayBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="yesterdayJournalPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr> *
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- TOMORROW -->
+                    <div class="tab-pane" id="hospital-tomorrow-tab" role="tabpanel">
+                        <div class="table-responsive" data-simplebar style="max-height: 330px;">
+                            <table class="table align-middle table-nowrap">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Total Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowAppointments"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Pending Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowPending">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 50px;">
+                                            <div class="font-size-22 text-primary">
+                                                <i class="fa-regular fa-calendar-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Completed Appointments</h5>
+                                                <p class="text-muted mb-0" id="tomorrowCompleted">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-success">
+                                                <i class="bx bx-user-check"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Doctors</h5>
+                                                <p class="text-muted mb-0" id="tomorrowAvailableDoctors">0</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @* <tr>
+                                        <td>
+                                            <div class="font-size-22 text-warning">
+                                                <i class="bx bx-bed"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">IPD Patients</h5>
+                                                <p class="text-muted mb-0" id="tomorrowIPDPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-info">
+                                                <i class="bx bx-building-house"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Available Beds/Rooms</h5>
+                                                <p class="text-muted mb-0" id="tomorrowBeds"></p>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="font-size-22 text-secondary">
+                                                <i class="bx bx-book-open"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h5 class="font-size-14 mb-1">Journal Patients</h5>
+                                                <p class="text-muted mb-0" id="tomorrowJournalPatients"></p>
+                                            </div>
+                                        </td>
+                                    </tr> *
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div> <!-- end tab content -->
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-sm-flex flex-wrap">
+                    <h4 class="card-title mb-4">Appointment</h4>
+                    <div class="ms-auto">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                @* <a class="nav-link" href="#">Week</a> *
+                            </li>
+                            <li class="nav-item">
+                                @* <a class="nav-link" href="#">Month</a> *
+                            </li>
+                            <li class="nav-item">
+                                @* <a class="nav-link active" href="#">Year</a> *
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="stacked-column-chart" class="apex-charts" dir="ltr"></div>
+                @* <div id="appointment-summary-chart" class="apex-charts mt-4"></div> *
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<!-- JAVASCRIPT -->
+<script src="~/assets/libs/jquery/jquery.min.js"></script>
+<script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="~/assets/libs/metismenu/metisMenu.min.js"></script>
+<script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+<script src="~/assets/libs/node-waves/waves.min.js"></script>
+
+<!-- apexcharts -->
+<script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+<script src="~/assets/js/pages/dashboard.init.js"></script>
+
+<!-- App js -->
+<script src="~/assets/js/app.js"></script>
+
+
+
+<script>
+    $(document).ready(function () {
+
+        $.ajax({
+            url: '/DashBord/GetDashboardCounts',
+            type: 'GET',
+            success: function (data) {
+
+                console.log("Dashboard data:", data);
+
+              // Top Cards
+    $('#totalPatients').text(data.TotalPatients);
+    $('#totalAppointments').text(data.TotalAppointments);
+    $("#completedAppointments").text(data.CompletedAppointments);
+    $("#pendingAppointments").text(data.PendingAppointments);
+
+    // Today
+    $('#todayAppointments').text(data.TodayAppointments);
+    $("#todayCompleted").text(data.TodayCompleted);
+    $("#todayPending").text(data.TodayPending);
+    $("#todayAvailableDoctors").text(data.TodayAvailableDoctors);
+
+    // Yesterday
+    $('#yesterdayAppointments').text(data.YesterdayAppointments);
+    $("#yesterdayCompleted").text(data.YesterdayCompleted);
+    $("#yesterdayPending").text(data.YesterdayPending);
+    $("#yesterdayAvailableDoctors").text(data.YesterdayAvailableDoctors);
+
+    // Tomorrow
+    $('#tomorrowAppointments').text(data.TomorrowAppointments);
+    $("#tomorrowCompleted").text(data.TomorrowCompleted);
+    $("#tomorrowPending").text(data.TomorrowPending);
+    $("#tomorrowAvailableDoctors").text(data.TomorrowAvailableDoctors);
+
+                // =============================
+                // Second Chart (Dynamic)
+                // =============================
+                var options2 = {
+                    chart: {
+                        type: 'bar',
+                        height: 350
+                    },
+                    series: [{
+                        name: 'Appointments',
+                        data: [
+                            data.WeeklyAppointments,
+                            data.MonthlyAppointments,
+                            data.YearlyAppointments
+                        ]
+                    }],
+                    xaxis: {
+                        categories: ['Week', 'Month', 'Year']
+                    },
+                    colors: ['#34c38f']
+                };
+
+                var chart2 = new ApexCharts(
+                    document.querySelector("#appointment-summary-chart"),
+                    options2
+                );
+
+                chart2.render();
+            },
+            error: function (err) {
+                console.error("Error fetching dashboard data:", err);
+            }
+        });
+
+    });
+</script> *@

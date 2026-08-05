@@ -1,0 +1,2530 @@
+﻿@model WebApplicationSampleTest2.Models.OPD
+@{
+    ViewData["Title"] = "OPD Consultation";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    :root {
+        --clr-primary: #556ee6;
+        --clr-primary-lt: #eef1ff;
+        --clr-primary-dk: #4458b8;
+        --clr-success: #34c38f;
+        --clr-success-lt: #e8f8f2;
+        --clr-warning: #f1b44c;
+        --clr-warning-lt: #fff8e8;
+        --clr-danger: #f46a6a;
+        --clr-danger-lt: #fff0f0;
+        --clr-surface: #f8f8fb;
+        --clr-border: #eff0f2;
+        --clr-text: #495057;
+        --clr-muted: #74788d;
+        --clr-white: #ffffff;
+        --radius-sm: 6px;
+        --radius-md: 4px;
+        --radius-lg: 6px;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+        --font-base: 'Poppins','Segoe UI',sans-serif;
+        --font-mono: 'Roboto Mono',monospace;
+    }
+
+    .opd-toolbar,
+    .opd-workspace {
+        font-family: var(--font-base);
+    }
+
+    body.vertical-collpsed .vertical-menu {
+        z-index: 1003;
+    }
+
+    .opd-toolbar {
+        margin: 0 -12px;
+        padding: 12px 20px;
+        box-shadow: none;
+    }
+
+    .opd-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--clr-white);
+        border-bottom: 1px solid var(--clr-border);
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        box-shadow: var(--shadow-sm);
+        font-family: var(--font-base);
+    }
+
+        .opd-toolbar .patient-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .opd-toolbar .patient-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--clr-primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .opd-toolbar .patient-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--clr-text);
+            line-height: 1.2;
+        }
+
+        .opd-toolbar .patient-meta {
+            font-size: 12px;
+            color: var(--clr-muted);
+        }
+
+        .opd-toolbar .toolbar-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+    .btn-toolbar-action {
+        font-family: var(--font-base);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 7px 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-text);
+        cursor: pointer;
+        transition: all .18s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+
+        .btn-toolbar-action:hover {
+            border-color: var(--clr-primary);
+            color: var(--clr-primary);
+            background: var(--clr-primary-lt);
+        }
+
+        .btn-toolbar-action.btn-primary-action {
+            background: var(--clr-primary);
+            color: #fff;
+            border-color: var(--clr-primary);
+        }
+
+            .btn-toolbar-action.btn-primary-action:hover {
+                background: var(--clr-primary-dk);
+            }
+
+        .btn-toolbar-action.btn-end-visit {
+            background: var(--clr-success);
+            color: #fff;
+            border-color: var(--clr-success);
+        }
+
+            .btn-toolbar-action.btn-end-visit:hover {
+                background: #2ca77a;
+            }
+
+        .btn-toolbar-action.btn-print {
+            background: var(--clr-primary);
+            color: #fff;
+            border-color: var(--clr-primary);
+        }
+
+            .btn-toolbar-action.btn-print:hover {
+                background: var(--clr-primary-dk);
+            }
+
+    .opd-workspace {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        height: calc(100vh - 145px);
+        min-height: 620px;
+        overflow: hidden;
+        border: 1px solid var(--clr-border);
+        background: var(--clr-white);
+    }
+
+    .opd-left {
+        background: var(--clr-surface);
+        border-right: 1px solid var(--clr-border);
+        overflow-y: auto;
+        padding: 0;
+    }
+
+        .opd-left::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .opd-left::-webkit-scrollbar-thumb {
+            background: var(--clr-border);
+            border-radius: 4px;
+        }
+
+    .left-section {
+        border-bottom: 1px solid var(--clr-border);
+        padding: 14px 16px;
+    }
+
+    .left-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .8px;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Vitals */
+    .vitals-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .vital-input-card {
+        background: var(--clr-white);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+    }
+
+        .vital-input-card label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--clr-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .vital-input-card input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--clr-text);
+            background: transparent;
+            font-family: var(--font-mono);
+        }
+
+        .vital-input-card .vital-unit {
+            font-size: 10px;
+            color: var(--clr-muted);
+            margin-top: 1px;
+        }
+
+    /* History sections */
+    .hist-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .hist-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .7px;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-add-hist {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1.5px solid var(--clr-primary);
+        background: var(--clr-primary-lt);
+        color: var(--clr-primary);
+        cursor: pointer;
+        transition: all .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .btn-add-hist:hover {
+            background: var(--clr-primary);
+            color: #fff;
+        }
+
+    .hist-form-panel {
+        background: var(--clr-white);
+        border: 1.5px solid var(--clr-primary);
+        border-radius: var(--radius-md);
+        padding: 12px;
+        margin-bottom: 10px;
+        display: none;
+    }
+
+        .hist-form-panel.open {
+            display: block;
+        }
+
+    .hist-form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 8px;
+    }
+
+    .hist-form-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .hist-form-input, .hist-form-select, .hist-form-textarea {
+        padding: 7px 10px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-family: var(--font-base);
+        color: var(--clr-text);
+        outline: none;
+        width: 100%;
+        min-width: 0;
+        background: var(--clr-white);
+        transition: border-color .15s;
+        box-sizing: border-box;
+    }
+
+        .hist-form-input:focus, .hist-form-select:focus, .hist-form-textarea:focus {
+            border-color: var(--clr-primary);
+        }
+
+    .hist-form-textarea {
+        resize: vertical;
+        min-height: 54px;
+    }
+
+    /* ✅ FIX: Changed to single column layout to prevent Status from being cut off */
+    .hist-form-grid2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Only use 2-col where it truly fits */
+    .hist-form-grid2-wide {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .hist-form-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .btn-hist-save {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: var(--clr-primary);
+        color: #fff;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .btn-hist-save:hover {
+            background: var(--clr-primary-dk);
+        }
+
+    .btn-hist-cancel {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+    }
+
+        .btn-hist-cancel:hover {
+            border-color: var(--clr-danger);
+            color: var(--clr-danger);
+        }
+
+    .hist-item {
+        background: var(--clr-white);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .hist-item-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .hist-item-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--clr-text);
+    }
+
+    .hist-item-meta {
+        font-size: 11px;
+        color: var(--clr-muted);
+        margin-top: 2px;
+    }
+
+    .hist-item-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .btn-hist-edit, .btn-hist-del {
+        width: 24px;
+        height: 24px;
+        border-radius: 5px;
+        border: 1px solid var(--clr-border);
+        background: var(--clr-white);
+        cursor: pointer;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .15s;
+    }
+
+        .btn-hist-edit:hover {
+            border-color: var(--clr-primary);
+            background: var(--clr-primary-lt);
+        }
+
+        .btn-hist-del:hover {
+            border-color: var(--clr-danger);
+            background: var(--clr-danger-lt);
+        }
+
+    .status-badge {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 20px;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: var(--clr-success-lt);
+        color: #2ca77a;
+    }
+
+    .status-resolved {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .status-abnormal {
+        background: var(--clr-danger-lt);
+        color: var(--clr-danger);
+    }
+
+    /* Past visits */
+    .history-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .history-visit-card {
+        background: var(--clr-white);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+
+        .history-visit-card:hover {
+            border-color: var(--clr-primary);
+        }
+
+        .history-visit-card .visit-date {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--clr-primary);
+        }
+
+        .history-visit-card .visit-meta {
+            font-size: 11px;
+            color: var(--clr-muted);
+            margin-top: 3px;
+        }
+
+        .history-visit-card .visit-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+    .visit-chip {
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 20px;
+        background: var(--clr-primary-lt);
+        color: var(--clr-primary);
+        font-weight: 500;
+    }
+
+        .visit-chip.med {
+            background: var(--clr-success-lt);
+            color: #2ca77a;
+        }
+
+    .private-notes-area {
+        width: 100%;
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        font-size: 13px;
+        font-family: var(--font-base);
+        color: var(--clr-text);
+        background: var(--clr-white);
+        resize: vertical;
+        min-height: 80px;
+        outline: none;
+        transition: border-color .15s;
+    }
+
+        .private-notes-area:focus {
+            border-color: var(--clr-primary);
+        }
+
+    /* Right panel */
+    .opd-right {
+        overflow-y: auto;
+        background: var(--clr-white);
+        padding: 0;
+    }
+
+        .opd-right::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .opd-right::-webkit-scrollbar-thumb {
+            background: var(--clr-border);
+            border-radius: 4px;
+        }
+
+    .right-block {
+        border-bottom: 1px solid var(--clr-border);
+        padding: 18px 20px;
+    }
+
+        .right-block:last-child {
+            border-bottom: none;
+        }
+
+    .block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+
+    .block-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--clr-text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .block-title .block-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: var(--clr-primary-lt);
+            color: var(--clr-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+    .block-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-block-action {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+        transition: all .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .btn-block-action:hover {
+            border-color: var(--clr-primary);
+            color: var(--clr-primary);
+        }
+
+    .search-input-wrap {
+        position: relative;
+    }
+
+        .search-input-wrap svg.search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--clr-muted);
+            pointer-events: none;
+        }
+
+    .search-input {
+        width: 100%;
+        padding: 9px 12px 9px 34px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-family: var(--font-base);
+        color: var(--clr-text);
+        outline: none;
+        transition: border-color .15s;
+        background: var(--clr-surface);
+    }
+
+        .search-input:focus {
+            border-color: var(--clr-primary);
+            background: var(--clr-white);
+        }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: var(--clr-white);
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        z-index: 200;
+        max-height: 220px;
+        overflow-y: auto;
+        display: none;
+    }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+    .autocomplete-item {
+        padding: 9px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        color: var(--clr-text);
+        transition: background .1s;
+    }
+
+        .autocomplete-item:hover {
+            background: var(--clr-primary-lt);
+            color: var(--clr-primary);
+        }
+
+    .chips-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        background: var(--clr-primary-lt);
+        color: var(--clr-primary);
+        border: 1px solid #c8d0fb;
+    }
+
+        .chip .chip-remove {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(37,99,235,.15);
+            border: none;
+            cursor: pointer;
+            color: var(--clr-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            padding: 0;
+        }
+
+            .chip .chip-remove:hover {
+                background: var(--clr-primary);
+                color: #fff;
+            }
+
+    .diag-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid;
+    }
+
+        .diag-chip.final {
+            background: var(--clr-primary-lt);
+            color: var(--clr-primary);
+            border-color: #c8d0fb;
+        }
+
+        .diag-chip.provisional {
+            background: var(--clr-warning-lt);
+            color: #c58b2d;
+            border-color: #f5d99c;
+        }
+
+        .diag-chip .chip-remove {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            padding: 0;
+            background: rgba(0,0,0,.1);
+        }
+
+    .btn-ddx-ai {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--clr-primary);
+        background: var(--clr-primary-lt);
+        color: var(--clr-primary);
+        cursor: pointer;
+        transition: all .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .btn-ddx-ai:hover {
+            background: var(--clr-primary);
+            color: #fff;
+        }
+
+    .vitals-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .field-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .field-input {
+        padding: 9px 12px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-family: var(--font-mono);
+        color: var(--clr-text);
+        outline: none;
+        transition: border-color .15s;
+        width: 100%;
+    }
+
+        .field-input:focus {
+            border-color: var(--clr-primary);
+        }
+
+    .field-textarea {
+        padding: 10px 12px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-family: var(--font-base);
+        color: var(--clr-text);
+        outline: none;
+        transition: border-color .15s;
+        width: 100%;
+        resize: vertical;
+        min-height: 90px;
+    }
+
+        .field-textarea:focus {
+            border-color: var(--clr-primary);
+        }
+
+    .rx-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .rx-table thead tr {
+            background: var(--clr-surface);
+        }
+
+        .rx-table th {
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--clr-muted);
+            border-bottom: 1.5px solid var(--clr-border);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .rx-table td {
+            padding: 10px;
+            font-size: 13px;
+            color: var(--clr-text);
+            border-bottom: 1px solid var(--clr-border);
+            vertical-align: middle;
+        }
+
+        .rx-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .rx-table tbody tr:hover td {
+            background: var(--clr-surface);
+        }
+
+    .freq-chips {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .freq-chip {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1.5px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+        .freq-chip.active {
+            background: var(--clr-primary);
+            color: #fff;
+            border-color: var(--clr-primary);
+        }
+
+    .timing-toggles {
+        display: flex;
+        gap: 4px;
+    }
+
+    .timing-toggle {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1.5px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+        transition: all .15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .timing-toggle.active {
+            background: var(--clr-primary);
+            color: #fff;
+            border-color: var(--clr-primary);
+        }
+
+    .when-select {
+        padding: 5px 8px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-family: var(--font-base);
+        color: var(--clr-text);
+        background: var(--clr-white);
+        cursor: pointer;
+        outline: none;
+    }
+
+        .when-select:focus {
+            border-color: var(--clr-primary);
+        }
+
+    .days-input {
+        width: 56px;
+        padding: 5px 8px;
+        border: 1.5px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-family: var(--font-mono);
+        text-align: center;
+        outline: none;
+    }
+
+        .days-input:focus {
+            border-color: var(--clr-primary);
+        }
+
+    .btn-delete-row {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .15s;
+    }
+
+        .btn-delete-row:hover {
+            background: var(--clr-danger-lt);
+            border-color: var(--clr-danger);
+            color: var(--clr-danger);
+        }
+
+    .followup-chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .followup-chip {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1.5px solid var(--clr-border);
+        background: var(--clr-white);
+        color: var(--clr-muted);
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+        .followup-chip:hover {
+            border-color: var(--clr-primary);
+            color: var(--clr-primary);
+        }
+
+        .followup-chip.active {
+            background: var(--clr-primary);
+            color: #fff;
+            border-color: var(--clr-primary);
+        }
+
+    .save-bar {
+        position: sticky;
+        bottom: 0;
+        background: var(--clr-white);
+        border-top: 1px solid var(--clr-border);
+        padding: 12px 24px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .upload-area {
+        border: 2px dashed var(--clr-border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s;
+        background: var(--clr-surface);
+    }
+
+        .upload-area:hover {
+            border-color: var(--clr-primary);
+            background: var(--clr-primary-lt);
+        }
+
+        .upload-area input[type=file] {
+            display: none;
+        }
+
+        .upload-area .upload-text {
+            font-size: 13px;
+            color: var(--clr-muted);
+            margin-top: 6px;
+        }
+
+    .existing-file-link {
+        font-size: 12px;
+        color: var(--clr-primary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 6px;
+    }
+
+    .selected-file-actions {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .selected-file-actions .file-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--clr-muted);
+        font-size: 12px;
+    }
+
+    .selected-file-actions .file-action {
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: var(--clr-primary);
+        cursor: pointer;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .toast-container-custom {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toast-custom {
+        padding: 12px 18px;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        box-shadow: var(--shadow-md);
+        animation: slideInToast .3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .toast-custom.success {
+            background: #16a34a;
+        }
+
+        .toast-custom.error {
+            background: #dc2626;
+        }
+
+    @@keyframes slideInToast {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .spinner-ring {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255,255,255,.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        display: none;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 14px 8px;
+        color: var(--clr-muted);
+        font-size: 12px;
+    }
+
+    .history-loading {
+        text-align: center;
+        padding: 20px;
+        color: var(--clr-muted);
+        font-size: 13px;
+    }
+
+    @@media(max-width:900px) {
+        .opd-workspace {
+            grid-template-columns: 1fr;
+            height: auto;
+            min-height: 0;
+        }
+
+        .opd-left {
+            border-right: none;
+            border-bottom: 1px solid var(--clr-border);
+            max-height: 350px;
+        }
+
+        .vitals-row {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    /* Keep the consultation workspace visually consistent with the Bootstrap
+       cards, tabs and form controls used throughout the application. */
+    .opd-toolbar {
+        position: relative;
+        margin: 0 -12px 0;
+        padding: 14px 20px;
+        border: 1px solid #eff0f2;
+        border-bottom: 0;
+        background: #fff;
+        box-shadow: none;
+    }
+
+    .opd-toolbar .patient-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 4px;
+        background: #eef1ff;
+        color: #556ee6;
+        font-size: 14px;
+    }
+
+    .opd-toolbar .patient-name {
+        color: #495057;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .opd-toolbar .patient-meta {
+        color: #74788d;
+        font-size: 12px;
+    }
+
+    .opd-section-nav {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin: 0 -12px;
+        padding: 0 20px;
+        min-height: 46px;
+        border: 1px solid #eff0f2;
+        border-bottom: 0;
+        background: #fff;
+        overflow-x: auto;
+    }
+
+    .opd-section-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 12px 16px 10px;
+        border-bottom: 2px solid transparent;
+        color: #74788d;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .opd-section-nav a:hover,
+    .opd-section-nav a.active {
+        color: #556ee6;
+        border-bottom-color: #556ee6;
+        background: #fff;
+    }
+
+    .opd-section-nav i {
+        font-size: 12px;
+    }
+
+    .btn-toolbar-action {
+        border-radius: 4px;
+        border-color: #ced4da;
+        color: #495057;
+        font-family: inherit;
+        font-size: 13px;
+        padding: 7px 12px;
+    }
+
+    .opd-workspace {
+        position: relative;
+        display: grid;
+        grid-template-columns: 290px minmax(0, 1fr);
+        height: calc(100vh - 190px);
+        min-height: 640px;
+        border: 1px solid #eff0f2;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 1px 3px rgba(56, 65, 74, .08);
+    }
+
+    .opd-left {
+        background: #f8f8fb;
+        border-right-color: #eff0f2;
+    }
+
+    .left-section,
+    .right-block {
+        border-bottom-color: #eff0f2;
+    }
+
+    .left-section-title,
+    .hist-section-title,
+    .field-label {
+        color: #74788d;
+        letter-spacing: .35px;
+    }
+
+    .vital-input-card,
+    .hist-item,
+    .history-visit-card {
+        border-color: #eff0f2;
+        border-radius: 4px;
+        box-shadow: none;
+    }
+
+    .vital-input-card input,
+    .field-input,
+    .field-textarea,
+    .search-input,
+    .hist-form-input,
+    .hist-form-select,
+    .hist-form-textarea,
+    .when-select,
+    .days-input {
+        border-color: #ced4da;
+        border-radius: 4px;
+        color: #495057;
+        font-family: inherit;
+        background: #fff;
+    }
+
+    .field-input,
+    .field-textarea,
+    .search-input {
+        box-shadow: none;
+    }
+
+    .field-input:focus,
+    .field-textarea:focus,
+    .search-input:focus,
+    .hist-form-input:focus,
+    .hist-form-select:focus,
+    .hist-form-textarea:focus {
+        border-color: #aab6f4;
+        box-shadow: 0 0 0 .15rem rgba(85, 110, 230, .12);
+    }
+
+    .right-block {
+        padding: 20px 22px;
+    }
+
+    .block-title {
+        color: #495057;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .block-title .block-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: #eef1ff;
+        color: #556ee6;
+    }
+
+    .btn-add-hist,
+    .btn-block-action,
+    .btn-hist-cancel {
+        border-radius: 4px;
+        background: #fff;
+        border-color: #ced4da;
+        color: #556ee6;
+    }
+
+    .btn-hist-save,
+    .freq-chip.active,
+    .timing-toggle.active,
+    .followup-chip.active {
+        background: #556ee6;
+        border-color: #556ee6;
+    }
+
+    .hist-form-panel,
+    .upload-area,
+    .opd-right .rx-table thead tr {
+        border-radius: 4px;
+        background: #f8f8fb;
+    }
+
+    .upload-area {
+        border-color: #ced4da;
+    }
+
+    .rx-table th {
+        color: #74788d;
+        background: #f8f8fb;
+    }
+
+    .save-bar {
+        padding: 12px 22px;
+        background: #fff;
+        border-top-color: #eff0f2;
+    }
+
+    @@media (max-width: 900px) {
+        .opd-toolbar {
+            margin: 0 -12px;
+        }
+
+        .opd-workspace {
+            height: auto;
+            min-height: 0;
+        }
+
+        .opd-section-nav {
+            margin: 0 -12px;
+            padding: 0 10px;
+        }
+
+        .opd-section-nav a {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+    }
+</style>
+
+<input type="hidden" id="hf_OPDId" value="@Model.Id" />
+<input type="hidden" id="hf_AppointmentId" value="@Model.AppointmentId" />
+<input type="hidden" id="hf_PatientId" value="@Model.PatientId" />
+
+@* ══════════ TOP TOOLBAR ══════════ *@
+<div class="opd-toolbar">
+    <div class="patient-header">
+        <div class="patient-avatar" id="patientAvatar">?</div>
+        <div>
+            <div class="patient-name" id="patientNameDisplay">Loading...</div>
+            <div class="patient-meta" id="patientMetaDisplay">—</div>
+        </div>
+    </div>
+    <div class="toolbar-actions">
+@{
+            var backUrl = ViewBag.IsWalkIn == true
+                ? Url.Action("Index", "WalkInConsultation")
+                : Url.Action("Index", "OPDAppointment");
+        }
+        <a href="@backUrl" class="btn-toolbar-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>Back
+        </a>
+    </div>
+</div>
+
+<div class="opd-section-nav" aria-label="Consultation sections">
+    <a href="#opdSymptoms" class="active"><i class="fas fa-notes-medical"></i> Consultation</a>
+    <a href="#opdDiagnosis"><i class="fas fa-stethoscope"></i> Diagnosis</a>
+    <a href="#opdMedicines"><i class="fas fa-pills"></i> Medicines</a>
+    <a href="#opdFollowup"><i class="fas fa-calendar-check"></i> Follow-up</a>
+</div>
+
+<div class="opd-workspace">
+
+    @* ══════════ LEFT PANEL ══════════ *@
+    <div class="opd-left">
+
+        @* — Vitals — *@
+        <div class="left-section">
+            <div class="left-section-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+                Vitals &amp; Body Composition
+            </div>
+            <div class="vitals-grid">
+                <div class="vital-input-card"><label>Temperature</label><input type="text" id="vit_temp" placeholder="98.6" /><div class="vital-unit">°F (97–99)</div></div>
+                <div class="vital-input-card"><label>Pulse Rate</label><input type="text" id="vit_pulse_left" placeholder="72" /><div class="vital-unit">bpm</div></div>
+                <div class="vital-input-card"><label>BP Systolic</label><input type="text" id="vit_bp_sys" placeholder="120" /><div class="vital-unit">mmHg</div></div>
+                <div class="vital-input-card"><label>BP Diastolic</label><input type="text" id="vit_bp_dia" placeholder="80" /><div class="vital-unit">mmHg</div></div>
+                <div class="vital-input-card"><label>SPO₂</label><input type="text" id="vit_spo2" placeholder="98" /><div class="vital-unit">% (95–100)</div></div>
+                <div class="vital-input-card"><label>RBS</label><input type="text" id="vit_rbs" placeholder="100" /><div class="vital-unit">mg/dL</div></div>
+                <div class="vital-input-card"><label>Weight</label><input type="text" id="vit_weight" placeholder="70" /><div class="vital-unit">kg</div></div>
+                <div class="vital-input-card"><label>Height</label><input type="text" id="vit_height" placeholder="170" /><div class="vital-unit">cm</div></div>
+                <div class="vital-input-card"><label>Respiration</label><input type="text" id="vit_resp" placeholder="16" /><div class="vital-unit">breaths/min</div></div>
+                <div class="vital-input-card"><label>Waist</label><input type="text" id="vit_waist" placeholder="85" /><div class="vital-unit">cm</div></div>
+                <div class="vital-input-card" style="grid-column:span 2;"><label>FIB-4 Index</label><input type="text" id="vit_fib4" placeholder="e.g. 1.3" /><div class="vital-unit">Liver fibrosis score</div></div>
+            </div>
+            <div id="bmiDisplay" style="margin-top:8px;font-size:12px;color:var(--clr-muted);display:none;">
+                BMI: <strong id="bmiValue"></strong> <span id="bmiCategory"></span>
+            </div>
+            <button class="btn-add-hist" style="margin-top:10px;width:100%;justify-content:center;" onclick="saveVitals()">💾 Save Vitals</button>
+        </div>
+
+        @* — Medical Conditions — *@
+        <div class="left-section">
+            <div class="hist-section-header">
+                <div class="hist-section-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4" /><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                    Medical Conditions
+                </div>
+                <button class="btn-add-hist" onclick="toggleHistForm('condForm')">+ Add</button>
+            </div>
+            <div class="hist-form-panel" id="condForm">
+                <input type="hidden" id="condId" value="0" />
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Condition Name *</label>
+                    <input type="text" class="hist-form-input" id="condName" placeholder="e.g. Diabetes, Hypertension..." />
+                </div>
+                {{! ✅ FIX: Duration Since row - full width with flex inline }}
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Duration Since</label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="number" class="hist-form-input" id="condDays" placeholder="e.g. 3" min="0" style="flex:1;min-width:0;" />
+                        <select class="hist-form-select" id="condSinceUnit" style="flex:0 0 100px;">
+                            <option value="Hours">Hours</option>
+                            <option value="Days" selected>Days</option>
+                            <option value="Months">Months</option>
+                            <option value="Years">Years</option>
+                        </select>
+                    </div>
+                </div>
+                {{! ✅ FIX: Status on its own full-width row — no longer gets cut off }}
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Status</label>
+                    <select class="hist-form-select" id="condStatus">
+                        <option value="Active">Active</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="hist-form-row" style="flex-direction:row;align-items:center;gap:8px;">
+                    <input type="checkbox" id="condOnMed" style="width:16px;height:16px;cursor:pointer;" />
+                    <label for="condOnMed" class="hist-form-label" style="margin:0;cursor:pointer;">On Medication</label>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Notes</label>
+                    <textarea class="hist-form-textarea" id="condNotes" placeholder="Additional details..."></textarea>
+                </div>
+                <div class="hist-form-actions">
+                    <button class="btn-hist-save" onclick="saveCondition()">Save</button>
+                    <button class="btn-hist-cancel" onclick="closeHistForm('condForm')">Cancel</button>
+                </div>
+            </div>
+            <div id="condList"><div class="empty-state" id="condEmpty">No conditions recorded</div></div>
+        </div>
+
+        @* — Allergies — *@
+        <div class="left-section">
+            <div class="hist-section-header">
+                <div class="hist-section-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                    Allergies
+                </div>
+                <button class="btn-add-hist" onclick="toggleHistForm('allergyForm')">+ Add</button>
+            </div>
+            <div class="hist-form-panel" id="allergyForm">
+                <input type="hidden" id="allergyId" value="0" />
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Allergic To *</label>
+                    <input type="text" class="hist-form-input" id="allergyTo" placeholder="e.g. Penicillin, Peanuts, Dust..." />
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Since</label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="number" class="hist-form-input" id="allergySince" placeholder="e.g. 2" min="0" style="flex:1;min-width:0;" />
+                        <select class="hist-form-select" id="allergySinceUnit" style="flex:0 0 100px;">
+                            <option value="Hours" selected>Hours</option>
+                            <option value="Days">Days</option>
+                            <option value="Months">Months</option>
+                            <option value="Years">Years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Status</label>
+                    <select class="hist-form-select" id="allergyStatus">
+                        <option value="Active">Active</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Notes</label>
+                    <textarea class="hist-form-textarea" id="allergyNotes" placeholder="Reaction description..."></textarea>
+                </div>
+                <div class="hist-form-actions">
+                    <button class="btn-hist-save" onclick="saveAllergy()">Save</button>
+                    <button class="btn-hist-cancel" onclick="closeHistForm('allergyForm')">Cancel</button>
+                </div>
+            </div>
+            <div id="allergyList"><div class="empty-state" id="allergyEmpty">No allergies recorded</div></div>
+        </div>
+
+        @* — Surgical History — *@
+        <div class="left-section">
+            <div class="hist-section-header">
+                <div class="hist-section-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    Surgical History
+                </div>
+                <button class="btn-add-hist" onclick="toggleHistForm('surgForm')">+ Add</button>
+            </div>
+            <div class="hist-form-panel" id="surgForm">
+                <input type="hidden" id="surgId" value="0" />
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Procedure Name *</label>
+                    <input type="text" class="hist-form-input" id="surgName" placeholder="e.g. Appendectomy, CABG..." />
+                </div>
+                <div class="hist-form-grid2-wide">
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Surgery Date</label>
+                        <input type="date" class="hist-form-input" id="surgDate" />
+                    </div>
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Location / Site</label>
+                        <input type="text" class="hist-form-input" id="surgLocation" placeholder="e.g. Abdomen" />
+                    </div>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Notes</label>
+                    <textarea class="hist-form-textarea" id="surgNotes" placeholder="Complications, hospital..."></textarea>
+                </div>
+                <div class="hist-form-actions">
+                    <button class="btn-hist-save" onclick="saveSurgery()">Save</button>
+                    <button class="btn-hist-cancel" onclick="closeHistForm('surgForm')">Cancel</button>
+                </div>
+            </div>
+            <div id="surgList"><div class="empty-state" id="surgEmpty">No surgical history recorded</div></div>
+        </div>
+
+        @* — Family History — *@
+        <div class="left-section">
+            <div class="hist-section-header">
+                <div class="hist-section-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    Family History
+                </div>
+                <button class="btn-add-hist" onclick="toggleHistForm('famForm')">+ Add</button>
+            </div>
+            <div class="hist-form-panel" id="famForm">
+                <input type="hidden" id="famId" value="0" />
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Relation *</label>
+                    <select class="hist-form-select" id="famRelation">
+                        <option value="">Select...</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Uncle">Uncle</option>
+                        <option value="Aunt">Aunt</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Condition *</label>
+                    <input type="text" class="hist-form-input" id="famCondition" placeholder="e.g. Diabetes..." />
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Notes</label>
+                    <textarea class="hist-form-textarea" id="famNotes" placeholder="Age of onset, severity..."></textarea>
+                </div>
+                <div class="hist-form-actions">
+                    <button class="btn-hist-save" onclick="saveFamilyHistory()">Save</button>
+                    <button class="btn-hist-cancel" onclick="closeHistForm('famForm')">Cancel</button>
+                </div>
+            </div>
+            <div id="famList"><div class="empty-state" id="famEmpty">No family history recorded</div></div>
+        </div>
+
+        @* — Lab Results — *@
+        <div class="left-section">
+            <div class="hist-section-header">
+                <div class="hist-section-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" /></svg>
+                    Lab Results
+                </div>
+                <button class="btn-add-hist" onclick="toggleHistForm('labForm')">+ Add</button>
+            </div>
+            <div class="hist-form-panel" id="labForm">
+                <input type="hidden" id="labId" value="0" />
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Test Name *</label>
+                    <input type="text" class="hist-form-input" id="labTest" placeholder="e.g. HbA1c, CBC, LFT..." />
+                </div>
+                <div class="hist-form-grid2-wide">
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Result Value</label>
+                        <input type="text" class="hist-form-input" id="labResult" placeholder="e.g. 7.2" />
+                    </div>
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Unit</label>
+                        <input type="text" class="hist-form-input" id="labUnit" placeholder="e.g. %" />
+                    </div>
+                </div>
+                <div class="hist-form-grid2-wide">
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Normal Range</label>
+                        <input type="text" class="hist-form-input" id="labRange" placeholder="e.g. 4–5.6%" />
+                    </div>
+                    <div class="hist-form-row">
+                        <label class="hist-form-label">Result Date</label>
+                        <input type="date" class="hist-form-input" id="labDate" />
+                    </div>
+                </div>
+                <div class="hist-form-row" style="flex-direction:row;align-items:center;gap:8px;">
+                    <input type="checkbox" id="labAbnormal" style="width:16px;height:16px;cursor:pointer;" />
+                    <label for="labAbnormal" class="hist-form-label" style="margin:0;color:var(--clr-danger);cursor:pointer;">Mark as Abnormal</label>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Notes</label>
+                    <textarea class="hist-form-textarea" id="labNotes" placeholder="Clinical interpretation..."></textarea>
+                </div>
+                <div class="hist-form-row">
+                    <label class="hist-form-label">Upload Report (PDF/Image)</label>
+                    <input type="file" class="hist-form-input" id="labFile" accept=".pdf,.jpg,.jpeg,.png" style="padding:4px;" />
+                </div>
+                <div class="hist-form-actions">
+                    <button class="btn-hist-save" onclick="saveLabResult()">Save</button>
+                    <button class="btn-hist-cancel" onclick="closeHistForm('labForm')">Cancel</button>
+                </div>
+            </div>
+            <div id="labList"><div class="empty-state" id="labEmpty">No lab results recorded</div></div>
+        </div>
+
+        @* — Past Visits — *@
+        <div class="left-section">
+            <div class="left-section-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+                Past Visits
+            </div>
+            <div id="historyLoadingLeft" class="history-loading">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .8s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg> Loading...
+            </div>
+            <div class="history-timeline" id="historyTimeline"></div>
+            <div class="empty-state" id="historyEmpty" style="display:none;">No past visits found</div>
+        </div>
+
+        @* — Private Notes — *@
+        <div class="left-section">
+            <div class="left-section-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                Private Notes
+                <span style="margin-left:auto;font-size:10px;color:var(--clr-danger);background:var(--clr-danger-lt);padding:2px 6px;border-radius:4px;">Internal Only</span>
+            </div>
+            <textarea class="private-notes-area" id="privateNotes" placeholder="Internal clinical notes (not shown on prescription)..."></textarea>
+        </div>
+
+    </div><!-- /opd-left -->
+    @* ══════════ RIGHT PANEL ══════════ *@
+    <div class="opd-right">
+
+        @* — Symptoms — *@
+        <div class="right-block" id="opdSymptoms">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">🤒</div>Symptoms (Chief Complaints)</div>
+                <div class="block-actions">
+                    <button class="btn-block-action" onclick="clearSymptoms()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>Clear
+                    </button>
+                </div>
+            </div>
+            <div class="search-input-wrap" style="position:relative;">
+                <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" class="search-input" id="symptomSearch" placeholder="Search symptoms..." autocomplete="off" oninput="filterSymptoms(this.value)" />
+                <div class="autocomplete-dropdown" id="symptomDropdown"></div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                <span style="font-size:12px;color:var(--clr-muted);white-space:nowrap;">Since:</span>
+                <input type="number" id="symSinceVal" placeholder="e.g. 3" min="0" style="width:70px;padding:4px 6px;border:1px solid var(--clr-border);border-radius:6px;font-size:12px;" />
+                <select id="symSinceUnit" style="padding:4px 6px;border:1px solid var(--clr-border);border-radius:6px;font-size:12px;">
+                    <option value="Hours">Hours</option>
+                    <option value="Days" selected>Days</option>
+                    <option value="Months">Months</option>
+                    <option value="Years">Years</option>
+                </select>
+                <button type="button" class="btn-add-hist" id="btnAddSymptom" onclick="confirmAddSymptom()" style="display:none;">+ Add</button>
+            </div>
+            <div class="chips-container" id="symptomChips">
+                <div class="empty-state" style="padding:12px 0;"><div>Type to search, set Since, then click + Add</div></div>
+            </div>
+        </div>
+
+        @* — Examination — *@
+        <div class="right-block" id="opdDiagnosis">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">🩺</div>Examination &amp; Vitals</div>
+            </div>
+            <div class="vitals-row">
+                <div class="field-group">
+                    <label class="field-label">Blood Pressure</label>
+                    <input type="text" class="field-input" id="fld_bp" value="@Model.BP" placeholder="120/80 mmHg" />
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Pulse Rate</label>
+                    <input type="text" class="field-input" id="fld_pulse" value="@Model.Pulse" placeholder="72 bpm" />
+                </div>
+                
+                <div class="field-group">
+                    <label class="field-label">Respiration</label>
+                    <input type="text" class="field-input" id="fld_resp" placeholder="16 /min" />
+                </div>
+            </div>
+        </div>
+
+        @* — Diagnosis — *@
+        <div class="right-block" id="opdMedicines">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">🧠</div>Diagnosis &amp; DDx</div>
+                <div class="block-actions">
+                    <button class="btn-ddx-ai" onclick="runDDxAI()">✨ DDx Assistant</button>
+                    <button class="btn-block-action" onclick="clearDiagnosis()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>Clear
+                    </button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <button class="freq-chip active" id="diagTypeFinal" onclick="setDiagType('Final',this)">Final</button>
+                <button class="freq-chip" id="diagTypeProvisional" onclick="setDiagType('Provisional',this)">Provisional / DDx</button>
+            </div>
+            <div class="search-input-wrap" style="position:relative;">
+                <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" class="search-input" id="diagSearch" placeholder="Type diagnosis and press Enter, or search..." autocomplete="off" oninput="filterDiagnosis(this.value)" onkeydown="diagEnterKey(event)" />
+                <div class="autocomplete-dropdown" id="diagDropdown"></div>
+            </div>
+            <div class="chips-container" id="diagChips">
+                <div class="empty-state" style="padding:12px 0;"><div>Type a diagnosis name and press Enter to add</div></div>
+            </div>
+            <div id="ddxPanel" style="display:none;margin-top:12px;background:var(--clr-surface);border:1.5px solid #e9d5ff;border-radius:var(--radius-md);padding:12px;">
+                <div style="font-size:12px;font-weight:700;color:var(--clr-primary);margin-bottom:8px;">✨ AI Suggested Differentials</div>
+                <div id="ddxList"></div>
+            </div>
+        </div>
+
+        @* — Investigation — *@
+        <div class="right-block" id="opdFollowup">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">🔬</div>Investigation &amp; Examination Notes</div>
+            </div>
+            <textarea class="field-textarea" id="fld_investigation" rows="4" placeholder="Enter clinical examination findings, lab orders, radiology requests...">@Model.Investigation</textarea>
+        </div>
+
+        @* — Report + Upload — *@
+        <div class="right-block">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">📄</div>Report Detail &amp; Upload</div>
+            </div>
+            <textarea class="field-textarea" id="fld_reportDetail" rows="3" placeholder="Enter report interpretation, diagnosis notes...">@Model.ReportDetail</textarea>
+            <div style="margin-top:12px;">
+                <label class="field-label" style="margin-bottom:6px;display:block;">Attach Report File</label>
+                <div class="upload-area" onclick="document.getElementById('reportFileInput').click()">
+                    <div style="font-size:22px;">📎</div>
+                    <div class="upload-text" id="uploadLabel">Click to upload report (PDF, JPG, PNG)</div>
+                    <input type="file" id="reportFileInput" name="ReportFile" form="opdForm" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(this)" />
+                </div>
+                <div class="selected-file-actions" id="selectedReportActions">
+                    <span class="file-name" id="selectedReportName"></span>
+                    <a class="file-action" id="viewSelectedReport" href="#" target="_blank" rel="noopener">View selected report</a>
+                    <button type="button" class="file-action" onclick="clearSelectedReport(event)">Remove</button>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.ReportFilePath))
+                {
+                    <a href="@Model.ReportFilePath" target="_blank" class="existing-file-link">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>View existing report
+                    </a>
+                }
+            </div>
+        </div>
+
+        @* — Medications — *@
+        <div class="right-block">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">💊</div>Medications (Rx)</div>
+                <div class="block-actions">
+                    <button class="btn-block-action" onclick="clearMedicines()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>Clear All
+                    </button>
+                </div>
+            </div>
+            <div style="background:var(--clr-surface);border:1.5px solid var(--clr-border);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:12px;">
+                    <div class="field-group">
+                        <label class="field-label">Search Drug</label>
+                        <div class="search-input-wrap" style="position:relative;">
+                            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                            <input type="text" class="search-input" id="medicineSearch" placeholder="Search medicine by name..." autocomplete="off" oninput="filterMedicines(this.value)" />
+                            <div class="autocomplete-dropdown" id="medicineDropdown"></div>
+                        </div>
+                        <input type="hidden" id="selectedMedicineId" value="0" />
+                        <div id="selectedMedicineName" style="font-size:12px;color:var(--clr-primary);margin-top:4px;"></div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Days</label>
+                        <input type="number" class="days-input" id="rxDays" value="5" min="1" max="365" style="width:70px;padding:9px 10px;font-size:14px;" />
+                    </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+                    <div>
+                        <div class="field-label" style="margin-bottom:5px;">Frequency</div>
+                        <div class="freq-chips">
+                            <button class="freq-chip" onclick="setFreq(this,'OD',1,0,0)">OD</button>
+                            <button class="freq-chip" onclick="setFreq(this,'BD',1,0,1)">BD</button>
+                            <button class="freq-chip active" onclick="setFreq(this,'TDS',1,1,1)">TDS</button>
+                            <button class="freq-chip" onclick="setFreq(this,'QID',1,1,1)">QID</button>
+                            <button class="freq-chip" onclick="setFreq(this,'PRN',0,0,0)">PRN</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label" style="margin-bottom:5px;">Timing</div>
+                        <div class="timing-toggles">
+                            <button class="timing-toggle active" id="tog_morning" onclick="toggleTiming(this,'morning')" title="Morning">M</button>
+                            <button class="timing-toggle active" id="tog_afternoon" onclick="toggleTiming(this,'afternoon')" title="Afternoon">A</button>
+                            <button class="timing-toggle active" id="tog_evening" onclick="toggleTiming(this,'evening')" title="Evening">E</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="field-label" style="margin-bottom:5px;">When</div>
+                        <select class="when-select" id="rxWhen">
+                            <option value="After Food">After Food</option>
+                            <option value="Before Food">Before Food</option>
+                            <option value="With Food">With Food</option>
+                            <option value="Empty Stomach">Empty Stomach</option>
+                            <option value="Bedtime">Bedtime</option>
+                            <option value="SOS">SOS / As Needed</option>
+                        </select>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <button class="btn-toolbar-action btn-primary-action" onclick="addMedicine()" style="padding:8px 16px;">+ Add Medicine</button>
+                    </div>
+                </div>
+            </div>
+            <div id="rxTableWrap">
+                @* {{! ✅ CHANGED: Column order is now #, Medicine, M, A, E, When, Days, Total Qty, Action }} *@
+                <table class="rx-table" id="rxTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Medicine</th>
+                            <th>M</th>
+                            <th>A</th>
+                            <th>E</th>
+                            <th>When</th>
+                            <th>Days</th>
+                            <th>Total Qty</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rxTableBody"></tbody>
+                </table>
+                <div class="empty-state" id="rxEmpty">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" /></svg>
+                    <div>No medicines added yet</div>
+                </div>
+            </div>
+        </div>
+
+        @* — Follow-up — *@
+        <div class="right-block">
+            <div class="block-header">
+                <div class="block-title"><div class="block-icon">📅</div>Follow-up &amp; Next Appointment</div>
+            </div>
+            <div class="field-group" style="max-width:220px;">
+                <label class="field-label">Next Visit Date</label>
+                <input type="date" class="field-input" id="fld_followup" value="@(Model.NextAppointmentDate?.ToString("yyyy-MM-dd"))" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="followup-chips">
+                <button class="followup-chip" onclick="setFollowup(2)">2 Days</button>
+                <button class="followup-chip" onclick="setFollowup(7)">1 Week</button>
+                <button class="followup-chip" onclick="setFollowup(14)">2 Weeks</button>
+                <button class="followup-chip" onclick="setFollowup(30)">1 Month</button>
+                <button class="followup-chip" onclick="setFollowup(90)">3 Months</button>
+            </div>
+        </div>
+
+        @* — Save Bar — *@
+        <div class="save-bar">
+            <span style="font-size:12px;color:var(--clr-muted);" id="autoSaveStatus"></span>
+            <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+                @if (Model.AppointmentId > 0)
+                {
+                    <a href="@Url.Action("PrintPriscription", "Patient", new { appointmentId = Model.AppointmentId })" target="_blank" class="btn btn-secondary btn-sm">
+                        📄 Print Rx
+                    </a>
+                }
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location='@backUrl';">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="submitOPD('save')" id="btnSaveBottom">
+                    @if (Model.Id > 0)
+                    {
+                        <text>💾 Update OPD</text>
+                    }
+                    else
+                    {
+                        <text>💾 Save OPD</text>
+                    }
+                </button>
+             
+            </div>
+        </div>
+
+    </div><!-- /opd-right -->
+</div><!-- /opd-workspace -->
+
+<form id="opdForm" method="post" asp-action="AddOPD" asp-controller="Patient" enctype="multipart/form-data" style="display:none;">
+    <input type="hidden" name="Id" id="form_Id" value="@Model.Id" />
+    <input type="hidden" name="AppointmentId" id="form_AppointmentId" value="@Model.AppointmentId" />
+    <input type="hidden" name="PatientId" id="form_PatientId" value="@Model.PatientId" />
+    <input type="hidden" name="HospitalId" id="form_HospitalId" value="@Model.HospitalId" />
+    <input type="hidden" name="SubHospitalId" id="form_SubHospitalId" value="@(Model.SubHospitalId?.ToString() ?? string.Empty)" />
+    <input type="hidden" name="BP" id="form_BP" />
+    <input type="hidden" name="Pulse" id="form_Pulse" />
+    <input type="hidden" name="Investigation" id="form_Investigation" />
+    <input type="hidden" name="ReportDetail" id="form_ReportDetail" />
+    <input type="hidden" name="NextAppointmentDate" id="form_NextAppointmentDate" />
+    <input type="hidden" name="SymptomsJson" id="form_SymptomsJson" />
+    <input type="hidden" name="MedicinesJson" id="form_MedicinesJson" />
+    <input type="hidden" name="DiagnosesJson" id="form_DiagnosesJson" />
+</form>
+
+<div class="toast-container-custom" id="toastContainer"></div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script>
+        /* ════════ STATE ════════ */
+        var S = {
+            opdId:         parseInt($('#hf_OPDId').val())         || 0,
+            appointmentId: parseInt($('#hf_AppointmentId').val()) || 0,
+            patientId:     parseInt($('#hf_PatientId').val())     || 0,
+            symptoms: [], medicines: [], diagnosis: [],
+            allSymptoms: [], allMedicines: [], allDiagnosis: [],
+            timing: { morning:true, afternoon:true, evening:true },
+            diagType: 'Final'
+        };
+        var _cond=[], _allergy=[], _surg=[], _fam=[], _lab=[];
+
+        /* ════════ INIT ════════ */
+        $(function(){
+            loadMasterData(); loadPatientInfo(); loadPatientHistory();
+            if (S.patientId) reloadFullHistory();
+            if (S.opdId > 0) { loadExistingSymptoms(); loadExistingMedicines(); loadExistingDiagnosis(); }
+            initBMICalc(); closeDropdownsOnClickOutside();
+        });
+
+        /* ════════ MASTER DATA ════════ */
+        function loadMasterData(){
+            $.getJSON('@Url.Action("GetAllSymptoms", "Patient")', function(d){ S.allSymptoms = d||[]; });
+            $.getJSON('@Url.Action("GetAllMedicines", "Patient")', function(d){ S.allMedicines = d||[]; });
+            $.getJSON('/PatientHistory/GetDiagnosisMaster', function(d){ S.allDiagnosis = d||[]; }).fail(function(){ S.allDiagnosis=[]; });
+        }
+
+        /* ════════ PATIENT INFO ════════ */
+        function loadPatientInfo(){
+            if (!S.patientId) return;
+            $.getJSON('/Patient/GetPatientInfo?patientId='+S.patientId, function(d){
+                if (!d) return;
+                var name = ((d.firstName||'')+' '+(d.lastName||'')).trim()||'Patient';
+                $('#patientNameDisplay').text(name);
+                $('#patientMetaDisplay').text([d.gender, d.age?d.age+'y':'', d.phoneNumber].filter(Boolean).join(' · '));
+                $('#patientAvatar').text(name.split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase()||'?');
+            }).fail(function(){
+                $('#patientNameDisplay').text('Patient #'+S.patientId);
+                $('#patientMetaDisplay').text('Appt #'+S.appointmentId);
+                $('#patientAvatar').text('P');
+            });
+        }
+
+        /* ════════ PAST VISITS ════════ */
+        function loadPatientHistory(){
+            if (!S.patientId){ $('#historyLoadingLeft').hide(); $('#historyEmpty').show(); return; }
+            $.getJSON('/OPDAppointment/GetPatientHistory?patientId='+S.patientId, function(visits){
+                $('#historyLoadingLeft').hide();
+                if (!visits||!visits.length){ $('#historyEmpty').show(); return; }
+                $('#historyTimeline').html(visits.map(function(v){
+                    var date = v.appointmentDate ? new Date(v.appointmentDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+                    var sc = (v.symptom||[]).slice(0,3).map(function(s){ return '<span class="visit-chip">'+h(s)+'</span>'; }).join('');
+                    var mc = (v.medicines||[]).slice(0,2).map(function(m){ return '<span class="visit-chip med">'+h(m.medicineName||'')+'</span>'; }).join('');
+                    return '<div class="history-visit-card"><div class="visit-date">'+date+'</div><div class="visit-meta">BP: '+(v.bp||'—')+' · Pulse: '+(v.pulse||'—')+'</div><div class="visit-chips">'+sc+mc+'</div></div>';
+                }).join(''));
+            }).fail(function(){ $('#historyLoadingLeft').hide(); $('#historyEmpty').show(); });
+        }
+
+        /* ════════ FULL MEDICAL HISTORY ════════ */
+        function reloadFullHistory(){
+            $.getJSON('/PatientHistory/GetFullHistory?patientId='+S.patientId, function(d){
+                if (!d) return;
+                _cond    = d.conditions    || [];
+                _allergy = d.allergies     || [];
+                _surg    = d.surgeries     || [];
+                _fam     = d.familyHistory || [];
+                _lab     = d.labResults    || [];
+                renderConditions(); renderAllergies(); renderSurgeries(); renderFamilyHistory(); renderLabResults();
+                if (d.latestVitals){ var v=d.latestVitals;
+                    if(v.temperature)       $('#vit_temp').val(v.temperature);
+                    if(v.pulseRate)         $('#vit_pulse_left').val(v.pulseRate);
+                    if(v.bpSystolic)        $('#vit_bp_sys').val(v.bpSystolic);
+                    if(v.bpDiastolic)       $('#vit_bp_dia').val(v.bpDiastolic);
+                    if(v.spo2)              $('#vit_spo2').val(v.spo2);
+                    if(v.rbs)               $('#vit_rbs').val(v.rbs);
+                    if(v.weight)            $('#vit_weight').val(v.weight);
+                    if(v.height)            $('#vit_height').val(v.height);
+                    if(v.respiration)       $('#vit_resp').val(v.respiration);
+                    if(v.waistCircumference)$('#vit_waist').val(v.waistCircumference);
+                    if(v.fib4)              $('#vit_fib4').val(v.fib4);
+                }
+            });
+        }
+
+        /* ════════ FORM HELPERS ════════ */
+        function toggleHistForm(id){
+            var $f=$('#'+id);
+            if($f.hasClass('open')){ $f.removeClass('open'); }
+            else { resetHistForm(id); $f.addClass('open'); $f[0].scrollIntoView({behavior:'smooth',block:'nearest'}); }
+        }
+        function closeHistForm(id){ $('#'+id).removeClass('open'); }
+        function resetHistForm(id){
+            var $f=$('#'+id);
+            $f.find('input[type=text],input[type=number],input[type=date],textarea').val('');
+            $f.find('input[type=hidden]').val('0');
+            $f.find('input[type=checkbox]').prop('checked',false);
+            $f.find('select').prop('selectedIndex',0);
+        }
+
+        /* ════════ MEDICAL CONDITIONS ════════ */
+        function renderConditions(){
+            if(!_cond.length){ $('#condList').html('<div class="empty-state" id="condEmpty">No conditions recorded</div>'); return; }
+            $('#condList').html(_cond.map(function(c){
+                var badge = c.status==='Active' ? '<span class="status-badge status-active">Active</span>' : '<span class="status-badge status-resolved">Resolved</span>';
+                var meta  = [c.sinceDays?(c.sinceDays+' '+(c.sinceUnit||'Days').toLowerCase()):'', c.onMedication?'On Medication':''].filter(Boolean).join(' · ');
+                return '<div class="hist-item"><div class="hist-item-body"><div class="hist-item-title">'+h(c.conditionName)+' '+badge+'</div>'+(meta?'<div class="hist-item-meta">'+h(meta)+'</div>':'')+(c.notes?'<div class="hist-item-meta" style="font-style:italic;">'+h(c.notes)+'</div>':'')+'</div><div class="hist-item-actions"><button class="btn-hist-edit" onclick="editCondition('+c.id+')" title="Edit">✏️</button><button class="btn-hist-del" onclick="deleteCondition('+c.id+')" title="Delete">🗑</button></div></div>';
+            }).join(''));
+        }
+        function editCondition(id){
+            var c=_cond.find(function(x){return x.id===id;});
+            if(!c)return;
+            $('#condId').val(c.id); $('#condName').val(c.conditionName); $('#condDays').val(c.sinceDays||''); $('#condSinceUnit').val(c.sinceUnit||'Days');
+            $('#condStatus').val(c.status||'Active'); $('#condOnMed').prop('checked',c.onMedication); $('#condNotes').val(c.notes||'');
+            $('#condForm').addClass('open'); document.getElementById('condForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+        function saveCondition(){
+            var name=$('#condName').val().trim(); if(!name){showToast('Condition name required','error');return;}
+            $.ajax({url:'/PatientHistory/SaveCondition',type:'POST',contentType:'application/json',
+                data:JSON.stringify({
+                    Id:parseInt($('#condId').val())||0,
+                    PatientId:S.patientId,
+                    ConditionName:name,
+                    SinceDays:parseInt($('#condDays').val())||0,
+                    SinceUnit:$('#condSinceUnit').val()||'Days',
+                    Status:$('#condStatus').val(),
+                    OnMedication:$('#condOnMed').is(':checked'),
+                    Notes:$('#condNotes').val().trim()
+                }),
+                success:function(r){ if(r.success){showToast('Condition saved','success');closeHistForm('condForm');reloadFullHistory();}else showToast(r.message||'Error','error'); }
+            });
+        }
+        function deleteCondition(id){
+            if(!confirm('Delete this condition?'))return;
+            $.post('/PatientHistory/DeleteCondition',{id:id},function(r){if(r.success){showToast('Deleted','success');reloadFullHistory();}});
+        }
+
+        /* ════════ ALLERGIES ════════ */
+        function renderAllergies(){
+            if(!_allergy.length){ $('#allergyList').html('<div class="empty-state" id="allergyEmpty">No allergies recorded</div>'); return; }
+            $('#allergyList').html(_allergy.map(function(a){
+                var badge = a.status==='Active'?'<span class="status-badge status-active">Active</span>':'<span class="status-badge status-resolved">Resolved</span>';
+                return '<div class="hist-item"><div class="hist-item-body"><div class="hist-item-title">⚠️ '+h(a.allergyTo)+' '+badge+'</div>'+(a.notes?'<div class="hist-item-meta">'+h(a.notes)+'</div>':'')+'</div><div class="hist-item-actions"><button class="btn-hist-edit" onclick="editAllergy('+a.id+')" title="Edit">✏️</button><button class="btn-hist-del" onclick="deleteAllergy('+a.id+')" title="Delete">🗑</button></div></div>';
+            }).join(''));
+        }
+        function editAllergy(id){
+            var a=_allergy.find(function(x){return x.id===id;});
+            if(!a)return;
+            $('#allergyId').val(a.id); $('#allergyTo').val(a.allergyTo); $('#allergySince').val(a.sinceValue||a.sinceHours||''); $('#allergySinceUnit').val(a.sinceUnit||'Hours');
+            $('#allergyStatus').val(a.status||'Active'); $('#allergyNotes').val(a.notes||'');
+            $('#allergyForm').addClass('open'); document.getElementById('allergyForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+        function saveAllergy(){
+            var allergyTo=$('#allergyTo').val().trim(); if(!allergyTo){showToast('Allergy name required','error');return;}
+            var sinceVal = parseInt($('#allergySince').val())||0;
+            var sinceUnit = $('#allergySinceUnit').val()||'Hours';
+            $.ajax({url:'/PatientHistory/SaveAllergy',type:'POST',contentType:'application/json',
+                data:JSON.stringify({
+                    Id:parseInt($('#allergyId').val())||0,
+                    PatientId:S.patientId,
+                    AllergyTo:allergyTo,
+                    SinceValue:sinceVal,
+                    SinceUnit:sinceUnit,
+                    SinceHours:toHours(sinceVal, sinceUnit),
+                    Status:$('#allergyStatus').val(),
+                    Notes:$('#allergyNotes').val().trim()
+                }),
+                success:function(r){ if(r.success){showToast('Allergy saved','success');closeHistForm('allergyForm');reloadFullHistory();}else showToast(r.message||'Error','error'); }
+            });
+        }
+        function deleteAllergy(id){
+            if(!confirm('Delete allergy record?'))return;
+            $.post('/PatientHistory/DeleteAllergy',{id:id},function(r){if(r.success){showToast('Deleted','success');reloadFullHistory();}});
+        }
+
+        /* ════════ SURGICAL HISTORY ════════ */
+        function renderSurgeries(){
+            if(!_surg.length){ $('#surgList').html('<div class="empty-state" id="surgEmpty">No surgical history recorded</div>'); return; }
+            $('#surgList').html(_surg.map(function(s){
+                var date=s.surgeryDate?new Date(s.surgeryDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+                var meta=[date,s.location].filter(Boolean).join(' · ');
+                return '<div class="hist-item"><div class="hist-item-body"><div class="hist-item-title">🔪 '+h(s.procedureName)+'</div>'+(meta?'<div class="hist-item-meta">'+h(meta)+'</div>':'')+(s.notes?'<div class="hist-item-meta" style="font-style:italic;">'+h(s.notes)+'</div>':'')+'</div><div class="hist-item-actions"><button class="btn-hist-edit" onclick="editSurgery('+s.id+')" title="Edit">✏️</button><button class="btn-hist-del" onclick="deleteSurgery('+s.id+')" title="Delete">🗑</button></div></div>';
+            }).join(''));
+        }
+        function editSurgery(id){
+            var s=_surg.find(function(x){return x.id===id;});
+            if(!s)return;
+            $('#surgId').val(s.id); $('#surgName').val(s.procedureName);
+            $('#surgDate').val(s.surgeryDate?new Date(s.surgeryDate).toISOString().split('T')[0]:'');
+            $('#surgLocation').val(s.location||''); $('#surgNotes').val(s.notes||'');
+            $('#surgForm').addClass('open'); document.getElementById('surgForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+        function saveSurgery(){
+            var name=$('#surgName').val().trim(); if(!name){showToast('Procedure name required','error');return;}
+            $.ajax({url:'/PatientHistory/SaveSurgery',type:'POST',contentType:'application/json',
+                data:JSON.stringify({Id:parseInt($('#surgId').val())||0,PatientId:S.patientId,ProcedureName:name,SurgeryDate:$('#surgDate').val()||null,Location:$('#surgLocation').val().trim(),Notes:$('#surgNotes').val().trim()}),
+                success:function(r){ if(r.success){showToast('Surgery record saved','success');closeHistForm('surgForm');reloadFullHistory();}else showToast(r.message||'Error','error'); }
+            });
+        }
+        function deleteSurgery(id){
+            if(!confirm('Delete surgery record?'))return;
+            $.post('/PatientHistory/DeleteSurgery',{id:id},function(r){if(r.success){showToast('Deleted','success');reloadFullHistory();}});
+        }
+
+        /* ════════ FAMILY HISTORY ════════ */
+        function renderFamilyHistory(){
+            if(!_fam.length){ $('#famList').html('<div class="empty-state" id="famEmpty">No family history recorded</div>'); return; }
+            $('#famList').html(_fam.map(function(f){
+                var title = (f.relation?h(f.relation)+': ':'')+h(f.conditionName);
+                return '<div class="hist-item"><div class="hist-item-body"><div class="hist-item-title">👨‍👩‍👧 '+title+'</div>'+(f.notes?'<div class="hist-item-meta">'+h(f.notes)+'</div>':'')+'</div><div class="hist-item-actions"><button class="btn-hist-edit" onclick="editFamilyHistory('+f.id+')" title="Edit">✏️</button><button class="btn-hist-del" onclick="deleteFamilyHistory('+f.id+')" title="Delete">🗑</button></div></div>';
+            }).join(''));
+        }
+        function editFamilyHistory(id){
+            var f=_fam.find(function(x){return x.id===id;});
+            if(!f)return;
+            $('#famId').val(f.id); $('#famRelation').val(f.relation||''); $('#famCondition').val(f.conditionName); $('#famNotes').val(f.notes||'');
+            $('#famForm').addClass('open'); document.getElementById('famForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+        function saveFamilyHistory(){
+            var relation=$('#famRelation').val(), condition=$('#famCondition').val().trim();
+            if(!relation){showToast('Please select a relation','error');return;}
+            if(!condition){showToast('Condition is required','error');return;}
+            $.ajax({url:'/PatientHistory/SaveFamilyHistory',type:'POST',contentType:'application/json',
+                data:JSON.stringify({Id:parseInt($('#famId').val())||0,PatientId:S.patientId,Relation:relation,ConditionName:condition,Notes:$('#famNotes').val().trim()}),
+                success:function(r){ if(r.success){showToast('Family history saved','success');closeHistForm('famForm');reloadFullHistory();}else showToast(r.message||'Error','error'); }
+            });
+        }
+        function deleteFamilyHistory(id){
+            if(!confirm('Delete family history record?'))return;
+            $.post('/PatientHistory/DeleteFamilyHistory',{id:id},function(r){if(r.success){showToast('Deleted','success');reloadFullHistory();}});
+        }
+
+        /* ════════ LAB RESULTS ════════ */
+        function renderLabResults(){
+            if(!_lab.length){ $('#labList').html('<div class="empty-state" id="labEmpty">No lab results recorded</div>'); return; }
+            $('#labList').html(_lab.map(function(l){
+                var badge = l.isAbnormal?'<span class="status-badge status-abnormal">Abnormal</span>':'';
+                var date  = l.resultDate?new Date(l.resultDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+                var meta  = [l.resultValue&&l.unit?l.resultValue+' '+l.unit:l.resultValue, l.normalRange?'Ref: '+l.normalRange:'', date].filter(Boolean).join(' · ');
+                return '<div class="hist-item"><div class="hist-item-body"><div class="hist-item-title">🧪 '+h(l.testName)+' '+badge+'</div>'+(meta?'<div class="hist-item-meta">'+h(meta)+'</div>':'')+(l.filePath?'<a href="'+h(l.filePath)+'" target="_blank" class="existing-file-link" style="font-size:11px;">📎 View Report</a>':'')+'</div><div class="hist-item-actions"><button class="btn-hist-edit" onclick="editLabResult('+l.id+')" title="Edit">✏️</button><button class="btn-hist-del" onclick="deleteLabResult('+l.id+')" title="Delete">🗑</button></div></div>';
+            }).join(''));
+        }
+        function editLabResult(id){
+            var l=_lab.find(function(x){return x.id===id;});
+            if(!l)return;
+            $('#labId').val(l.id); $('#labTest').val(l.testName); $('#labResult').val(l.resultValue||'');
+            $('#labUnit').val(l.unit||''); $('#labRange').val(l.normalRange||'');
+            $('#labDate').val(l.resultDate?new Date(l.resultDate).toISOString().split('T')[0]:'');
+            $('#labAbnormal').prop('checked',l.isAbnormal); $('#labNotes').val(l.notes||'');
+            $('#labForm').addClass('open'); document.getElementById('labForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+        function saveLabResult(){
+            var testName=$('#labTest').val().trim(); if(!testName){showToast('Test name required','error');return;}
+            var fd=new FormData();
+            fd.append('Id', parseInt($('#labId').val())||0);
+            fd.append('PatientId', S.patientId);
+            fd.append('AppointmentId', S.appointmentId||0);
+            fd.append('TestName', testName);
+            fd.append('ResultValue', $('#labResult').val().trim());
+            fd.append('Unit',        $('#labUnit').val().trim());
+            fd.append('NormalRange', $('#labRange').val().trim());
+            fd.append('ResultDate',  $('#labDate').val()||new Date().toISOString().split('T')[0]);
+            fd.append('IsAbnormal',  $('#labAbnormal').is(':checked')?'true':'false');
+            fd.append('Notes',       $('#labNotes').val().trim());
+            var fi=document.getElementById('labFile'); if(fi&&fi.files[0]) fd.append('LabReportFile',fi.files[0]);
+            $.ajax({url:'/PatientHistory/SaveLabResult',type:'POST',data:fd,processData:false,contentType:false,
+                success:function(r){ if(r.success){showToast('Lab result saved','success');closeHistForm('labForm');reloadFullHistory();}else showToast(r.message||'Error','error'); }
+            });
+        }
+        function deleteLabResult(id){
+            if(!confirm('Delete lab result?'))return;
+            $.post('/PatientHistory/DeleteLabResult',{id:id},function(r){if(r.success){showToast('Deleted','success');reloadFullHistory();}});
+        }
+
+        /* ════════ VITALS SAVE ════════ */
+        function saveVitals(){
+            var w=parseFloat($('#vit_weight').val())||null, hi=parseFloat($('#vit_height').val())||null;
+            var bmi=(w&&hi)?parseFloat((w/Math.pow(hi/100,2)).toFixed(1)):null;
+            $.ajax({url:'/PatientHistory/SaveVitals',type:'POST',contentType:'application/json',
+                data:JSON.stringify({PatientId:S.patientId,AppointmentId:S.appointmentId||null,
+                    Temperature:parseFloat($('#vit_temp').val())||null,PulseRate:parseInt($('#vit_pulse_left').val())||null,
+                    BPSystolic:parseInt($('#vit_bp_sys').val())||null,BPDiastolic:parseInt($('#vit_bp_dia').val())||null,
+                    SPO2:parseFloat($('#vit_spo2').val())||null,RBS:parseFloat($('#vit_rbs').val())||null,
+                    Weight:w,Height:hi,BMI:bmi,Respiration:parseInt($('#vit_resp').val())||null,
+                    WaistCircumference:parseFloat($('#vit_waist').val())||null,FIB4:parseFloat($('#vit_fib4').val())||null}),
+                success:function(r){ if(r.success)showToast('Vitals saved ✓','success'); else showToast(r.message||'Error','error'); }
+            });
+        }
+
+        /* ════════ BMI ════════ */
+        function initBMICalc(){
+            $('#vit_weight,#vit_height').on('input',function(){
+                var w=parseFloat($('#vit_weight').val()), hi=parseFloat($('#vit_height').val())/100;
+                if(w>0&&hi>0){
+                    var bmi=(w/(hi*hi)).toFixed(1);
+                    var cat=bmi<18.5?'(Underweight)':bmi<25?'(Normal)':bmi<30?'(Overweight)':'(Obese)';
+                    var col=bmi<18.5?'#d97706':bmi<25?'#16a34a':bmi<30?'#f59e0b':'#dc2626';
+                    $('#bmiValue').text(bmi).css('color',col); $('#bmiCategory').text(cat).css('color',col); $('#bmiDisplay').show();
+                } else { $('#bmiDisplay').hide(); }
+            });
+        }
+
+        /* ════════ SYMPTOMS ════════ */
+        function filterSymptoms(q){
+            var dd=$('#symptomDropdown'); if(!q){dd.removeClass('show');return;}
+            var m=S.allSymptoms.filter(function(s){return s.name.toLowerCase().includes(q.toLowerCase());}).slice(0,12);
+            if(!m.length){dd.removeClass('show');return;}
+            dd.html(m.map(function(s){return '<div class="autocomplete-item" onclick="addSymptom('+s.id+',\''+j(s.name)+'\')">'+h(s.name)+'</div>';}).join('')).addClass('show');
+        }
+        var _pendingSymptom = null;
+
+        function addSymptom(id,name){
+            if(S.symptoms.some(function(s){return s.id===id;})){showToast('Already added','error');return;}
+            _pendingSymptom = {id:id, name:name};
+            $('#symptomSearch').val(name);
+            $('#symptomDropdown').removeClass('show');
+            $('#btnAddSymptom').show();
+            $('#symSinceVal').focus();
+        }
+
+        function confirmAddSymptom(){
+            if(!_pendingSymptom){showToast('Select a symptom first','error');return;}
+            var sv=parseInt($('#symSinceVal').val())||0, su=$('#symSinceUnit').val()||'Days';
+            S.symptoms.push({id:_pendingSymptom.id,name:_pendingSymptom.name,since:sv,sinceUnit:su});
+            renderSymptomChips(); updateSymptomsJson();
+            $.get('/Patient/SaveSymtons',{Command:_pendingSymptom.id});
+            showToast(_pendingSymptom.name+' added','success');
+            _pendingSymptom = null;
+            $('#symSinceVal').val(''); $('#symSinceUnit').val('Days');
+            $('#symptomSearch').val(''); $('#symptomDropdown').removeClass('show');
+            $('#btnAddSymptom').hide();
+        }
+        function removeSymptom(id){
+            S.symptoms=S.symptoms.filter(function(s){return s.id!==id;}); renderSymptomChips(); updateSymptomsJson(); $.get('/Patient/DeleteSymtons',{Command:id});
+        }
+        function clearSymptoms(){ S.symptoms.forEach(function(s){$.get('/Patient/DeleteSymtons',{Command:s.id});}); S.symptoms=[]; renderSymptomChips(); updateSymptomsJson(); }
+        function toHours(val, unit){
+            if(!val) return null;
+            if(unit==='Hours')  return val;
+            if(unit==='Days')   return val*24;
+            if(unit==='Months') return val*24*30;
+            if(unit==='Years')  return val*24*365;
+            return val;
+        }
+        function renderSymptomChips(){
+            if(!S.symptoms.length){ $('#symptomChips').html('<div class="empty-state" style="padding:12px 0;"><div>Type to search, set Since, then click + Add</div></div>'); return; }
+            $('#symptomChips').html(S.symptoms.map(function(s){
+                var sl=s.since?(s.since+' '+s.sinceUnit):'';
+                return '<span class="chip">'+h(s.name)+(sl?' <small style="opacity:.7;font-size:10px;">('+sl+')</small>':'')+'<button class="chip-remove" onclick="removeSymptom('+s.id+')">✕</button></span>';
+            }).join(''));
+        }
+        function updateSymptomsJson(){ $('#form_SymptomsJson').val(JSON.stringify(S.symptoms.map(function(s){return s.id;}))); }
+        function loadExistingSymptoms(){
+            $.getJSON('/Patient/LoadExistingSymptomsJson?opdId='+S.opdId, function(data){
+                if(!data)return;
+                S.symptoms=data.map(function(s){return {id:s.symptomId,name:s.symptomName};});
+                renderSymptomChips(); updateSymptomsJson();
+            });
+        }
+
+        /* ════════ DIAGNOSIS ════════ */
+        function setDiagType(type,btn){ S.diagType=type; $('#diagTypeFinal,#diagTypeProvisional').removeClass('active'); $(btn).addClass('active'); }
+        function filterDiagnosis(q){
+            var dd=$('#diagDropdown'); if(!q){dd.removeClass('show');return;}
+            var m=S.allDiagnosis.filter(function(d){return d.name.toLowerCase().includes(q.toLowerCase());}).slice(0,12);
+            if(!m.length){dd.removeClass('show');return;}
+            dd.html(m.map(function(d){return '<div class="autocomplete-item" onclick="addDiagnosis(\''+j(d.name)+'\')">'+h(d.name)+'</div>';}).join('')).addClass('show');
+        }
+        function diagEnterKey(e){ if(e.key==='Enter'){ var v=$('#diagSearch').val().trim(); if(v){addDiagnosis(v);e.preventDefault();} } }
+        function addDiagnosis(name){
+            if(S.diagnosis.some(function(d){return d.name.toLowerCase()===name.toLowerCase();})){showToast('Already added','error');return;}
+            S.diagnosis.push({name:name,type:S.diagType}); renderDiagChips(); updateDiagnosisJson();
+            $('#diagSearch').val(''); $('#diagDropdown').removeClass('show');
+        }
+        function removeDiagnosis(i){ S.diagnosis.splice(i,1); renderDiagChips(); updateDiagnosisJson(); }
+        function clearDiagnosis(){ S.diagnosis=[]; renderDiagChips(); updateDiagnosisJson(); }
+        function renderDiagChips(){
+            if(!S.diagnosis.length){ $('#diagChips').html('<div class="empty-state" style="padding:12px 0;"><div>Type a diagnosis name and press Enter to add</div></div>'); return; }
+            $('#diagChips').html(S.diagnosis.map(function(d,i){
+                var cls=d.type==='Final'?'final':'provisional';
+                var lbl=d.type==='Provisional'?' <small style="font-size:10px;opacity:.7;">(DDx)</small>':'';
+                return '<span class="diag-chip '+cls+'">'+h(d.name)+lbl+'<button class="chip-remove" onclick="removeDiagnosis('+i+')">✕</button></span>';
+            }).join(''));
+        }
+        function updateDiagnosisJson(){ $('#form_DiagnosesJson').val(JSON.stringify(S.diagnosis)); }
+        function loadExistingDiagnosis(){
+            $.getJSON('/PatientHistory/GetOPDDiagnosis?opdId='+S.opdId, function(data){
+                if(!data)return;
+                S.diagnosis=data.map(function(d){return{name:d.diagnosisName,type:d.type||'Final'};});
+                renderDiagChips(); updateDiagnosisJson();
+            });
+        }
+        function runDDxAI(){
+            var symptoms=S.symptoms.map(function(s){return s.name;}).join(', ');
+            if(!symptoms){showToast('Add symptoms first','error');return;}
+            $('#ddxPanel').show(); $('#ddxList').html('<div style="font-size:12px;color:var(--clr-muted);padding:8px 0;">Analyzing symptoms...</div>');
+            $.getJSON('/PatientHistory/GetDDxSuggestions?symptoms='+encodeURIComponent(symptoms),function(data){
+                if(!data||!data.length){$('#ddxList').html('<div style="font-size:12px;color:var(--clr-muted);">No suggestions returned</div>');return;}
+                $('#ddxList').html(data.map(function(d){
+                    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3e8ff;"><span style="font-size:12px;">'+h(d)+'</span><button class="btn-add-hist" style="font-size:10px;padding:2px 8px;" onclick="S.diagType=\'Provisional\';addDiagnosis(\''+j(d)+'\')">+ Add</button></div>';
+                }).join(''));
+            }).fail(function(){ $('#ddxList').html('<div style="font-size:12px;color:var(--clr-muted);">AI endpoint not available</div>'); });
+        }
+
+        /* ════════ MEDICINES ════════ */
+              /* ── SYRUP DETECTION HELPER ── */
+        function isSyrupMedicine(name){
+            var kw=['syrup','susp','suspension','linctus','elixir'];
+            var lo=name.toLowerCase();
+            return kw.some(function(k){return lo.includes(k);});
+        }
+        function calcTotalQty(m){
+            var doses=(m.Morning==='1'?1:0)+(m.Afternoon==='1'?1:0)+(m.Evening==='1'?1:0);
+            if(m.IsSyrup){
+                var ml=doses*m.Days*5;
+                var btl=Math.ceil(ml/100);
+                return btl+(btl>1?' Btls':' Btl');
+            }
+            return doses*m.Days;
+        }
+
+        function filterMedicines(q){
+            var dd=$('#medicineDropdown'); if(!q){dd.removeClass('show');return;}
+            var m=S.allMedicines.filter(function(x){return x.name.toLowerCase().includes(q.toLowerCase());}).slice(0,12);
+            if(!m.length){dd.removeClass('show');return;}
+            dd.html(m.map(function(x){return '<div class="autocomplete-item" onclick="selectMedicine('+x.id+',\''+j(x.name)+'\')">'+h(x.name)+'</div>';}).join('')).addClass('show');
+        }
+        function selectMedicine(id,name){ $('#selectedMedicineId').val(id); $('#selectedMedicineName').text('✔ '+name); $('#medicineSearch').val(name); $('#medicineDropdown').removeClass('show'); }
+        function toggleTiming(btn,field){ S.timing[field]=!S.timing[field]; $(btn).toggleClass('active',S.timing[field]); }
+        function setFreq(btn,label,m,a,e){
+            $('.freq-chip').removeClass('active'); $(btn).addClass('active');
+            S.timing.morning=!!m; S.timing.afternoon=!!a; S.timing.evening=!!e;
+            $('#tog_morning').toggleClass('active',!!m); $('#tog_afternoon').toggleClass('active',!!a); $('#tog_evening').toggleClass('active',!!e);
+        }
+        function addMedicine(){
+            var id=parseInt($('#selectedMedicineId').val())||0, name=$('#medicineSearch').val().trim(), days=parseInt($('#rxDays').val())||1, when=$('#rxWhen').val();
+            if(!id||!name){showToast('Select a medicine first','error');return;}
+            if(S.medicines.some(function(m){return m.MedicineId===id;})){showToast('Already added','error');return;}
+            var med={MedicineId:id,MedicineName:name,Morning:S.timing.morning?'1':'0',Afternoon:S.timing.afternoon?'1':'0',Evening:S.timing.evening?'1':'0',Days:days,When:when,IsSyrup:isSyrupMedicine(name)};
+            S.medicines.push(med); renderRxTable(); updateMedicinesJson();
+            $.get('/Patient/SaveMedicines',{Command:id,_Morning:med.Morning,_Afternoon:med.Afternoon,_Evening:med.Evening,_Days:days});
+            $('#medicineSearch').val(''); $('#selectedMedicineId').val(0); $('#selectedMedicineName').text('');
+            showToast(name+' added to Rx','success');
+        }
+        function removeMedicine(id){ S.medicines=S.medicines.filter(function(m){return m.MedicineId!==id;}); renderRxTable(); updateMedicinesJson(); $.get('/Patient/DeleteMedicines',{Command:id}); }
+        function clearMedicines(){ S.medicines.forEach(function(m){$.get('/Patient/DeleteMedicines',{Command:m.MedicineId});}); S.medicines=[]; renderRxTable(); updateMedicinesJson(); }
+
+        function renderRxTable(){
+            if(!S.medicines.length){$('#rxTable').hide();$('#rxEmpty').show();return;}
+            $('#rxEmpty').hide(); $('#rxTable').show();
+            $('#rxTableBody').html(S.medicines.map(function(m,i){
+                var freq=(m.Morning==='1'?1:0)+(m.Afternoon==='1'?1:0)+(m.Evening==='1'?1:0);
+                var defaultQty=m.IsSyrup ? calcTotalQty(m) : (m.Quantity||freq*m.Days);
+                var qtyDisplay=m.IsSyrup
+                    ? '<span style="font-size:13px;font-weight:500;color:var(--clr-primary);padding:6px 8px;display:inline-block;">'+calcTotalQty(m)+'</span>'
+                    : '<input type="number" class="days-input" value="'+(m.Quantity||freq*m.Days)+'" min="1" style="width:55px;" onchange="updateQty('+m.MedicineId+',this.value)"/>';
+                return '<tr>' +
+                    '<td>'+(i+1)+'</td>' +
+                    '<td><strong>'+h(m.MedicineName)+'</strong></td>' +
+                    '<td><span class="timing-toggle '+(m.Morning==='1'?'active':'')+'" style="cursor:default;">M</span></td>' +
+                    '<td><span class="timing-toggle '+(m.Afternoon==='1'?'active':'')+'" style="cursor:default;">A</span></td>' +
+                    '<td><span class="timing-toggle '+(m.Evening==='1'?'active':'')+'" style="cursor:default;">E</span></td>' +
+                    '<td><span style="font-size:12px;color:var(--clr-muted);">'+h(m.When||'')+'</span></td>' +
+                    '<td><input type="number" class="days-input" value="'+m.Days+'" min="1" onchange="updateDays('+m.MedicineId+',this.value)"/></td>' +
+                    '<td>'+qtyDisplay+'</td>' +
+                    '<td><button class="btn-delete-row" onclick="removeMedicine('+m.MedicineId+')">✕</button></td>' +
+                    '</tr>';
+            }).join(''));
+        }
+
+        function updateDays(id,val){
+            var m=S.medicines.find(function(x){return x.MedicineId===id;});
+            if(m){ m.Days=parseInt(val)||1; updateMedicinesJson(); renderRxTable(); }
+        }
+        function updateQty(id,val){
+            var m=S.medicines.find(function(x){return x.MedicineId===id;});
+            if(m){ m.Quantity=parseInt(val)||1; updateMedicinesJson(); }
+        }
+        function updateMedicinesJson(){
+            $('#form_MedicinesJson').val(JSON.stringify(S.medicines.map(function(m){
+                var f=(m.Morning==='1'?1:0)+(m.Afternoon==='1'?1:0)+(m.Evening==='1'?1:0);
+                var qty=m.IsSyrup ? Math.ceil(f*m.Days*5/100) : (m.Quantity||f*m.Days);
+                return{MedicineId:m.MedicineId,Morning:m.Morning,Afternoon:m.Afternoon,Evening:m.Evening,Days:m.Days,Quantity:qty};
+            })));
+        }
+        function loadExistingMedicines(){
+            $.getJSON('/Patient/GetMedicinesByOPDIdJson?opdId='+S.opdId,function(data){
+                if(!data)return;
+                S.medicines=data.map(function(m){
+                    return{MedicineId:m.medicineId,MedicineName:m.medicineName,Morning:m.morning.toString(),Afternoon:m.afternoon.toString(),Evening:m.evening.toString(),Days:m.days,Quantity:m.quantity,When:m.when||'After Food',IsSyrup:isSyrupMedicine(m.medicineName)};
+                });
+                renderRxTable(); updateMedicinesJson();
+            });
+        }
+
+        /* ════════ FOLLOW-UP ════════ */
+        function setFollowup(days){ var d=new Date(); d.setDate(d.getDate()+days); $('#fld_followup').val(d.toISOString().split('T')[0]); $('.followup-chip').removeClass('active'); event.target.classList.add('active'); }
+
+        /* ════════ SUBMIT ════════ */
+        function submitOPD(mode){
+            $('#form_BP').val($('#fld_bp').val().trim()); $('#form_Pulse').val($('#fld_pulse').val().trim());
+            $('#form_Investigation').val($('#fld_investigation').val().trim()); $('#form_ReportDetail').val($('#fld_reportDetail').val().trim());
+            $('#form_NextAppointmentDate').val($('#fld_followup').val());
+            updateSymptomsJson(); updateMedicinesJson(); updateDiagnosisJson();
+            $('#saveSpinner').show(); $('#btnSaveBottom').prop('disabled',true);
+            $('#opdForm').submit();
+        }
+        function endVisit(){ if(confirm('End visit and mark as completed?')) submitOPD('end'); }
+        var selectedReportUrl = null;
+        function handleFileSelect(input){
+            var file = input.files && input.files[0];
+            if(!file) return;
+            if(selectedReportUrl) URL.revokeObjectURL(selectedReportUrl);
+            selectedReportUrl = URL.createObjectURL(file);
+            $('#uploadLabel').text('📎 '+file.name);
+            $('#selectedReportName').text(file.name);
+            $('#viewSelectedReport').attr('href', selectedReportUrl);
+            $('#selectedReportActions').css('display','flex');
+        }
+        function clearSelectedReport(event){
+            if(event) event.stopPropagation();
+            var input = document.getElementById('reportFileInput');
+            if(input) input.value = '';
+            if(selectedReportUrl) URL.revokeObjectURL(selectedReportUrl);
+            selectedReportUrl = null;
+            $('#uploadLabel').text('Click to upload report (PDF, JPG, PNG)');
+            $('#viewSelectedReport').attr('href','#');
+            $('#selectedReportName').text('');
+            $('#selectedReportActions').hide();
+        }
+
+        /* ════════ TOAST ════════ */
+        function showToast(msg,type){
+            var $t=$('<div class="toast-custom '+(type||'success')+'">'+(type==='success'?'✓':'✕')+' '+h(msg)+'</div>');
+            $('#toastContainer').append($t);
+            setTimeout(function(){$t.fadeOut(400,function(){$t.remove();});},2500);
+        }
+
+        /* ════════ UTILS ════════ */
+        function h(s){ return $('<div>').text(s||'').html(); }
+        function j(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+        function closeDropdownsOnClickOutside(){
+            $(document).on('click',function(e){
+                if(!$(e.target).closest('#symptomSearch,#symptomDropdown').length)  $('#symptomDropdown').removeClass('show');
+                if(!$(e.target).closest('#medicineSearch,#medicineDropdown').length) $('#medicineDropdown').removeClass('show');
+                if(!$(e.target).closest('#diagSearch,#diagDropdown').length)         $('#diagDropdown').removeClass('show');
+            });
+        }
+        $('#fld_bp,#fld_pulse,#fld_investigation,#fld_reportDetail').on('input',function(){
+            $('#autoSaveStatus').text('Unsaved changes...');
+            clearTimeout(window._ast);
+            window._ast=setTimeout(function(){$('#autoSaveStatus').text('');},3000);
+        });
+    </script>
+}

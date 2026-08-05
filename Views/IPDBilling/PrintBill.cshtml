@@ -1,0 +1,1043 @@
+@model WebApplicationSampleTest2.Models.IPDBillVM
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>IPD Bill - @Model.AdmissionNumber</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        /* ===== PRINT OPTIONS PANEL (screen only) ===== */
+        .print-options {
+            width: 820px;
+            margin: 0 auto 20px;
+            background: #fff;
+            border: 1px solid #e0e4ea;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            padding: 16px 20px;
+        }
+
+        .print-options h3 {
+            margin: 0 0 4px;
+            font-size: 15px;
+            color: #1f4e79;
+        }
+
+        .print-options .sub {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 12px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px 16px;
+        }
+
+        .options-grid label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: #333;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background .15s;
+        }
+
+        .options-grid label:hover {
+            background: #f0f4ff;
+        }
+
+        .options-grid input[type="checkbox"] {
+            accent-color: #1f4e79;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .option-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 9px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-print { background: #1f4e79; }
+        .btn-pdf { background: #28a745; }
+        .btn-back { background: #6c757d; }
+        .btn-select-all { background: #0d6efd; }
+        .btn-select-none { background: #adb5bd; }
+
+        /* ===== PRINT SHEET ===== */
+        .sheet {
+            width: 820px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 36px 40px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            border-radius: 4px;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 14px;
+            border-bottom: 3px solid #1f4e79;
+            margin-bottom: 14px;
+        }
+
+        .hospital-logo {
+            height: 60px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .hospital-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1f4e79;
+            letter-spacing: .3px;
+        }
+
+        .hospital-sub {
+            font-size: 11px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        .bill-title {
+            text-align: right;
+        }
+
+            .bill-title h2 {
+                font-size: 24px;
+                color: #1f4e79;
+                font-weight: 800;
+                letter-spacing: 2px;
+                margin: 0;
+            }
+
+            .bill-title p {
+                font-size: 11px;
+                color: #777;
+                margin-top: 3px;
+            }
+
+        .bill-no {
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            color: #1f4e79 !important;
+        }
+
+        /* PATIENT BAR */
+        .patient-bar {
+            background: #1f4e79;
+            color: #fff;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px 16px;
+            border-radius: 4px;
+            font-size: 11.5px;
+            margin: 12px 0;
+        }
+
+            .patient-bar span strong {
+                color: #cce5ff;
+                font-weight: 600;
+            }
+
+        /* STATUS */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-partial { background: #fff3cd; color: #856404; }
+        .status-unpaid { background: #f8d7da; color: #721c24; }
+
+        /* SECTION */
+        .section {
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #1f4e79;
+            background: #e8f0fe;
+            padding: 5px 10px;
+            border-left: 4px solid #1f4e79;
+            margin-bottom: 6px;
+            letter-spacing: .2px;
+        }
+
+        /* TABLES */
+        .bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+            .bill-table th {
+                background: #f0f4ff;
+                padding: 6px 8px;
+                border: 1px solid #dde3ec;
+                text-align: left;
+                font-weight: 600;
+            }
+
+            .bill-table td {
+                padding: 6px 8px;
+                border: 1px solid #eef0f4;
+            }
+
+            .bill-table tr:nth-child(even) td {
+                background: #fafbfd;
+            }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* OPERATION BOX */
+        .op-box {
+            border: 1px solid #dde3ec;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .op-box-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            color: #1f4e79;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+
+        /* TOTALS BOX */
+        .totals-box {
+            width: 320px;
+            margin-left: auto;
+            margin-top: 12px;
+            border: 1px solid #dde3ec;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 12px;
+            border-bottom: 1px solid #eef0f4;
+            font-size: 12px;
+        }
+
+            .totals-row.total-final {
+                background: #1f4e79;
+                color: #fff;
+                font-weight: 700;
+                font-size: 14px;
+                padding: 9px 12px;
+            }
+
+            .totals-row.discount { color: #dc3545; }
+            .totals-row.paid { color: #28a745; }
+            .totals-row.due { color: #dc3545; font-weight: 700; }
+
+        /* PAYMENT TABLE */
+        .pay-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+            .pay-table th {
+                background: #e8f0fe;
+                padding: 6px 8px;
+                border: 1px solid #dde3ec;
+            }
+
+            .pay-table td {
+                padding: 6px 8px;
+                border: 1px solid #eef0f4;
+            }
+
+        /* SIGNATURE */
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 34px;
+            padding-top: 12px;
+        }
+
+        .sig-box {
+            text-align: center;
+            width: 190px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #333;
+            margin-bottom: 4px;
+            padding-top: 4px;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            margin-top: 18px;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+
+        /* ── PRINT / EXCLUDE CONTROL ── */
+        .exclude-from-print { display: none !important; }
+
+        /* ===== PRINT RULES ===== */
+        @@media print {
+            body { background: #fff; padding: 0; }
+            .print-options { display: none !important; }
+            .sheet {
+                width: 100%;
+                box-shadow: none;
+                padding: 10px 12px;
+                margin: 0;
+            }
+            .exclude-from-print { display: none !important; }
+            .btn-bar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    @* ── PRINT OPTIONS PANEL (screen only) ── *@
+    <div class="print-options" id="printOptions">
+        <h3>⚙️ Print Options</h3>
+        <div class="sub">Tick the sections you want to include in the printed bill. Unchecking a section hides it from the print output only — the on-screen bill is always complete.</div>
+        <div class="options-grid">
+            <label><input type="checkbox" data-key="header" checked> Hospital Header</label>
+            <label><input type="checkbox" data-key="patient" checked> Patient Bar</label>
+            <label><input type="checkbox" data-key="bed" checked> Bed Charges</label>
+            <label><input type="checkbox" data-key="doctor" checked> Doctor Visits</label>
+            <label><input type="checkbox" data-key="medicine" checked> Medicines</label>
+            <label><input type="checkbox" data-key="investigation" checked> Investigations</label>
+            <label><input type="checkbox" data-key="discharge_med" checked> Discharge Medicines</label>
+            <label><input type="checkbox" data-key="procedure" checked> Procedures</label>
+            <label><input type="checkbox" data-key="nursing" checked> Nursing Charges</label>
+            <label><input type="checkbox" data-key="operation" checked> Operations</label>
+            <label><input type="checkbox" data-key="other" checked> Other Charges</label>
+            <label><input type="checkbox" data-key="totals" checked> Totals Box</label>
+            <label><input type="checkbox" data-key="payments" checked> Payment History</label>
+            <label><input type="checkbox" data-key="signature" checked> Signature Area</label>
+            <label><input type="checkbox" data-key="footer" checked> Footer</label>
+        </div>
+        <div class="option-actions">
+            <button class="btn btn-print" onclick="window.print()">🖨 Print Bill</button>
+            <button class="btn btn-pdf" onclick="savePDF()">📄 Save as PDF</button>
+            <button class="btn btn-select-all" onclick="selectAll(true)">Select All</button>
+            <button class="btn btn-select-none" onclick="selectAll(false)">Select None</button>
+            <button class="btn btn-back" onclick="window.close()">✕ Close</button>
+        </div>
+    </div>
+
+    <div class="sheet" id="billContent">
+
+        @* ── HOSPITAL HEADER ── *@
+        <div class="header" data-print-section="header">
+            <div>
+                @if (!string.IsNullOrEmpty(ViewBag.HospitalLogo as string))
+                {
+                    <img src="/uploads/hospitals/@ViewBag.HospitalLogo"
+                         style="height:60px;margin-bottom:5px;display:block;" />
+                }
+                <div class="hospital-name">@ViewBag.HospitalName</div>
+                <div class="hospital-sub">@ViewBag.HospitalAddress</div>
+                <div class="hospital-sub">
+                    📞 @ViewBag.HospitalPhone &nbsp;|&nbsp;
+                    ✉ @ViewBag.HospitalEmail
+                </div>
+                @if (!string.IsNullOrEmpty(ViewBag.HospitalRegNo as string))
+                {
+                    <div class="hospital-sub">
+                        Reg No: @ViewBag.HospitalRegNo
+                    </div>
+                }
+            </div>
+            <div class="bill-title">
+                <h2>INVOICE</h2>
+                <p class="bill-no">
+                    Bill No: @ViewBag.BillNumber
+                </p>
+                <p>Date: @DateTime.Now.ToString("dd-MM-yyyy")</p>
+                <p>
+                    Status:
+                    <span class="status-badge
+                    @(Model.PaymentStatus == "Paid" ? "status-paid" :
+                                                Model.PaymentStatus == "Partial" ? "status-partial" :
+                                                                                   "status-unpaid")">
+                        @Model.PaymentStatus
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        @* ── PATIENT BAR ── *@
+        <div class="patient-bar" data-print-section="patient">
+            <span><strong>Patient:</strong> @Model.PatientName</span>
+            <span><strong>Age/Sex:</strong> @Model.Age Y / @Model.Gender</span>
+            <span><strong>Phone:</strong> @Model.PhoneNumber</span>
+            <span><strong>IPD No:</strong> @Model.AdmissionNumber</span>
+            <span>
+                <strong>Admitted:</strong>
+                @Model.AdmissionDateTime.ToString("dd-MM-yyyy")
+            </span>
+            <span><strong>Days:</strong> @Model.TotalDays</span>
+        </div>
+
+        @* ══════════════════════════════════════════════════════════════════
+       All sections below are derived from Model.OtherItems — the items
+       actually saved on this bill — NOT from the live clinical suggestion
+       lists (which reflect what's currently ordered/prescribed and can
+       differ from what was billed). This keeps the printed invoice, its
+       section totals, and the totals box fully consistent with each other
+       and with what the patient was actually charged.
+       ══════════════════════════════════════════════════════════════════ *@
+        @{
+            var billedItems = Model.OtherItems ?? new List<WebApplicationSampleTest2.Models.IPDBillItem>();
+            var bedItems = billedItems.Where(i => i.ItemType == "Bed").ToList();
+            var doctorItems = billedItems.Where(i => i.ItemType == "DoctorVisit").ToList();
+            var medicineItems = billedItems.Where(i => i.ItemType == "Medicine").ToList();
+            var investigationItems = billedItems.Where(i => i.ItemType == "Investigation").ToList();
+            var dischargeMedItems = billedItems.Where(i => i.ItemType == "DischargeMedicine").ToList();
+            var procedureItems = billedItems.Where(i => i.ItemType == "Procedure").ToList();
+            var otherLineItems = billedItems.Where(i => i.ItemType != "Bed" && i.ItemType != "DoctorVisit"
+            && i.ItemType != "Medicine" && i.ItemType != "Investigation"
+            && i.ItemType != "DischargeMedicine" && i.ItemType != "Procedure").ToList();
+
+            decimal bedTotal = bedItems.Sum(i => i.TotalPrice);
+            decimal doctorTotal = doctorItems.Sum(i => i.TotalPrice);
+            decimal medicineTotal = medicineItems.Sum(i => i.TotalPrice);
+            decimal investigationTotal = investigationItems.Sum(i => i.TotalPrice);
+            decimal dischargeMedTotal = dischargeMedItems.Sum(i => i.TotalPrice);
+            decimal procedureTotal = procedureItems.Sum(i => i.TotalPrice);
+            decimal otherTotal = otherLineItems.Sum(i => i.TotalPrice);
+            decimal nursingTotal = Model.TotalNursingCharges;
+            decimal operationTotal = Model.TotalOperationCharges;
+        }
+
+        @* ── 1. BED CHARGES (billed) ── *@
+        @if (bedItems.Any())
+        {
+            <div class="section" data-print-section="bed">
+                <div class="section-title">🛏 Bed Charges</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Item</th><th class="text-right">Amount</th></tr></thead>
+                    <tbody>
+                        @{
+                            int bi = 1;
+                        }
+                        @foreach (var b in bedItems)
+                        {
+                            <tr>
+                                <td>@bi</td>
+                                <td><strong>@b.ItemName</strong></td>
+                                <td class="text-right"><strong>₹@b.TotalPrice.ToString("0.00")</strong></td>
+                            </tr>
+                            bi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="2" class="text-right"><strong>Bed Total:</strong></td>
+                            <td class="text-right"><strong>₹@bedTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 2. DOCTOR VISITS (billed) ── *@
+        @if (doctorItems.Any())
+        {
+            <div class="section" data-print-section="doctor">
+                <div class="section-title">👨‍⚕️ Doctor Visits</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Item</th><th class="text-right">Charge</th></tr></thead>
+                    <tbody>
+                        @{
+                            int di = 1;
+                        }
+                        @foreach (var d in doctorItems)
+                        {
+                            <tr>
+                                <td>@di</td>
+                                <td>@d.ItemName</td>
+                                <td class="text-right">₹@d.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            di++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="2" class="text-right"><strong>Doctor Total:</strong></td>
+                            <td class="text-right"><strong>₹@doctorTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 3. MEDICINES (billed) ── *@
+        @if (medicineItems.Any())
+        {
+            <div class="section" data-print-section="medicine">
+                <div class="section-title">💊 Medicines (During Stay)</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Medicine</th><th>Qty</th><th>Unit Price</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>
+                        @{
+                            int mi = 1;
+                        }
+                        @foreach (var m in medicineItems)
+                        {
+                            <tr>
+                                <td>@mi</td>
+                                <td><strong>@m.ItemName</strong></td>
+                                <td>@m.Quantity</td>
+                                <td>₹@m.UnitPrice.ToString("0.00")</td>
+                                <td class="text-right">₹@m.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            mi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="4" class="text-right"><strong>Medicine Total:</strong></td>
+                            <td class="text-right"><strong>₹@medicineTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 4. INVESTIGATION CHARGES (billed) ── *@
+        @if (investigationItems.Any())
+        {
+            <div class="section" data-print-section="investigation">
+                <div class="section-title">🔬 Investigation Charges</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Item</th><th class="text-right">Amount</th></tr></thead>
+                    <tbody>
+                        @{
+                            int ivi = 1;
+                        }
+                        @foreach (var iv in investigationItems)
+                        {
+                            <tr>
+                                <td>@ivi</td>
+                                <td>@iv.ItemName</td>
+                                <td class="text-right">₹@iv.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            ivi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="2" class="text-right"><strong>Investigation Total:</strong></td>
+                            <td class="text-right"><strong>₹@investigationTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── INVESTIGATIONS ORDERED (clinical reference — may or may not be billed above) ── *@
+        @if (Model.Investigations != null && Model.Investigations.Any())
+        {
+            <div class="section" data-print-section="investigation">
+                <div class="section-title">🔬 Investigations Ordered <span style="font-size:10px;font-weight:normal;color:#777;">(clinical reference)</span></div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Type</th><th>Test</th><th>Priority</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @{
+                            int ioi = 1;
+                        }
+                        @foreach (var inv in Model.Investigations)
+                        {
+                            <tr>
+                                <td>@ioi</td>
+                                <td>@inv.InvestigationType</td>
+                                <td><strong>@inv.TestName</strong></td>
+                                <td>@inv.Priority</td>
+                                <td>@inv.Status</td>
+                            </tr>
+                            ioi++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 5. DISCHARGE MEDICINES (billed) ── *@
+@if (dischargeMedItems.Any())
+        {
+            <div class="section" data-print-section="discharge_med">
+                <div class="section-title">📋 Discharge Medicines</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Medicine</th><th>Qty</th><th>Unit Price</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>
+                        @{
+                            int dmi = 1;
+                        }
+                        @foreach (var m in dischargeMedItems)
+                        {
+                            <tr>
+                                <td>@dmi</td>
+                                <td><strong>@m.ItemName</strong></td>
+                                <td>@m.Quantity</td>
+                                <td>₹@m.UnitPrice.ToString("0.00")</td>
+                                <td class="text-right">₹@m.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            dmi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="4" class="text-right"><strong>Discharge Medicine Total:</strong></td>
+                            <td class="text-right"><strong>₹@dischargeMedTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 6. PROCEDURE CHARGES (billed) ── *@
+@if (procedureItems.Any())
+        {
+            <div class="section" data-print-section="procedure">
+                <div class="section-title">🩹 Procedure Charges</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Item</th><th class="text-right">Amount</th></tr></thead>
+                    <tbody>
+                        @{
+                            int pci = 1;
+                        }
+                        @foreach (var pc in procedureItems)
+                        {
+                            <tr>
+                                <td>@pci</td>
+                                <td>@pc.ItemName</td>
+                                <td class="text-right">₹@pc.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            pci++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="2" class="text-right"><strong>Procedure Total:</strong></td>
+                            <td class="text-right"><strong>₹@procedureTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── PROCEDURES PERFORMED (clinical reference — may or may not be billed above) ── *@
+@if (Model.Procedures != null && Model.Procedures.Any())
+        {
+            <div class="section" data-print-section="procedure">
+                <div class="section-title">🩹 Procedures Performed <span style="font-size:10px;font-weight:normal;color:#777;">(clinical reference)</span></div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Procedure</th><th>Category</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody>
+                        @{
+                            int pri = 1;
+                        }
+                        @foreach (var proc in Model.Procedures)
+                        {
+                            <tr>
+                                <td>@pri</td>
+                                <td><strong>@proc.ProcedureName</strong></td>
+                                <td>@proc.ProcedureCategory</td>
+                                <td>@proc.Status</td>
+                                <td>@(proc.ProcedureDate?.ToString("dd-MM-yyyy") ?? "-")</td>
+                            </tr>
+                            pri++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 7. NURSING CHARGES (always live/authoritative — from the Nursing Charges module) ── *@
+@if (Model.NursingCharges != null && Model.NursingCharges.Any())
+        {
+            <div class="section" data-print-section="nursing">
+                <div class="section-title">🩺 Nursing Charges</div>
+                <table class="bill-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Procedure</th>
+                            <th>Type</th>
+                            <th>Nurse</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int ni = 1;
+                        }
+                        @foreach (var n in Model.NursingCharges)
+                        {
+                            <tr>
+                                <td>@ni</td>
+                                <td>@n.ChargeDate.ToString("dd-MM-yyyy")</td>
+                                <td><strong>@n.ChargeName</strong></td>
+                                <td>@n.ChargeType</td>
+                                <td>@(n.NurseName ?? "-")</td>
+                                <td>@n.Quantity</td>
+                                <td>₹@n.UnitCharge.ToString("0.00")</td>
+                                <td class="text-right">₹@n.TotalCharge.ToString("0.00")</td>
+                            </tr>
+                            ni++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="7" class="text-right"><strong>Nursing Total:</strong></td>
+                            <td class="text-right"><strong>₹@nursingTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 8. OPERATIONS (always live/authoritative — from OT Management) ── *@
+@if (Model.Operations != null && Model.Operations.Any())
+        {
+            <div class="section" data-print-section="operation">
+                <div class="section-title">🏥 Operation / OT Charges</div>
+                @{
+                    int opi = 1;
+                }
+                @foreach (var op in Model.Operations)
+                {
+                    var opT = op.ActualCharge + op.AnesthesiaCharge + op.SurgeonCharge + op.OTCharge + op.TotalStaffCharge;
+                    <div class="op-box">
+                        <div class="op-box-header">
+                            <span>@opi. @op.OperationName</span>
+                            <span style="font-weight:normal;color:#555;">@op.OperationDate</span>
+                        </div>
+                        <table class="bill-table">
+                            <tbody>
+                                @if (op.OTCharge > 0)
+                                {
+                                    <tr><td>OT Charges</td><td class="text-right">₹@op.OTCharge.ToString("0.00")</td></tr>
+                                }
+                                @if (op.SurgeonCharge > 0)
+                                {
+                                    <tr><td>Surgeon @(op.SurgeonName != null ? "— " + op.SurgeonName : "")</td><td class="text-right">₹@op.SurgeonCharge.ToString("0.00")</td></tr>
+                                }
+                                @if (op.AnesthesiaCharge > 0)
+                                {
+                                    <tr><td>Anesthesia @(op.AnesthesistName != null ? "— " + op.AnesthesistName : "")</td><td class="text-right">₹@op.AnesthesiaCharge.ToString("0.00")</td></tr>
+                                }
+                                @if (op.ActualCharge > 0)
+                                {
+                                    <tr><td>Other Charges</td><td class="text-right">₹@op.ActualCharge.ToString("0.00")</td></tr>
+                                }
+                                @if (op.Staff != null && op.Staff.Any())
+                                {
+                                    @foreach (var s in op.Staff)
+                                    {
+                                        <tr><td>@s.StaffType — @s.StaffName</td><td class="text-right">₹@s.Charge.ToString("0.00")</td></tr>
+                                    }
+                                }
+                                <tr style="background:#fde8e8;">
+                                    <td class="text-right"><strong>Operation Total:</strong></td>
+                                    <td class="text-right"><strong>₹@opT.ToString("0.00")</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    opi++;
+                }
+            </div>
+        }
+
+        @* ── 9. OTHER CHARGES (billed) ── *@
+@if (otherLineItems.Any())
+        {
+            <div class="section" data-print-section="other">
+                <div class="section-title">➕ Other Charges</div>
+                <table class="bill-table">
+                    <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit Price</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>
+                        @{
+                            int oi = 1;
+                        }
+                        @foreach (var item in otherLineItems)
+                        {
+                            <tr>
+                                <td>@oi</td>
+                                <td><strong>@item.ItemName</strong></td>
+                                <td>@item.Quantity</td>
+                                <td>₹@item.UnitPrice.ToString("0.00")</td>
+                                <td class="text-right">₹@item.TotalPrice.ToString("0.00")</td>
+                            </tr>
+                            oi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="4" class="text-right"><strong>Other Total:</strong></td>
+                            <td class="text-right"><strong>₹@otherTotal.ToString("0.00")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ── 10. TOTALS BOX — built from the same grouped sums shown above, so the
+         printed breakdown and the grand total always agree with each other ── *@
+<div class="totals-box" data-print-section="totals">
+            @if (bedTotal > 0)
+            {
+                <div class="totals-row"><span>🛏 Bed Charges</span><span>₹@bedTotal.ToString("0.00")</span></div>
+            }
+            @if (doctorTotal > 0)
+            {
+                <div class="totals-row"><span>👨‍⚕️ Doctor Visits</span><span>₹@doctorTotal.ToString("0.00")</span></div>
+            }
+            @if (medicineTotal > 0)
+            {
+                <div class="totals-row"><span>💊 Medicines</span><span>₹@medicineTotal.ToString("0.00")</span></div>
+            }
+            @if (investigationTotal > 0)
+            {
+                <div class="totals-row"><span>🔬 Investigations</span><span>₹@investigationTotal.ToString("0.00")</span></div>
+            }
+            @if (dischargeMedTotal > 0)
+            {
+                <div class="totals-row"><span>📋 Discharge Medicines</span><span>₹@dischargeMedTotal.ToString("0.00")</span></div>
+            }
+            @if (procedureTotal > 0)
+            {
+                <div class="totals-row"><span>🩹 Procedures</span><span>₹@procedureTotal.ToString("0.00")</span></div>
+            }
+            @if (nursingTotal > 0)
+            {
+                <div class="totals-row"><span>🩺 Nursing</span><span>₹@nursingTotal.ToString("0.00")</span></div>
+            }
+            @if (operationTotal > 0)
+            {
+                <div class="totals-row"><span>🏥 Operations</span><span>₹@operationTotal.ToString("0.00")</span></div>
+            }
+            @if (otherTotal > 0)
+            {
+                <div class="totals-row"><span>➕ Other Charges</span><span>₹@otherTotal.ToString("0.00")</span></div>
+            }
+            <div class="totals-row" style="font-weight:bold;background:#f0f4ff;">
+                <span>Sub Total</span>
+                <span>₹@Model.SubTotal.ToString("0.00")</span>
+            </div>
+            @if (Model.DiscountAmount > 0)
+            {
+                <div class="totals-row discount">
+                    <span>Discount (@Model.DiscountPercent.ToString("0.##")%)</span>
+                    <span>-₹@Model.DiscountAmount.ToString("0.00")</span>
+                </div>
+            }
+            <div class="totals-row total-final">
+                <span>TOTAL AMOUNT</span>
+                <span>₹@Model.TotalAmount.ToString("0.00")</span>
+            </div>
+            @if (Model.PaidAmount > 0)
+            {
+                <div class="totals-row paid">
+                    <span>Paid Amount</span>
+                    <span>₹@Model.PaidAmount.ToString("0.00")</span>
+                </div>
+            }
+            <div class="totals-row due">
+                <span>Balance Due</span>
+                <span>₹@Model.DueAmount.ToString("0.00")</span>
+            </div>
+        </div>
+
+        @* ── 10. PAYMENT HISTORY ── *@
+@if (Model.Payments != null && Model.Payments.Any())
+        {
+            <div class="section" style="margin-top:15px;" data-print-section="payments">
+                <div class="section-title">💰 Payment History</div>
+                <table class="pay-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Mode</th>
+                            <th>Reference</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int pi = 1;
+                        }
+                        @foreach (var p in Model.Payments)
+                        {
+                            <tr>
+                                <td>@pi</td>
+                                <td>
+                                    @p.PaymentDate
+
+                                </td>
+                                <td>@p.PaymentMode</td>
+                                <td>@(p.TransactionRef ?? "-")</td>
+                                <td class="text-right">
+                                    <strong>
+                                        ₹@p.Amount.ToString("0.00")
+                                    </strong>
+                                </td>
+                            </tr>
+                            pi++;
+                        }
+                        <tr style="background:#e8f0fe;">
+                            <td colspan="4" class="text-right">
+                                <strong>Total Paid:</strong>
+                            </td>
+                            <td class="text-right">
+                                <strong>
+                                    ₹@Model.PaidAmount.ToString("0.00")
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+@* ── SIGNATURE ── *@
+        <div class="signature-area" data-print-section="signature">
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div>Patient / Attendant Signature</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div>Cashier</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div>Authorized Signatory</div>
+            </div>
+        </div>
+
+@* ── FOOTER ── *@
+        <div class="footer" data-print-section="footer">
+            <p>
+                This is a computer-generated bill.
+                Thank you for choosing @ViewBag.HospitalName.
+            </p>
+            <p>
+                Generated on:
+                @DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+            </p>
+        </div>
+
+    </div>
+
+    @* ── PRINT / PDF BUTTONS ── *@
+    <div class="btn-bar">
+        <button class="btn btn-print" onclick="window.print()">
+            🖨 Print Bill
+        </button>
+        <button class="btn btn-pdf" onclick="savePDF()">
+            📄 Save as PDF
+        </button>
+        <button class="btn btn-back"
+                onclick="window.close()">
+            ✕ Close
+        </button>
+    </div>
+
+<script>
+        function savePDF() {
+            window.print();
+        }
+
+        // Apply the current checkbox state to the print sections
+        function applyPrintOptions() {
+            var boxes = document.querySelectorAll('#printOptions input[type="checkbox"]');
+            boxes.forEach(function (box) {
+                var key = box.getAttribute('data-key');
+                var section = document.querySelector('[data-print-section="' + key + '"]');
+                if (section) {
+                    if (box.checked) {
+                        section.classList.remove('exclude-from-print');
+                    } else {
+                        section.classList.add('exclude-from-print');
+                    }
+                }
+            });
+        }
+
+        // Select all / none
+        function selectAll(checked) {
+            var boxes = document.querySelectorAll('#printOptions input[type="checkbox"]');
+            boxes.forEach(function (box) {
+                box.checked = checked;
+            });
+            applyPrintOptions();
+        }
+
+        // Wire up change events
+        document.addEventListener('DOMContentLoaded', function () {
+            var boxes = document.querySelectorAll('#printOptions input[type="checkbox"]');
+            boxes.forEach(function (box) {
+                box.addEventListener('change', applyPrintOptions);
+            });
+            applyPrintOptions();
+        });
+
+        // Auto trigger print if opened as popup
+        window.onload = function () {
+            // Optional: auto print
+            // window.print();
+        };
+    </script>
+
+</body>
+</html>

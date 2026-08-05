@@ -1,0 +1,324 @@
+﻿@using WebApplicationSampleTest2.Models
+@model List<OPDAppointmentModel>
+
+<div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-primary" asp-controller="OPDAppointment" asp-action="Create">
+        + Book Appointment
+    </a>
+</div>
+@* @if (TempData["ToastMessage"] != null)
+{
+    var type = TempData["ToastType"] ?? "success";
+
+    <div class="toast-container position-fixed top-10 start-50 translate-middle p-3"
+         style="z-index: 1100;">
+        <div id="liveToast" class="toast align-items-center text-bg-@type show">
+            <div class="d-flex">
+                <div class="toast-body">
+                    @TempData["ToastMessage"]
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+} *@
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">OPD Appointment List</h4>
+                <p class="card-title-desc">
+                    Today's Total Appointments  @ViewBag.TodayAppointmentCount / Selected Date Appointments
+                </p>
+
+                <!-- ================= SEARCH ================= -->
+                <div class="d-flex justify-content-end mb-3">
+                    <form id="searchForm" method="get" asp-action="Index" class="d-flex">
+
+                        <!-- Date Filter -->
+                        <input type="date"
+                               name="date"
+                               value="@ViewBag.SelectedDate"
+                               class="form-control me-2" />
+
+                        <!-- Search Input -->
+                        <input type="text"
+                               name="search"
+                               id="searchInput"
+                               value="@ViewBag.Search"
+                               class="form-control me-2 w-auto"
+                               placeholder="Search patient / doctor / mobile"
+                               autocomplete="off" />
+
+                        <input type="hidden" name="page" value="1" />
+                    </form>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Mobile No</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                                <th>OPD</th>
+                                <th>Billing</th>
+                                <th>Prescription</th>
+                                <th>Actions</th>
+                                <th>History</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.PatientName</td>
+                                        <td>@item.MobileNo</td>
+                                        <td>@item.AppointmentDate.ToString("dd-MM-yyyy")</td>
+                                        <td> @DateTime.Today.Add(item.AppointmentTime).ToString("hh:mm tt")</td>
+                                        <td>
+                                            Dr. @item.DoctorName
+                                        </td>
+
+                                        @* <td class="text-center">@item.Status</td> *@
+                                        <td>
+                                        @if (item.Status == "Completed")
+                                        {
+                                            <span>@item.Status</span>
+                                        }
+                                        else if (item.Status == "Pending")
+                                        {
+                                            <span >@item.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@item.Status</span>
+                                        }
+                                        </td>
+                                    
+                                            @* <a asp-action="EditAsOPD"
+                                               asp-controller="Patient"
+                                               asp-route-appointmentId="@item.Id"
+                                               style=" text-decoration:none;">
+                                                OPD
+                                            </a> *@
+
+                                        <td>
+                                            @if (item.OPDId > 0)
+                                            {
+                                                <a asp-action="EditAsOPD"
+                                                   asp-controller="Patient"
+                                                   asp-route-appointmentId="@item.Id"
+                                                   style="text-decoration:none;">
+                                                    Edit OPD
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a asp-action="EditAsOPD"
+                                                   asp-controller="Patient"
+                                                   asp-route-appointmentId="@item.Id"
+                                                   style=" text-decoration:none;">
+                                                    Create OPD
+                                                </a>
+                                            }
+                                        </td>
+
+                                        
+                                       
+                                       
+                                        <td>
+                                            @* <a asp-action="BillingofPatient"
+                                               asp-controller="Patient"
+                                               asp-route-appointmentId="@item.Id"
+                                               style=" text-decoration:none;">
+                                                Billing
+                                            </a> *@
+                                            <div class="d-flex gap-1">
+                                                <a asp-controller="OPDBilling"
+                                                   asp-action="GenerateBill"
+                                                   asp-route-appointmentId="@item.Id"
+                                                   class="btn btn-primary btn-sm">
+                                                    Generate Bill
+                                                </a>
+                                                <a asp-controller="OPDBilling"
+                                                   asp-action="PrintBill"
+                                                   asp-route-appointmentId="@item.Id"
+                                                   target="_blank"
+                                                   class="btn btn-outline-primary btn-sm"
+                                                   title="Print Bill">
+                                                    <i class="mdi mdi-printer"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+
+                                        @* <td>
+                                            <a asp-action="PrintPriscription"
+                                               asp-controller="Patient"
+                                               asp-route-Id="@item.Id"
+                                               style=" text-decoration:none;">
+                                                Print
+                                            </a>
+                                        </td> *@
+                                        <td>
+                                            <a asp-action="PrintPriscription"
+                                               asp-controller="Patient"
+                                               asp-route-appointmentId="@item.Id"
+                                               style="text-decoration:none;">
+                                                Print
+                                            </a>
+                                        </td>
+
+                                        <td>
+                                            <!-- Edit Button -->
+                                            <a asp-action="Edit"
+                                               asp-controller="OPDAppointment"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-primary me-1">
+                                                Edit
+                                            </a>
+
+                                            <!-- Cancel Button -->
+                                            <button class="btn btn-sm btn-danger"
+                                                    onclick="confirmDelete(@item.Id)">
+                                                Cancel
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <a asp-action="PatientHistory"
+                                               asp-controller="OPDAppointment"
+                                               asp-route-appointmentId="@item.Id"
+                                               class="btn btn-sm btn-info">
+                                                History
+                                            </a>
+                                        </td>
+
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted">
+                                        No appointments found
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <!-- ================= PAGINATION ================= -->
+                @if (ViewBag.TotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination justify-content-end mt-3">
+
+                            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage - 1)"
+                                   asp-route-search="@ViewBag.Search">
+                                    Previous
+                                </a>
+                            </li>
+
+                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@i"
+                                       asp-route-search="@ViewBag.Search">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+
+                            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(ViewBag.CurrentPage + 1)"
+                                   asp-route-search="@ViewBag.Search">
+                                    Next
+                                </a>
+                            </li>
+
+                        </ul>
+                    </nav>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+   @section Scripts {
+    <script>
+        let timer;
+        const searchInput = document.getElementById("searchInput");
+        const searchForm = document.getElementById("searchForm");
+        const dateInput = document.querySelector("input[name='date']");
+
+        // ✅ REMOVE SPECIAL CHARACTERS (Allow only A-Z, a-z, 0-9, space)
+        searchInput.addEventListener("input", function () {
+            this.value = this.value.replace(/[^a-zA-Z0-9\s]/g, '');
+        });
+
+        // ✅ Auto search (delay 1.5 sec)
+        searchInput.addEventListener("keyup", function () {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                searchForm.submit();
+            }, 1500);
+        });
+
+        // ✅ Date change auto submit
+        dateInput.addEventListener("change", function () {
+            searchForm.submit();
+        });
+    </script>
+
+    <script>
+        function confirmDelete(id) {
+            var url = '/OPDAppointment/Delete/' + id;
+            document.getElementById("deleteForm").action = url;
+
+            var modal = new bootstrap.Modal(
+                document.getElementById('deleteModal')
+            );
+            modal.show();
+        }
+    </script>
+}
+ 
+
+
+<!-- DELETE MODAL -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Confirmation</h5>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to Cancel this appointment?
+            </div>
+            <div class="modal-footer">
+                <form id="deleteForm" method="get">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

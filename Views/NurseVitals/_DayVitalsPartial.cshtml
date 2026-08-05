@@ -1,0 +1,445 @@
+﻿@* Views/NurseVitals/_DayVitalsPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.IPDNurseVitals>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+    int dayNumber = (int)ViewBag.DayNumber;
+    DateTime dayDate = (DateTime)ViewBag.DayDate;
+    bool hasPreviousDay = (bool)ViewBag.HasPreviousDay;
+}
+
+@if (ViewBag.DebugInfo != null)
+{
+    <div class="alert alert-warning py-1 px-2 mb-2" style="font-family:monospace; font-size:12px;">@ViewBag.DebugInfo</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <strong>Day @dayNumber</strong> - @dayDate.ToString("dd MMM yyyy")
+
+    </div>
+    <div>
+        @if (hasPreviousDay)
+        {
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-controller="NurseVitals" asp-action="Create"
+               asp-route-ipdId="@ipdId" asp-route-dayNumber="@dayNumber" asp-route-copyFromDay="@(dayNumber - 1)">
+                <i class="fas fa-copy me-1"></i> Copy Previous Day
+            </a>
+        }
+        <a class="btn btn-sm btn-outline-secondary" target="_blank"
+           asp-controller="NurseVitals" asp-action="PrintDay"
+           asp-route-ipdId="@ipdId" asp-route-dayNumber="@dayNumber">
+            <i class="fas fa-print me-1"></i> Print
+        </a>
+        <a class="btn btn-sm btn-primary"
+           asp-controller="NurseVitals" asp-action="Create" asp-route-ipdId="@ipdId" asp-route-dayNumber="@dayNumber">
+            <i class="fas fa-plus me-1"></i> Add Vital
+        </a>
+    </div>
+</div>
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+        <div>No vitals recorded for Day @dayNumber yet.</div>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Time</th>
+                    <th>Shift</th>
+                    <th>Recorded By</th>
+                    <th>Temp</th>
+                    <th>Pulse</th>
+                    <th>BP</th>
+                    <th>RR</th>
+                    <th>SpO2</th>
+                    <th>Notes</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model)
+                {
+                    var statusList = WebApplicationSampleTest2.Models.VitalsStatusHelper.BuildStatusList(v);
+                    <tr class="@(v.IsAbnormal ? "table-danger" : "")">
+                        <td>@v.RecordedDateTime.ToString("hh:mm tt")</td>
+                        <td><span class="badge bg-secondary">@v.Shift</span></td>
+                        <td>@(string.IsNullOrWhiteSpace(v.RecordedByName) ? v.RecordedByRole : v.RecordedByName)</td>
+                        @foreach (var s in statusList)
+                        {
+                            <td>
+                                <span class="badge vital-badge-@s.Level" title="@s.Label">@s.Value</span>
+                            </td>
+                        }
+                        <td class="text-truncate" style="max-width:160px;" title="@v.Notes">@v.Notes</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary"
+                               asp-controller="NurseVitals" asp-action="Edit" asp-route-id="@v.VitalsId">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-vital"
+                                    data-vitals-id="@v.VitalsId">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@{
+    var examinations = (List<WebApplicationSampleTest2.Models.IPDExamination>)ViewBag.Examinations;
+    var inputOutputs = (List<WebApplicationSampleTest2.Models.IPDInputOutput>)ViewBag.InputOutputs;
+    var wellbeings = (List<WebApplicationSampleTest2.Models.IPDDailyWellbeing>)ViewBag.Wellbeings;
+    var bodyComps = (List<WebApplicationSampleTest2.Models.IPDBodyComposition>)ViewBag.BodyCompositions;
+}
+
+@* ========================= EXAMINATION ========================= *@
+<div class="mt-4 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Examination</h6>
+    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addExaminationModal">
+        <i class="fas fa-plus me-1"></i> Add New Examination
+    </button>
+</div>
+@if (examinations == null || examinations.Count == 0)
+{
+    <div class="text-muted text-center py-3 border rounded mt-2">No examination added.</div>
+}
+else
+{
+    <div class="table-responsive mt-2">
+        <table class="table table-sm">
+            <thead class="table-light"><tr><th>Time</th><th>CNS</th><th>CVS</th><th>R/S</th><th>PA</th><th>Recorded by</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+                @foreach (var e in examinations)
+                {
+                    <tr>
+                        <td>@e.RecordedDateTime.ToString("hh:mm tt")</td>
+                        <td>@e.CNS</td>
+                        <td>@e.CVS</td>
+                        <td>@e.RS</td>
+                        <td>@e.PA</td>
+                        <td>@(string.IsNullOrWhiteSpace(e.RecordedByName) ? e.RecordedByRole : e.RecordedByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-extra"
+                                    data-endpoint="DeleteExamination" data-id="@e.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* ========================= INPUT / OUTPUT CHARTING ========================= *@
+<div class="mt-4 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Input/Output Charting</h6>
+    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInputOutputModal">
+        <i class="fas fa-plus me-1"></i> Add New Input/Output
+    </button>
+</div>
+@if (inputOutputs == null || inputOutputs.Count == 0)
+{
+    <div class="text-muted text-center py-3 border rounded mt-2">No input/output charting added.</div>
+}
+else
+{
+    decimal totalIn = 0, totalOut = 0;
+    <div class="table-responsive mt-2">
+        <table class="table table-sm">
+            <thead class="table-light"><tr><th>Time</th><th>Input (ml)</th><th>Output (ml)</th><th>Drain Output (ml)</th><th>Recorded by</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+                @foreach (var io in inputOutputs)
+                {
+                    totalIn += io.Input ?? 0;
+                    totalOut += io.TotalOutput;
+                    <tr>
+                        <td>@io.RecordedDateTime.ToString("hh:mm tt")</td>
+                        <td>@io.Input</td>
+                        <td>@io.Output</td>
+                        <td>@io.DrainOutput</td>
+                        <td>@(string.IsNullOrWhiteSpace(io.RecordedByName) ? io.RecordedByRole : io.RecordedByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-extra"
+                                    data-endpoint="DeleteInputOutput" data-id="@io.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td>Total</td>
+                    <td>@totalIn</td>
+                    <td colspan="2">@totalOut</td>
+                    <td colspan="2">Balance: @(totalIn - totalOut) ml</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+@* ========================= DAILY WELLBEING ========================= *@
+<div class="mt-4 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Daily Wellbeing</h6>
+    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addWellbeingModal">
+        <i class="fas fa-plus me-1"></i> Add New Daily Wellbeing
+    </button>
+</div>
+@if (wellbeings == null || wellbeings.Count == 0)
+{
+    <div class="text-muted text-center py-3 border rounded mt-2">No wellbeing added.</div>
+}
+else
+{
+    <div class="table-responsive mt-2">
+        <table class="table table-sm">
+            <thead class="table-light"><tr><th>Time</th><th>Sleep</th><th>Bowel</th><th>Bladder</th><th>Appetite</th><th>Ambulation</th><th>Eating</th><th>Recorded by</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+                @foreach (var w in wellbeings)
+                {
+                    <tr>
+                        <td>@w.RecordedDateTime.ToString("hh:mm tt")</td>
+                        <td>@w.Sleep</td>
+                        <td>@w.Bowel</td>
+                        <td>@w.Bladder</td>
+                        <td>@w.Appetite</td>
+                        <td>@w.Ambulation</td>
+                        <td>@w.Eating</td>
+                        <td>@(string.IsNullOrWhiteSpace(w.RecordedByName) ? w.RecordedByRole : w.RecordedByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-extra"
+                                    data-endpoint="DeleteDailyWellbeing" data-id="@w.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* ========================= BODY COMPOSITION ========================= *@
+<div class="mt-4 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Body Composition</h6>
+    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBodyCompModal">
+        <i class="fas fa-plus me-1"></i> Add New Parameter
+    </button>
+</div>
+@if (bodyComps == null || bodyComps.Count == 0)
+{
+    <div class="text-muted text-center py-3 border rounded mt-2">No parameter added.</div>
+}
+else
+{
+    <div class="table-responsive mt-2">
+        <table class="table table-sm">
+            <thead class="table-light"><tr><th>Ht (cms)</th><th>Wt (kgs)</th><th>BMI</th><th>BMR</th><th>BSA</th><th>Date</th><th>Recorded by</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+                @foreach (var b in bodyComps)
+                {
+                    <tr>
+                        <td>@b.HeightCm</td>
+                        <td>@b.WeightKg</td>
+                        <td>@b.BMI</td>
+                        <td>@b.BMR</td>
+                        <td>@b.BSA</td>
+                        <td>@b.RecordedDateTime.ToString("dd-MM-yyyy")</td>
+                        <td>@(string.IsNullOrWhiteSpace(b.RecordedByName) ? b.RecordedByRole : b.RecordedByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-extra"
+                                    data-endpoint="DeleteBodyComposition" data-id="@b.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* ========================= MODALS ========================= *@
+<div class="modal fade" id="addExaminationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="extra-form" data-endpoint="AddExamination">
+                <input type="hidden" name="ipdId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" value="@dayNumber" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Examination</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">CNS</label><input name="CNS" class="form-control" placeholder="Central Nervous System" /></div>
+                    <div class="mb-2"><label class="form-label">CVS</label><input name="CVS" class="form-control" placeholder="Cardiovascular System" /></div>
+                    <div class="mb-2"><label class="form-label">R/S</label><input name="RS" class="form-control" placeholder="Respiratory System" /></div>
+                    <div class="mb-2"><label class="form-label">PA</label><input name="PA" class="form-control" placeholder="Per Abdomen" /></div>
+                    <hr />
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label">Recorded By</label>
+                            <select name="RecordedByRole" class="form-control" id="ddlRole_Exam" onchange="toggleRecordedByFor('Exam')">
+                                <option value="Nurse">Nurse</option>
+                                <option value="Doctor">Doctor</option>
+                            </select>
+                        </div>
+                        <div class="col-6" id="nurseField_Exam">
+                            <label class="form-label">Nurse</label>
+                            <select name="NurseId" class="form-control" asp-items="ViewBag.Nurses">
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+                        <div class="col-6 d-none" id="doctorField_Exam">
+                            <label class="form-label">Doctor</label>
+                            <select name="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addInputOutputModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="extra-form" data-endpoint="AddInputOutput">
+                <input type="hidden" name="ipdId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" value="@dayNumber" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Input/Output Charting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-2">
+                    <div class="col-6"><label class="form-label">Input (ml)</label><input type="number" step="0.01" name="Input" class="form-control" /></div>
+                    <div class="col-6"><label class="form-label">Output (ml)</label><input type="number" step="0.01" name="Output" class="form-control" /></div>
+                    <div class="col-6"><label class="form-label">Drain Output (ml)</label><input type="number" step="0.01" name="DrainOutput" class="form-control" /></div>
+                    <div class="col-12"><hr /></div>
+                    <div class="col-6">
+                        <label class="form-label">Recorded By</label>
+                        <select name="RecordedByRole" class="form-control" id="ddlRole_IO" onchange="toggleRecordedByFor('IO')">
+                            <option value="Nurse">Nurse</option>
+                            <option value="Doctor">Doctor</option>
+                        </select>
+                    </div>
+                    <div class="col-6" id="nurseField_IO">
+                        <label class="form-label">Nurse</label>
+                        <select name="NurseId" class="form-control" asp-items="ViewBag.Nurses">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                    <div class="col-6 d-none" id="doctorField_IO">
+                        <label class="form-label">Doctor</label>
+                        <select name="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addWellbeingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="extra-form" data-endpoint="AddDailyWellbeing">
+                <input type="hidden" name="ipdId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" value="@dayNumber" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Daily Wellbeing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-2">
+                    <div class="col-6"><label class="form-label">Sleep</label><input name="Sleep" class="form-control" placeholder="e.g. Adequate" /></div>
+                    <div class="col-6"><label class="form-label">Bowel</label><input name="Bowel" class="form-control" placeholder="e.g. Normal" /></div>
+                    <div class="col-6"><label class="form-label">Bladder</label><input name="Bladder" class="form-control" placeholder="e.g. Normal" /></div>
+                    <div class="col-6"><label class="form-label">Appetite</label><input name="Appetite" class="form-control" placeholder="e.g. Good" /></div>
+                    <div class="col-6"><label class="form-label">Ambulation</label><input name="Ambulation" class="form-control" placeholder="e.g. Independent" /></div>
+                    <div class="col-6"><label class="form-label">Eating</label><input name="Eating" class="form-control" placeholder="e.g. Self" /></div>
+                    <div class="col-12"><hr /></div>
+                    <div class="col-6">
+                        <label class="form-label">Recorded By</label>
+                        <select name="RecordedByRole" class="form-control" id="ddlRole_WB" onchange="toggleRecordedByFor('WB')">
+                            <option value="Nurse">Nurse</option>
+                            <option value="Doctor">Doctor</option>
+                        </select>
+                    </div>
+                    <div class="col-6" id="nurseField_WB">
+                        <label class="form-label">Nurse</label>
+                        <select name="NurseId" class="form-control" asp-items="ViewBag.Nurses">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                    <div class="col-6 d-none" id="doctorField_WB">
+                        <label class="form-label">Doctor</label>
+                        <select name="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addBodyCompModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="extra-form" data-endpoint="AddBodyComposition">
+                <input type="hidden" name="ipdId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" value="@dayNumber" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Body Composition</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-2">
+                    <div class="col-6"><label class="form-label">Ht (cms)</label><input type="number" step="0.1" name="HeightCm" class="form-control" /></div>
+                    <div class="col-6"><label class="form-label">Weight (kgs)</label><input type="number" step="0.1" name="WeightKg" class="form-control" /></div>
+                    <div class="form-text mt-2">BMI, BMR and BSA are calculated automatically after you submit.</div>
+                    <div class="col-12"><hr /></div>
+                    <div class="col-6">
+                        <label class="form-label">Recorded By</label>
+                        <select name="RecordedByRole" class="form-control" id="ddlRole_BC" onchange="toggleRecordedByFor('BC')">
+                            <option value="Nurse">Nurse</option>
+                            <option value="Doctor">Doctor</option>
+                        </select>
+                    </div>
+                    <div class="col-6" id="nurseField_BC">
+                        <label class="form-label">Nurse</label>
+                        <select name="NurseId" class="form-control" asp-items="ViewBag.Nurses">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                    <div class="col-6 d-none" id="doctorField_BC">
+                        <label class="form-label">Doctor</label>
+                        <select name="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()

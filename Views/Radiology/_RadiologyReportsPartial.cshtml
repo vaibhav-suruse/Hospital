@@ -1,0 +1,64 @@
+﻿@* Views/Radiology/_RadiologyReportsPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.RadiologyReportModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+@if (Model == null || Model.Count == 0)
+{
+    <div class="text-center text-muted py-5">No Radiology Report Entered</div>
+}
+else
+{
+    foreach (var r in Model)
+    {
+        <div class="card border mb-3 radiology-report-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
+                    <div class="text-muted small">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        @r.ReportDateTime.ToString("dd/MM/yyyy, hh:mm tt")
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary rr-edit-btn" title="Edit"
+                                data-id="@r.Id"
+                                data-title="@r.Title"
+                                data-notes="@r.Notes"
+                                data-radiologist="@r.RadiologistDoctorId"
+                                data-reportdatetime="@r.ReportDateTime.ToString("yyyy-MM-ddTHH:mm")">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rr-delete-btn" title="Delete" data-id="@r.Id">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <a class="btn btn-sm btn-outline-secondary" title="Print"
+                           asp-controller="Radiology" asp-action="Print" asp-route-ipdId="@ipdId" asp-route-id="@r.Id" target="_blank">
+                            <i class="fas fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <div class="text-muted small">Title</div>
+                            <div class="fw-semibold">@r.Title</div>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Notes</div>
+                            <div style="white-space:pre-wrap;">@r.Notes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <div class="text-muted small">Radiologist</div>
+                            <div class="fw-semibold">@(r.RadiologistName ?? "-")</div>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Entered By</div>
+                            <div>@(r.EnteredByName ?? "-")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}

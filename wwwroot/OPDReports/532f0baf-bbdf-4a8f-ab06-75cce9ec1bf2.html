@@ -1,0 +1,473 @@
+
+<style>
+  .wrap { display:flex; flex-direction:column; gap:2rem; padding:1rem 0; }
+  .screen-label { font-size:12px; font-weight:500; color:var(--color-text-secondary); margin-bottom:6px; letter-spacing:.05em; text-transform:uppercase; }
+  .scenario-pill { display:inline-block; background:var(--color-background-info); color:var(--color-text-info); font-size:11px; border-radius:4px; padding:3px 10px; margin-bottom:10px; }
+  .frame { width:320px; margin:0 auto; background:var(--color-background-primary); border:0.5px solid var(--color-border-secondary); border-radius:20px; overflow:hidden; }
+  .hdr { background:#1a5276; padding:16px 20px 12px; }
+  .hdr h2 { color:#fff; font-size:15px; font-weight:500; margin:0; }
+  .hdr p { color:rgba(255,255,255,.65); font-size:12px; margin:4px 0 0; }
+  .body { padding:22px 20px; }
+  .lbl { font-size:12px; color:var(--color-text-secondary); margin-bottom:5px; }
+  .inp { border:0.5px solid var(--color-border-secondary); border-radius:8px; padding:9px 12px; font-size:13px; color:var(--color-text-primary); background:var(--color-background-secondary); width:100%; box-sizing:border-box; }
+  .inp.active { border-color:#1a5276; background:var(--color-background-primary); }
+  .inp.err { border-color:#c0392b; }
+  .btn { background:#1a5276; color:#fff; border:none; border-radius:8px; padding:11px; width:100%; font-size:13px; font-weight:500; margin-top:14px; }
+  .btn.secondary { background:transparent; color:#1a5276; border:0.5px solid #1a5276; margin-top:8px; }
+  .hint { font-size:12px; color:var(--color-text-secondary); text-align:center; margin-top:10px; }
+  .hint a { color:#1a5276; }
+  .err-box { background:#fdf0ee; border:0.5px solid #e74c3c; border-radius:8px; padding:9px 12px; font-size:12px; color:#922b21; margin-bottom:12px; }
+  .ok-box { background:#eafaf1; border:0.5px solid #27ae60; border-radius:8px; padding:9px 12px; font-size:12px; color:#1e8449; margin-bottom:12px; }
+  .otp-row { display:flex; gap:8px; justify-content:center; margin:14px 0; }
+  .otp-box { width:38px; height:42px; border:0.5px solid var(--color-border-secondary); border-radius:8px; text-align:center; font-size:18px; font-weight:500; background:var(--color-background-secondary); color:var(--color-text-primary); display:flex; align-items:center; justify-content:center; }
+  .otp-box.on { border-color:#1a5276; background:var(--color-background-primary); }
+  .divider { display:flex; align-items:center; gap:8px; margin:14px 0; }
+  .divider hr { flex:1; border:none; border-top:0.5px solid var(--color-border-tertiary); }
+  .divider span { font-size:11px; color:var(--color-text-secondary); }
+  .profile-row { border:0.5px solid var(--color-border-tertiary); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .profile-row.sel { border-color:#1a5276; background:#eaf1f8; }
+  .av { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500; flex-shrink:0; }
+  .av.b { background:#d4e6f1; color:#1a5276; }
+  .av.t { background:#d1f2eb; color:#0e6655; }
+  .av.o { background:#fde8e0; color:#a04000; }
+  .av.p { background:#f5eef8; color:#7d3c98; }
+  .pname { font-size:13px; font-weight:500; color:var(--color-text-primary); margin:0 0 2px; }
+  .psub { font-size:11px; color:var(--color-text-secondary); margin:0; }
+  .hbadge { background:#eaf4fb; color:#1a5276; font-size:10px; border-radius:3px; padding:1px 6px; }
+  .rbadge { background:#fef9e7; color:#7d6608; font-size:10px; border-radius:3px; padding:1px 6px; margin-right:4px; }
+  .radio { width:16px; height:16px; border-radius:50%; border:0.5px solid var(--color-border-secondary); flex-shrink:0; margin-left:auto; display:flex; align-items:center; justify-content:center; }
+  .radio.on { border-color:#1a5276; }
+  .radio.on::after { content:''; width:8px; height:8px; border-radius:50%; background:#1a5276; }
+  .add-row { border:0.5px dashed var(--color-border-secondary); border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:10px; color:#1a5276; font-size:12px; }
+  .plus-circle { width:30px; height:30px; border-radius:50%; border:0.5px solid #1a5276; display:flex; align-items:center; justify-content:center; font-size:18px; color:#1a5276; flex-shrink:0; }
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .stat { background:var(--color-background-secondary); border-radius:8px; padding:10px; text-align:center; }
+  .stat-n { font-size:20px; font-weight:500; color:var(--color-text-primary); }
+  .stat-l { font-size:11px; color:var(--color-text-secondary); margin-top:1px; }
+  .sec-title { font-size:11px; color:var(--color-text-secondary); letter-spacing:.06em; text-transform:uppercase; margin:12px 0 6px; }
+  .appt-card { border:0.5px solid var(--color-border-tertiary); border-radius:8px; padding:10px; margin-bottom:8px; }
+  .tag { display:inline-block; font-size:10px; border-radius:3px; padding:2px 7px; }
+  .tag.pend { background:#fef9e7; color:#9a7d0a; }
+  .tag.done { background:#eafaf1; color:#1e8449; }
+  .top-bar { background:#1a5276; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .switch-btn { background:rgba(255,255,255,.15); border:0.5px solid rgba(255,255,255,.3); border-radius:6px; padding:4px 8px; font-size:11px; color:#fff; }
+  .arrow-mid { text-align:center; color:var(--color-text-secondary); font-size:22px; margin:-6px 0; }
+  .pass-row { position:relative; }
+  .pass-row .inp { padding-right:36px; }
+  .eye-btn { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--color-text-secondary); font-size:14px; cursor:pointer; padding:0; }
+  .step-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.35); margin:0 2px; }
+  .step-dot.on { background:#fff; }
+  .mb8 { margin-bottom:8px; }
+  .mb12 { margin-bottom:12px; }
+  .mt4 { margin-top:4px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .forgot-link { font-size:12px; color:#1a5276; text-align:right; display:block; margin-top:4px; cursor:pointer; }
+  .sel-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
+  .sel-opt { border:0.5px solid var(--color-border-secondary); border-radius:6px; padding:7px 8px; font-size:12px; color:var(--color-text-secondary); text-align:center; cursor:pointer; }
+  .sel-opt.on { border-color:#1a5276; background:#eaf1f8; color:#1a5276; font-weight:500; }
+</style>
+
+<div class="wrap">
+
+  <!-- ── SCREEN 1 LOGIN ── -->
+  <div>
+    <div class="screen-label">Screen 1 — Patient login</div>
+    <div class="scenario-pill">All patients start here</div>
+    <div class="frame">
+      <div class="hdr">
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <span class="step-dot on"></span><span class="step-dot"></span><span class="step-dot"></span>
+        </div>
+        <h2>Patient login</h2>
+        <p>Narwade Hospital — Patient Portal</p>
+      </div>
+      <div class="body">
+        <div class="lbl mb8">Email address</div>
+        <div class="inp active mb12">rahul@gmail.com</div>
+        <div class="lbl mb8">Password</div>
+        <div class="pass-row mb12">
+          <div class="inp active">••••••••</div>
+          <button class="eye-btn">&#128065;</button>
+        </div>
+        <span class="forgot-link">Forgot password?</span>
+        <div class="btn">Sign in</div>
+        <div class="hint">New patient? <a>Register here</a></div>
+        <div class="divider"><hr><span>or</span><hr></div>
+        <div class="hint" style="font-size:11px;">Hospital staff? <a>Staff login</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <!-- ── SCREEN 2A — WRONG PASSWORD ── -->
+  <div>
+    <div class="screen-label">Screen 2A — Wrong email or password</div>
+    <div class="scenario-pill">Scenario: Login failed</div>
+    <div class="frame">
+      <div class="hdr"><h2>Patient login</h2><p>Narwade Hospital</p></div>
+      <div class="body">
+        <div class="err-box">Incorrect email or password. Please try again.</div>
+        <div class="lbl mb8">Email address</div>
+        <div class="inp err mb12">rahul@gmail.com</div>
+        <div class="lbl mb8">Password</div>
+        <div class="pass-row mb12">
+          <div class="inp err">••••••••</div>
+        </div>
+        <span class="forgot-link">Forgot password?</span>
+        <div class="btn">Try again</div>
+        <div class="hint">Don't have an account? <a>Register here</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓ (if login success)</div>
+
+  <!-- ── SCREEN 2B — 1 HOSPITAL ── -->
+  <div>
+    <div class="screen-label">Screen 2B — Login success, patient in 1 hospital only</div>
+    <div class="scenario-pill">Scenario: Single hospital patient</div>
+    <div class="frame">
+      <div class="hdr"><h2>Welcome back, Rahul</h2><p>Logging you in to Sri Hospital...</p></div>
+      <div class="body" style="text-align:center;padding:40px 20px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:#eaf1f8;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:22px;height:22px;border-radius:50%;border:2.5px solid #1a5276;border-top-color:transparent;"></div>
+        </div>
+        <div style="font-size:13px;color:var(--color-text-secondary);">Taking you directly to your dashboard...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓ (if multiple records found)</div>
+
+  <!-- ── SCREEN 2C — MULTI SELECTOR ── -->
+  <div>
+    <div class="screen-label">Screen 2C — Multiple records found</div>
+    <div class="scenario-pill">Scenario: Family sharing email / patient in 2+ hospitals</div>
+    <div class="frame">
+      <div class="hdr"><h2>Select profile</h2><p>Multiple records found for this account</p></div>
+      <div class="body">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">Whose records do you want to view?</div>
+
+        <div class="profile-row sel">
+          <div class="av b">RS</div>
+          <div style="flex:1">
+            <p class="pname">Rahul Sharma</p>
+            <p class="psub"><span class="hbadge">Sri Hospital</span></p>
+          </div>
+          <div class="radio on"></div>
+        </div>
+
+        <div class="profile-row">
+          <div class="av b">RS</div>
+          <div style="flex:1">
+            <p class="pname">Rahul Sharma</p>
+            <p class="psub"><span class="hbadge">Vinaya Hospital</span></p>
+          </div>
+          <div class="radio"></div>
+        </div>
+
+        <div class="profile-row">
+          <div class="av t">SS</div>
+          <div style="flex:1">
+            <p class="pname">Sunita Sharma</p>
+            <p class="psub"><span class="rbadge">Mother</span><span class="hbadge">Sri Hospital</span></p>
+          </div>
+          <div class="radio"></div>
+        </div>
+
+        <div class="profile-row">
+          <div class="av o">RS</div>
+          <div style="flex:1">
+            <p class="pname">Ramesh Sharma</p>
+            <p class="psub"><span class="rbadge">Father</span><span class="hbadge">Sri Hospital</span></p>
+          </div>
+          <div class="radio"></div>
+        </div>
+
+        <div class="add-row" style="margin-bottom:12px;">
+          <div class="plus-circle">+</div>
+          Add family member
+        </div>
+
+        <div class="btn">Continue as Rahul — Sri Hospital</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <!-- ── SCREEN 3 — DASHBOARD ── -->
+  <div>
+    <div class="screen-label">Screen 3 — Patient dashboard</div>
+    <div class="frame">
+      <div class="top-bar">
+        <div>
+          <div style="color:#fff;font-size:13px;font-weight:500;">Hi, Rahul</div>
+          <div style="color:rgba(255,255,255,.6);font-size:11px;">Sri Hospital</div>
+        </div>
+        <div class="switch-btn">Switch profile</div>
+      </div>
+      <div class="body">
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-n">3</div><div class="stat-l">Appointments</div></div>
+          <div class="stat"><div class="stat-n">2</div><div class="stat-l">OPD visits</div></div>
+          <div class="stat"><div class="stat-n">1</div><div class="stat-l">IPD stays</div></div>
+          <div class="stat"><div class="stat-n" style="color:#c0392b;">₹500</div><div class="stat-l">Amount due</div></div>
+        </div>
+        <div class="sec-title">Next appointment</div>
+        <div class="appt-card">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Dr. Pooja Kale</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">Cardiologist · 25 Mar 2026, 10:30 AM</div>
+          <div style="margin-top:7px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="tag pend">Pending</span>
+            <span style="font-size:11px;color:#c0392b;cursor:pointer;">Cancel</span>
+          </div>
+        </div>
+        <div class="sec-title">Recent OPD</div>
+        <div class="appt-card">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Dr. Soham Sashte</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">10 Mar 2026</div>
+          <div style="margin-top:7px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="tag done">Completed</span>
+            <span style="font-size:11px;color:#1a5276;cursor:pointer;">View prescription</span>
+          </div>
+        </div>
+        <div class="btn" style="margin-top:4px;">Book new appointment</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REGISTRATION FLOW ── -->
+  <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:2rem;">
+    <div class="screen-label">Registration flow — new patient</div>
+  </div>
+
+  <!-- ── REG SCREEN 1 ── -->
+  <div>
+    <div class="screen-label">Reg screen 1 — Basic details + password</div>
+    <div class="scenario-pill">New patient self-registers</div>
+    <div class="frame">
+      <div class="hdr">
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <span class="step-dot on"></span><span class="step-dot"></span><span class="step-dot"></span>
+        </div>
+        <h2>Create account</h2>
+        <p>Step 1 of 3 — Your details</p>
+      </div>
+      <div class="body">
+        <div class="row2 mb12">
+          <div>
+            <div class="lbl mb8">First name</div>
+            <div class="inp active">Rahul</div>
+          </div>
+          <div>
+            <div class="lbl mb8">Last name</div>
+            <div class="inp active">Sharma</div>
+          </div>
+        </div>
+        <div class="row2 mb12">
+          <div>
+            <div class="lbl mb8">Age</div>
+            <div class="inp active">28</div>
+          </div>
+          <div>
+            <div class="lbl mb8">Gender</div>
+            <div class="inp active">Male</div>
+          </div>
+        </div>
+        <div class="lbl mb8">Email address</div>
+        <div class="inp active mb12">rahul@gmail.com</div>
+        <div class="lbl mb8">Password</div>
+        <div class="pass-row mb12">
+          <div class="inp active">••••••••</div>
+          <button class="eye-btn">&#128065;</button>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:12px;">Min 8 chars, 1 capital, 1 number, 1 symbol</div>
+        <div class="lbl mb8">Phone number</div>
+        <div class="inp active mb12">9876543210</div>
+        <div class="btn">Next — Verify email</div>
+        <div class="hint">Already registered? <a>Login here</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <!-- ── REG SCREEN 2 — OTP ── -->
+  <div>
+    <div class="screen-label">Reg screen 2 — Email OTP verification</div>
+    <div class="scenario-pill">OTP sent to email for verification only</div>
+    <div class="frame">
+      <div class="hdr">
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <span class="step-dot"></span><span class="step-dot on"></span><span class="step-dot"></span>
+        </div>
+        <h2>Verify your email</h2>
+        <p>Step 2 of 3</p>
+      </div>
+      <div class="body">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:14px;text-align:center;">
+          We sent a 6-digit code to<br><strong style="color:var(--color-text-primary);">rahul@gmail.com</strong>
+        </div>
+        <div class="otp-row">
+          <div class="otp-box on">4</div>
+          <div class="otp-box on">8</div>
+          <div class="otp-box on">2</div>
+          <div class="otp-box on">9</div>
+          <div class="otp-box">_</div>
+          <div class="otp-box">_</div>
+        </div>
+        <div class="btn">Verify and create account</div>
+        <div class="hint">Didn't receive? <a>Resend in 0:42</a></div>
+        <div class="hint" style="margin-top:6px;"><a>Change email address</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <!-- ── REG SCREEN 3 — SUCCESS + existing records found ── -->
+  <div>
+    <div class="screen-label">Reg screen 3A — Account created, existing hospital records found and linked</div>
+    <div class="scenario-pill">Hospital had already added this patient</div>
+    <div class="frame">
+      <div class="hdr">
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <span class="step-dot"></span><span class="step-dot"></span><span class="step-dot on"></span>
+        </div>
+        <h2>Account created!</h2>
+        <p>Step 3 of 3</p>
+      </div>
+      <div class="body">
+        <div class="ok-box">
+          Your account has been created and we found your existing hospital records. They have been linked automatically.
+        </div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;">Records linked to your account:</div>
+        <div class="profile-row" style="margin-bottom:8px;">
+          <div class="av b">RS</div>
+          <div>
+            <p class="pname">Rahul Sharma</p>
+            <p class="psub"><span class="hbadge">Sri Hospital</span></p>
+          </div>
+        </div>
+        <div class="profile-row" style="margin-bottom:12px;">
+          <div class="av b">RS</div>
+          <div>
+            <p class="pname">Rahul Sharma</p>
+            <p class="psub"><span class="hbadge">Vinaya Hospital</span></p>
+          </div>
+        </div>
+        <div class="btn">Go to dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REG SCREEN 3B — no existing records ── -->
+  <div>
+    <div class="screen-label">Reg screen 3B — Account created, no existing records</div>
+    <div class="scenario-pill">Completely new patient</div>
+    <div class="frame">
+      <div class="hdr"><h2>You are all set!</h2><p>Account created successfully</p></div>
+      <div class="body" style="text-align:center;padding:28px 20px;">
+        <div style="width:52px;height:52px;border-radius:50%;background:#eafaf1;border:0.5px solid #27ae60;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#27ae60;">&#10003;</div>
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:20px;">No existing records found. Book your first appointment to get started.</div>
+        <div class="btn">Book an appointment</div>
+        <div class="btn secondary">Go to dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FORGOT PASSWORD FLOW ── -->
+  <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:2rem;">
+    <div class="screen-label">Forgot password flow</div>
+  </div>
+
+  <div>
+    <div class="screen-label">Forgot 1 — Enter email</div>
+    <div class="frame">
+      <div class="hdr"><h2>Forgot password</h2><p>We will send a reset code to your email</p></div>
+      <div class="body">
+        <div class="lbl mb8">Your registered email</div>
+        <div class="inp active mb12">rahul@gmail.com</div>
+        <div class="btn">Send OTP</div>
+        <div class="hint"><a>Back to login</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <div>
+    <div class="screen-label">Forgot 2 — Enter OTP from email</div>
+    <div class="frame">
+      <div class="hdr"><h2>Enter OTP</h2><p>Sent to rahul@gmail.com</p></div>
+      <div class="body">
+        <div class="otp-row">
+          <div class="otp-box on">7</div>
+          <div class="otp-box on">3</div>
+          <div class="otp-box on">1</div>
+          <div class="otp-box on">4</div>
+          <div class="otp-box on">9</div>
+          <div class="otp-box">_</div>
+        </div>
+        <div class="btn">Verify OTP</div>
+        <div class="hint">Didn't receive? <a>Resend</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-mid">↓</div>
+
+  <div>
+    <div class="screen-label">Forgot 3 — Set new password</div>
+    <div class="frame">
+      <div class="hdr"><h2>Set new password</h2><p>OTP verified successfully</p></div>
+      <div class="body">
+        <div class="lbl mb8">New password</div>
+        <div class="pass-row mb12">
+          <div class="inp active">••••••••</div>
+          <button class="eye-btn">&#128065;</button>
+        </div>
+        <div class="lbl mb8">Confirm password</div>
+        <div class="pass-row mb12">
+          <div class="inp active">••••••••</div>
+        </div>
+        <div class="btn">Reset password</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOOK APPOINTMENT ── -->
+  <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:2rem;">
+    <div class="screen-label">Book appointment — hospital selected here</div>
+  </div>
+
+  <div>
+    <div class="screen-label">Book appointment screen</div>
+    <div class="scenario-pill">Hospital is selected here, not at registration</div>
+    <div class="frame">
+      <div class="hdr"><h2>Book appointment</h2><p>Select hospital and doctor</p></div>
+      <div class="body">
+        <div class="lbl mb8">Select hospital</div>
+        <div class="sel-row mb12">
+          <div class="sel-opt on">Sri Hospital</div>
+          <div class="sel-opt">Vinaya Hospital</div>
+        </div>
+        <div class="lbl mb8">Select doctor</div>
+        <div class="inp active mb12">Dr. Pooja Kale — Cardiologist</div>
+        <div class="lbl mb8">Appointment date</div>
+        <div class="inp active mb12">25 Mar 2026</div>
+        <div class="lbl mb8">Preferred time</div>
+        <div class="inp active mb12">10:30 AM</div>
+        <div class="lbl mb8">Booking for</div>
+        <div class="sel-row mb12">
+          <div class="sel-opt on">Myself</div>
+          <div class="sel-opt">Family member</div>
+        </div>
+        <div class="btn">Confirm booking</div>
+      </div>
+    </div>
+  </div>
+
+</div>

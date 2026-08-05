@@ -1,0 +1,212 @@
+﻿@using WebApplicationSampleTest2.Models
+@model Medicine
+
+@{
+    ViewData["Title"] = Model.isUpdate ? "Edit Medicine" : "Create Medicine";
+}
+
+<h4 class="card-title">
+    @(Model.isUpdate ? "Edit Medicine" : "Create Medicine")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form id="medicineForm" asp-action="Create" asp-controller="Medicine" method="post" novalidate>
+
+                    @Html.HiddenFor(x => x.MedicineId)
+                    @Html.HiddenFor(x => x.isUpdate)
+
+                    <div class="row">
+                        <!-- Medicine Name -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Medicine Name</label>
+                                <input type="text"
+                                       asp-for="MedicineName"
+                                       class="form-control"
+                                       id="MedicineName"
+                                       placeholder="Enter Medicine Name">
+                                <small class="text-danger" id="errMedicineName"></small>
+                            </div>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Type</label>
+                                <select id="Type" asp-for="Type" class="form-select">
+                                    <option value="">Select Type</option>
+                                    <option>Tablet</option>
+                                    <option>Syrup</option>
+                                    <option>Capsule</option>
+                                    <option>Injection</option>
+                                </select>
+                                <small class="text-danger" id="errType"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Quantity + Schedule -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number"
+                                       asp-for="Quantity"
+                                       class="form-control"
+                                       id="Quantity"
+                                       name="Quantity"
+                                       value="@(Model.Quantity > 0 ? Model.Quantity.ToString() : "")"
+                                       required
+                                       min="1"
+                                       step="1"
+                                       oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
+                                       placeholder="Enter quantity" />
+                                <small class="text-danger" id="errQuantity"></small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               asp-for="Morning"
+                                               id="Morning" />
+                                        <label class="form-check-label">Morning</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               asp-for="Afternoon"
+                                               id="Afternoon" />
+                                        <label class="form-check-label">Afternoon</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               asp-for="Evening"
+                                               id="Evening" />
+                                        <label class="form-check-label">Evening</label>
+                                    </div>
+                                </div>
+                                <p class="text-danger" id="errSchedule"></p>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea asp-for="Description"
+                                          class="form-control"
+                                          id="Description"
+                                          rows="4"></textarea>
+                                <small class="text-danger" id="errDescription"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.isUpdate ? "Update" : "Submit")
+                        </button>
+
+                        <a asp-action="Index"
+                           asp-controller="Medicine"
+                           class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/libs/metismenu/metisMenu.min.js"></script>
+    <script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+    <script src="~/assets/libs/node-waves/waves.min.js"></script>
+    <script src="~/assets/libs/parsleyjs/parsley.min.js"></script>
+    <script src="~/assets/js/pages/form-validation.init.js"></script>
+    <script src="~/assets/js/app.js"></script>
+
+    <script>
+        function clearErrors() {
+            $(".text-danger").text("");
+            $(".form-control, .form-select").removeClass("is-invalid");
+        }
+
+        function setError(inputId, errorId, message) {
+            if (inputId !== "") {
+                $("#" + inputId).addClass("is-invalid");
+            }
+            $("#" + errorId).text(message);
+        }
+
+        // 🔥 Medicine Name special character control
+        $("#MedicineName").on("input", function () {
+            let value = $(this).val();
+            value = value.replace(/[^a-zA-Z0-9 +\-\/]/g, '');
+            $(this).val(value);
+        });
+
+        $("#medicineForm").on("submit", function (e) {
+
+            clearErrors();
+            let isValid = true;
+
+            // 🔥 Medicine Name (updated)
+            let medName = $("#MedicineName").val().trim();
+            if (medName === "") {
+                setError("MedicineName", "errMedicineName", "Medicine Name is required");
+                isValid = false;
+            } else if (!/^[a-zA-Z0-9 +\-\/]+$/.test(medName)) {
+                setError("MedicineName", "errMedicineName", "Invalid characters in medicine name");
+                isValid = false;
+            }
+
+            // Type
+            if ($("#Type").val().trim() === "") {
+                setError("Type", "errType", "Please select medicine type");
+                isValid = false;
+            }
+
+            // Quantity
+            let qty = parseInt($("#Quantity").val(), 10);
+            if (isNaN(qty) || qty < 1) {
+                setError("Quantity", "errQuantity", "Quantity must be greater than 0");
+                isValid = false;
+            }
+
+            // Description
+            if ($("#Description").val().trim() === "") {
+                setError("Description", "errDescription", "Description is required");
+                isValid = false;
+            }
+
+            // Schedule
+            if (
+                !$("#Morning").is(":checked") &&
+                !$("#Afternoon").is(":checked") &&
+                !$("#Evening").is(":checked")
+            ) {
+                setError("", "errSchedule", "Select at least one schedule (Morning / Afternoon / Evening)");
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+    </script>
+}

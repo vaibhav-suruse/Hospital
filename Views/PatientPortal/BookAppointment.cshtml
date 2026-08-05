@@ -1,0 +1,304 @@
+﻿@model WebApplicationSampleTest2.Models.PatientBookAppointmentVM
+@{
+    ViewData["Title"] = "Book Appointment";
+    Layout = "~/Views/Shared/_PatientLayout.cshtml";
+
+    var mainHospitals = ViewBag.MainHospitals as
+        List<WebApplicationSampleTest2.Models.Hospital>;
+    var subHospitals  = ViewBag.SubHospitals as
+        List<WebApplicationSampleTest2.Models.Hospital>;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="bx bx-calendar-plus text-primary me-2"></i>
+                    Book New Appointment
+                </h5>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">
+                        @TempData["Error"]
+                    </div>
+                }
+
+                <form asp-action="BookAppointment"
+                      asp-controller="PatientPortal"
+                      method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" asp-for="PatientId" />
+
+                    <!-- Hidden Hospital IDs -->
+                   <input type="hidden"
+                   id="hidHospitalId"
+                   name="HospitalId"
+                   value="0" />
+                  <input type="hidden"
+                   id="hidSubHospitalId"
+                   name="SubHospitalId"
+                   value="" />
+                    <!-- Main Hospital -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Select Hospital
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select id="mainHospitalSelect"
+                                class="form-select"
+                                required
+                                onchange="onMainHospitalChange(this)">
+                            <option value="">
+                                -- Select Hospital --
+                            </option>
+                            @if (mainHospitals != null)
+                            {
+                                @foreach (var h in mainHospitals)
+                                {
+                                    <option value="@h.Id">
+                                        @h.Name
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Sub Hospital (hidden until needed) -->
+                    <div class="mb-3"
+                         id="subHospitalDiv"
+                         style="display:none;">
+                        <label class="form-label fw-semibold">
+                            Select Branch / Sub Hospital
+                        </label>
+                        <select id="subHospitalSelect"
+                                class="form-select"
+                                onchange="onSubHospitalChange(this)">
+                            <option value="">
+                                -- Use Main Hospital --
+                            </option>
+                        </select>
+                        <small class="text-muted">
+                            Optional — leave blank to use main hospital
+                        </small>
+                    </div>
+
+                    <!-- Doctor -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Select Doctor
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select id="doctorSelect"
+                                name="DoctorId"
+                                class="form-select"
+                                required>
+                            <option value="">
+                                -- Select Hospital First --
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Appointment Date
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="AppointmentDate" class="form-control"
+                               type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               required />
+                    </div>
+
+                    <!-- Time -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Preferred Time
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="AppointmentTime"
+                               type="time"
+                               class="form-control"
+                               required />
+                        <small class="text-muted">
+                            OPD hours: 9:00 AM – 5:00 PM
+                        </small>
+                    </div>
+
+                    <!-- Booking For -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Booking for
+                        </label>
+                        <select name="Relation"
+                                class="form-select">
+                            <option value="Self">Myself</option>
+                            <option value="Mother">Mother</option>
+                            <option value="Father">Father</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Child">Child</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit"
+                                class="btn btn-primary">
+                            <i class="bx bx-check me-1"></i>
+                            Confirm Booking
+                        </button>
+                        <a asp-action="Appointments"
+                           asp-controller="PatientPortal"
+                           class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+<script>
+    // Sub hospitals data from server
+          @{
+                var subHospitalJson = subHospitals != null
+                        ? Newtonsoft.Json.JsonConvert.SerializeObject(
+                                subHospitals.Select(h => new
+                                {
+                                        id = h.Id,
+                                        name = h.Name,
+                                        parentId = h.ParentHospitalId ?? 0
+                                }).ToList())
+                        : "[]";
+        }
+        var allSubHospitals = @Html.Raw(subHospitalJson);
+
+    function onMainHospitalChange(select) {
+        var mainId = parseInt(select.value) || 0;
+
+        var subDiv    = document.getElementById(
+                            'subHospitalDiv');
+        var subSelect = document.getElementById(
+                            'subHospitalSelect');
+
+        // Update hidden fields
+        document.getElementById(
+            'hidHospitalId').value = mainId;
+        document.getElementById(
+            'hidSubHospitalId').value = '';
+
+        // Reset sub hospital dropdown
+        subSelect.innerHTML =
+            '<option value="">' +
+            '-- Use Main Hospital --' +
+            '</option>';
+
+        if (!mainId) {
+            subDiv.style.display = 'none';
+            resetDoctors();
+            return;
+        }
+
+        // Filter sub hospitals for this main hospital
+        var subs = allSubHospitals.filter(function(h) {
+            return h.parentId === mainId;
+        });
+
+        if (subs.length > 0) {
+            // Has sub hospitals — show dropdown
+            subs.forEach(function(h) {
+                var opt =
+                    document.createElement('option');
+                opt.value = h.id;
+                opt.text  = h.name;
+                subSelect.appendChild(opt);
+            });
+            subDiv.style.display = 'block';
+        } else {
+            // No sub hospitals — hide dropdown
+            subDiv.style.display = 'none';
+        }
+
+        // Load doctors for main hospital
+        loadDoctors(mainId, null);
+    }
+
+    function onSubHospitalChange(select) {
+        var subId = select.value
+                    ? parseInt(select.value)
+                    : null;
+
+        // Update hidden sub hospital field
+        document.getElementById(
+            'hidSubHospitalId').value =
+            subId ? subId.toString() : '';
+
+        var mainId = parseInt(
+            document.getElementById(
+                'mainHospitalSelect').value) || 0;
+
+        // Reload doctors for selected branch
+        loadDoctors(mainId, subId);
+    }
+
+    function loadDoctors(hospitalId, subHospitalId) {
+        var doctorSelect =
+            document.getElementById('doctorSelect');
+
+        doctorSelect.innerHTML =
+            '<option value="">' +
+            'Loading doctors...' +
+            '</option>';
+
+        var url =
+            '/PatientPortal/GetDoctorsByHospital' +
+            '?hospitalId=' + hospitalId;
+
+        if (subHospitalId)
+            url += '&subHospitalId=' + subHospitalId;
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                doctorSelect.innerHTML =
+                    '<option value="">' +
+                    '-- Select Doctor --' +
+                    '</option>';
+
+                if (data.length === 0) {
+                    doctorSelect.innerHTML =
+                        '<option value="">' +
+                        'No doctors found' +
+                        '</option>';
+                    return;
+                }
+
+                data.forEach(function(doc) {
+                    var opt =
+                        document.createElement('option');
+                    opt.value = doc.id;
+                    opt.text  = doc.name;
+                    doctorSelect.appendChild(opt);
+                });
+            })
+            .catch(function() {
+                doctorSelect.innerHTML =
+                    '<option value="">' +
+                    'Error loading doctors' +
+                    '</option>';
+            });
+    }
+
+    function resetDoctors() {
+        document.getElementById(
+            'doctorSelect').innerHTML =
+            '<option value="">' +
+            '-- Select Hospital First --' +
+            '</option>';
+    }
+</script>
+}

@@ -1,0 +1,918 @@
+﻿@model WebApplicationSampleTest2.Models.PrescriptionVM
+@{
+    Layout = null;
+    var backUrl = ViewBag.IsWalkIn == true
+        ? Url.Action("Index", "WalkInConsultation")
+        : Url.Action("Index", "OPDAppointment");
+    var editUrl = Url.Action("EditAsOPD", "Patient", new { appointmentId = ViewBag.AppointmentId ?? 0 });
+    var docFullName = "Dr. " + (Model.DoctorName ?? "");
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Prescription — @Model.PatientName</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --rx-primary: #0f766e;          /* medical teal */
+            --rx-primary-dark: #115e59;
+            --rx-primary-bg: #f0fdfa;
+            --rx-accent: #0369a1;           /* deep blue accent */
+            --rx-text: #1f2937;
+            --rx-muted: #6b7280;
+            --rx-border: #e5e7eb;
+            --rx-soft: #f9fafb;
+            --rx-danger: #b91c1c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+            color: var(--rx-text);
+            background: #eef1f5;
+            padding: 24px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* ── LEFT ACTION PANEL ── */
+        .action-panel {
+            width: 330px;
+            position: fixed;
+            left: 20px;
+            top: 90px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: #fff;
+            border: 1px solid var(--rx-border);
+            border-radius: 10px;
+            color: var(--rx-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: box-shadow .2s, border-color .2s;
+        }
+
+            .action-btn:hover {
+                box-shadow: 0 4px 14px rgba(15,118,110,.12);
+                border-color: var(--rx-primary);
+            }
+
+            .action-btn svg { flex-shrink: 0; }
+
+            .action-btn.ghost { color: #555; }
+
+        /* ── LANGUAGE BAR ── */
+        .lang-bar {
+            width: 780px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+            .lang-bar label { font-size: 13px; color: #555; font-weight: 600; }
+
+        .lang-select {
+            padding: 7px 34px 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230f766e' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        /* ── PRESCRIPTION SHEET ── */
+        .rx-wrap { width: 780px; margin: 0 auto; }
+
+        .rx-card {
+            background: #fff;
+            border: 1px solid var(--rx-border);
+            border-radius: 14px;
+            padding: 30px 34px;
+            box-shadow: 0 6px 24px rgba(15,23,42,.08);
+        }
+
+        /* ── HEADER ── */
+        .rx-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--rx-primary);
+        }
+
+        .rx-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+            .rx-brand .logo-box {
+                width: 86px;
+                height: 86px;
+                flex: 0 0 86px;
+                border: 1px solid var(--rx-border);
+                border-radius: 14px;
+                background: var(--rx-primary-bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .rx-brand img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+
+            .rx-brand .logo-placeholder {
+                font-size: 30px;
+                color: var(--rx-primary);
+                font-weight: 700;
+            }
+
+        .doc-name {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--rx-primary-dark);
+            letter-spacing: .2px;
+        }
+
+        .doc-sub { font-size: 12.5px; color: var(--rx-muted); margin-top: 2px; }
+
+        .rx-hospital {
+            text-align: right;
+            max-width: 300px;
+        }
+
+        .hospital-name {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--rx-accent);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+
+        .hospital-line {
+            font-size: 11.5px;
+            color: var(--rx-muted);
+            margin-top: 3px;
+            line-height: 1.45;
+        }
+
+        .rx-badge-prescription {
+            display: inline-block;
+            margin-top: 8px;
+            background: var(--rx-primary);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 14px;
+            border-radius: 999px;
+        }
+
+        /* ── PATIENT CARD ── */
+        .patient-panel {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 18px 0 4px;
+            background: var(--rx-soft);
+            border: 1px solid var(--rx-border);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+
+        .p-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 3px 0;
+        }
+
+        .p-label {
+            font-size: 11px;
+            color: var(--rx-muted);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            font-weight: 700;
+        }
+
+        .p-value { font-weight: 700; color: var(--rx-text); }
+
+        .vital-pills {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .vital-pill {
+            background: var(--rx-primary-bg);
+            color: var(--rx-primary-dark);
+            border: 1px solid #99f6e4;
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-weight: 700;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* ── SECTIONS ── */
+        .sec {
+            margin-top: 16px;
+        }
+
+        .sec-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 13px;
+            color: var(--rx-primary-dark);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
+        }
+
+            .sec-title::after {
+                content: "";
+                flex: 1;
+                height: 1px;
+                background: var(--rx-border);
+            }
+
+        .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .chip {
+            background: var(--rx-primary-bg);
+            border: 1px solid #ccfbf1;
+            color: var(--rx-primary-dark);
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .clinical-text {
+            background: #fff8f0;
+            border: 1px solid #fed7aa;
+            color: #7c2d12;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* ── MEDICINE TABLE ── */
+        .med-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 4px;
+            font-size: 13px;
+            border: 1px solid var(--rx-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+            .med-table thead th {
+                background: var(--rx-primary);
+                color: #fff;
+                padding: 10px 12px;
+                text-align: left;
+                font-weight: 700;
+                font-size: 11.5px;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                border: none;
+            }
+
+            .med-table tbody td {
+                padding: 10px 12px;
+                border-top: 1px solid var(--rx-border);
+                vertical-align: middle;
+            }
+
+            .med-table tbody tr:nth-child(even) td { background: #f8fafc; }
+
+            .med-table tbody tr:hover td { background: var(--rx-primary-bg); }
+
+        .med-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: #111827;
+        }
+
+        .dose-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-weight: 700;
+            font-size: 12.5px;
+        }
+
+        .dose-badge.syrup {
+            background: #fff3e0;
+            color: #c2410c;
+        }
+
+        .freq-dots {
+            display: inline-flex;
+            gap: 5px;
+        }
+
+        .freq-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .freq-dot.on { background: var(--rx-primary); color: #fff; }
+
+        /* ── ADVICE / NOTES ── */
+        .advice-box {
+            background: #f5f7ff;
+            border-left: 4px solid var(--rx-accent);
+            border-radius: 0 10px 10px 0;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #1e3a8a;
+            line-height: 1.7;
+        }
+
+        /* ── SIGNATURE ── */
+        .sig-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 34px;
+            gap: 20px;
+        }
+
+        .sig-block {
+            text-align: center;
+            min-width: 220px;
+        }
+
+        .sig-line {
+            border-top: 1.5px solid #9ca3af;
+            width: 220px;
+            margin: 0 auto 6px;
+            padding-top: 6px;
+        }
+
+        .sig-name { font-weight: 800; font-size: 14px; color: var(--rx-primary-dark); }
+
+        .sig-sub { font-size: 11px; color: var(--rx-muted); text-transform: uppercase; letter-spacing: .5px; }
+
+        .rx-footer-note {
+            text-align: center;
+            font-size: 10.5px;
+            color: #9ca3af;
+            margin-top: 20px;
+            border-top: 1px dashed #d1d5db;
+            padding-top: 10px;
+            line-height: 1.6;
+        }
+
+        /* ── PRINT OPTIONS PANEL ── */
+        .po-panel {
+            width: 780px;
+            margin: 0 auto 15px auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(15,23,42,.08);
+            padding: 14px 18px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .po-panel .po-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .po-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px 14px;
+        }
+
+        .po-grid label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: #374151;
+            cursor: pointer;
+            padding: 3px 0;
+        }
+
+        .po-grid input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--rx-primary);
+            cursor: pointer;
+        }
+
+        .po-actions {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eef2f7;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .po-actions .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+        }
+
+        .btn-print { background: var(--rx-primary); }
+        .btn-pdf { background: #28a745; }
+        .btn-back { background: #6c757d; }
+
+        .po-actions .btn:hover { opacity: .92; }
+
+        .po-panel .btn-check-all {
+            background: #eef2f7;
+            color: #1f2937;
+            border: 1px solid #d1d9e4;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        /* ── PRINT ── */
+        @@page { size: A4; margin: 12mm; }
+
+        @@media print {
+            body { background: #fff; padding: 0; }
+
+            .action-panel, .lang-bar, .no-print, .po-panel { display: none !important; }
+
+            .rx-wrap { width: 100%; }
+
+            .rx-card {
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+                padding: 0;
+            }
+
+            .med-table { page-break-inside: auto; }
+
+            .med-table tr { page-break-inside: avoid; }
+
+            .sig-area { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT ACTION PANEL -->
+    <div class="action-panel no-print">
+        <a href="#" class="action-btn" onclick="window.print(); return false;">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                Print Prescription
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="#" class="action-btn" onclick="downloadPDF(); return false;">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Download Prescription
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="@editUrl" class="action-btn" style="color:#555;">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                Edit Prescription
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="@backUrl" class="action-btn ghost">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                Back to List
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+    </div>
+
+    <!-- PRESCRIPTION AREA -->
+    <div class="rx-wrap">
+
+<!-- LANGUAGE BAR -->
+        <div class="lang-bar no-print">
+            <label id="lbl-lang">Select Language</label>
+            <select class="lang-select" id="langSelect" onchange="applyLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="mr">मराठी</option>
+                <option value="hi">हिंदी</option>
+            </select>
+        </div>
+
+        <!-- PRINT OPTIONS PANEL -->
+        <div class="po-panel" id="printOptionsPanel">
+            <div class="po-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                Print Options — select sections to include
+            </div>
+            <div class="po-grid">
+                <label><input type="checkbox" class="po-sec" value="po-header" checked /> Header</label>
+                <label><input type="checkbox" class="po-sec" value="po-patient" checked /> Patient Info</label>
+                <label><input type="checkbox" class="po-sec" value="po-symptoms" checked /> Symptoms</label>
+                <label><input type="checkbox" class="po-sec" value="po-exam" checked /> Examinations</label>
+                <label><input type="checkbox" class="po-sec" value="po-medicines" checked /> Medicines</label>
+                <label><input type="checkbox" class="po-sec" value="po-advice" checked /> Advice / Instructions</label>
+                <label><input type="checkbox" class="po-sec" value="po-signature" checked /> Signatures</label>
+                <label><input type="checkbox" class="po-sec" value="po-footer" checked /> Footer</label>
+            </div>
+            <div class="po-actions">
+                <button type="button" class="btn-check-all" onclick="toggleAll(true)">☑ Select All</button>
+                <button type="button" class="btn-check-all" onclick="toggleAll(false)">☐ Clear All</button>
+                <button class="btn btn-print" onclick="printPrescription()">🖨 Print</button>
+                <button class="btn btn-pdf" onclick="downloadPDF()">⬇ Download PDF</button>
+                <button class="btn btn-back" onclick="window.close()">✕ Close</button>
+            </div>
+        </div>
+
+        <div class="rx-card" id="prescriptionContent">
+
+            <!-- HEADER -->
+            <div class="rx-header po-header-sec">
+                <div class="rx-brand">
+                    <div class="logo-box">
+                        @if (!string.IsNullOrEmpty(Model.HospitalLogo))
+                        {
+                            <img src="@Url.Content("~/uploads/hospitals/" + Model.HospitalLogo)" alt="Logo" onerror="this.style.display='none';document.getElementById('logoPh').style.display='flex';" />
+                        }
+                        <div class="logo-placeholder" id="logoPh" style="display:@(string.IsNullOrEmpty(Model.HospitalLogo) ? "flex" : "none");">+</div>
+                    </div>
+                    <div>
+                        <div class="doc-name">@docFullName</div>
+                        @if (!string.IsNullOrEmpty(Model.Education))
+                        {
+                            <div class="doc-sub">@Model.Education</div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Specialization))
+                        {
+                            <div class="doc-sub">@Model.Specialization</div>
+                        }
+                    </div>
+                </div>
+                <div class="rx-hospital">
+                    <div class="hospital-name">@Model.HospitalName</div>
+                    @if (!string.IsNullOrEmpty(Model.HospitalAddress))
+                    {
+                        <div class="hospital-line">@Model.HospitalAddress</div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.HospitalEmail))
+                    {
+                        <div class="hospital-line">@Model.HospitalEmail</div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.HospitalRegistrationNo))
+                    {
+                        <div class="hospital-line">Reg. No: @Model.HospitalRegistrationNo</div>
+                    }
+                    <div class="rx-badge-prescription" data-key="rxbadge">Prescription</div>
+                </div>
+            </div>
+
+            <!-- PATIENT INFO -->
+            <div class="patient-panel po-patient-sec">
+                <div>
+                    <div class="p-row"><span class="p-label" data-key="patname">Patient</span><span class="p-value">@Model.PatientName</span></div>
+                    <div class="p-row"><span class="p-label" data-key="agegender">Age / Gender</span><span class="p-value">@Model.Age Y / @Model.Gender</span></div>
+                </div>
+                <div>
+                    <div class="p-row"><span class="p-label" data-key="datetime">Date &amp; Time</span><span class="p-value">@DateTime.Now.ToString("dd-MMM-yyyy hh:mm tt")</span></div>
+                    <div class="p-row"><span class="p-label" data-key="rxno">Rx Ref</span><span class="p-value">#@Model.AppointmentDate.ToString("yyyyMMdd")-@((!string.IsNullOrEmpty(Model.PatientName) ? Math.Abs(Model.PatientName.GetHashCode()) % 9999 : 0).ToString("D4"))</span></div>
+                </div>
+                <div class="vital-pills">
+                    <span class="vital-pill" data-key="bp">BP: @(Model.BP ?? "—") mmHg</span>
+                    <span class="vital-pill" data-key="pulse">Pulse: @(Model.Pulse ?? "—") /min</span>
+                </div>
+            </div>
+
+            <!-- SYMPTOMS -->
+            @if (Model.Symptoms != null && Model.Symptoms.Any())
+            {
+                <div class="sec po-symptoms-sec">
+                    <div class="sec-title" data-key="symptoms">Symptoms</div>
+                    <div class="chip-row">
+                        @foreach (var s in Model.Symptoms)
+                        {
+                            <span class="chip">@s.SymptomName</span>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- EXAMINATIONS -->
+            @if (!string.IsNullOrEmpty(Model.Investigation))
+            {
+                <div class="sec po-exam-sec">
+                    <div class="sec-title" data-key="exam">Examinations / Investigations</div>
+                    <div class="clinical-text">@Model.Investigation</div>
+                </div>
+            }
+
+            <!-- MEDICINES TABLE -->
+            <div class="sec po-medicines-sec">
+                <div class="sec-title" data-key="medsec">Medication (Rx)</div>
+                <table class="med-table">
+                    <thead>
+                        <tr>
+                            <th style="width:34px;">#</th>
+                            <th data-key="th-med">Medicine</th>
+                            <th style="width:110px;" data-key="th-dose">Dose</th>
+                            <th style="width:120px;" data-key="th-freq">Frequency</th>
+                            <th style="width:110px;" data-key="th-when">When</th>
+                            <th style="width:56px;" data-key="th-days">Days</th>
+                            <th style="width:110px;" data-key="th-qty">Total Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Medicines != null && Model.Medicines.Any())
+                        {
+                            int idx = 1;
+                            foreach (var m in Model.Medicines)
+                            {
+                                bool isSyrup = false;
+                                if (!string.IsNullOrEmpty(m.MedicineName))
+                                {
+                                    var nm = m.MedicineName.ToLower();
+                                    isSyrup = nm.Contains("syrup") || nm.Contains("susp") ||
+                                    nm.Contains("suspension") || nm.Contains("linctus") ||
+                                    nm.Contains("elixir");
+                                }
+
+                                int doses = (m.Morning == 1 ? 1 : 0) + (m.Afternoon == 1 ? 1 : 0) + (m.Evening == 1 ? 1 : 0);
+                                string qtyDisplay;
+                                if (isSyrup)
+                                {
+                                    int totalMl = doses * m.Days * 5;
+                                    int bottles = (int)Math.Ceiling(totalMl / 100.0);
+                                    qtyDisplay = bottles + (bottles > 1 ? " Bottles" : " Bottle");
+                                }
+                                else
+                                {
+                                    int totalQty = m.Quantity > 0 ? m.Quantity : doses * m.Days;
+                                    string unit = !string.IsNullOrEmpty(m.Unit) ? m.Unit : "Tablet(s)";
+                                    qtyDisplay = totalQty + " " + unit;
+                                }
+
+                                string doseStr = (!string.IsNullOrEmpty(m.Dose) ? m.Dose : "1") + " " +
+                                (!string.IsNullOrEmpty(m.Unit) ? m.Unit : "Tablet(s)");
+
+                                string whenStr = !string.IsNullOrEmpty(m.WhenToTake) ? m.WhenToTake : "After Food";
+
+                                <tr>
+                                    <td>@idx</td>
+                                    <td>
+                                        <div class="med-name">@m.MedicineName</div>
+                                    </td>
+                                    <td>
+                                        <span class="dose-badge @(isSyrup ? "syrup" : "")">@doseStr</span>
+                                    </td>
+                                    <td>
+                                        <span class="freq-dots">
+                                            <span class="freq-dot @(m.Morning == 1 ? "on" : "")">M</span>
+                                            <span class="freq-dot @(m.Afternoon == 1 ? "on" : "")">A</span>
+                                            <span class="freq-dot @(m.Evening == 1 ? "on" : "")">E</span>
+                                        </span>
+                                    </td>
+                                    <td>@whenStr</td>
+                                    <td>@m.Days</td>
+                                    <td>
+                                        <span class="dose-badge @(isSyrup ? "syrup" : "")">@qtyDisplay</span>
+                                    </td>
+                                </tr>
+                                idx++;
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:18px;" data-key="nomed">No medicines prescribed.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ADVICE -->
+            <div class="sec po-advice-sec">
+                <div class="sec-title" data-key="advice">Advice / Instructions</div>
+                <div class="advice-box">
+                    @(string.IsNullOrEmpty(Model.Investigation) ? "Follow up as advised." : Model.Investigation)
+                </div>
+            </div>
+
+            <!-- SIGNATURE -->
+            <div class="sig-area po-signature-sec">
+                <div class="sig-block">
+                    <div class="sig-line"></div>
+                    <div class="sig-name">@docFullName</div>
+                    <div class="sig-sub" data-key="sig">Signature</div>
+                </div>
+                <div class="sig-block" style="min-width:200px;">
+                    <div class="sig-line" style="width:200px;"></div>
+                    <div class="sig-sub" data-key="pat-sig">Patient's Signature</div>
+                </div>
+            </div>
+
+            <div class="rx-footer-note po-footer-sec" data-key="footer">
+                This is a computer generated prescription and does not require a signature.<br />
+                @Model.HospitalName &middot; @Model.HospitalAddress
+            </div>
+
+        </div><!-- /.rx-card -->
+    </div><!-- /.rx-wrap -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        /* ── LANGUAGE TRANSLATIONS ── */
+        var T = {
+            en: {
+                'lbl-lang': 'Select Language',
+                'rxbadge': 'Prescription',
+                'patname': 'Patient',
+                'agegender': 'Age / Gender',
+                'datetime': 'Date & Time',
+                'rxno': 'Rx Ref',
+                'bp': 'BP:',
+                'pulse': 'Pulse:',
+                'symptoms': 'Symptoms',
+                'exam': 'Examinations / Investigations',
+                'medsec': 'Medication (Rx)',
+                'th-med': 'Medicine',
+                'th-dose': 'Dose',
+                'th-freq': 'Frequency',
+                'th-when': 'When',
+                'th-days': 'Days',
+                'th-qty': 'Total Qty',
+                'nomed': 'No medicines prescribed.',
+                'advice': 'Advice / Instructions',
+                'sig': 'Signature',
+                'pat-sig': "Patient's Signature",
+                'footer': 'This is a computer generated prescription and does not require a signature.'
+            },
+            mr: {
+                'lbl-lang': 'भाषा निवडा',
+                'rxbadge': 'प्रिस्क्रिप्शन',
+                'patname': 'रुग्ण',
+                'agegender': 'वय / लिंग',
+                'datetime': 'दिनांक व वेळ',
+                'rxno': 'प्रिस्क्रिप्शन क्र.',
+                'bp': 'रक्तदाब:',
+                'pulse': 'नाडी:',
+                'symptoms': 'लक्षणे',
+                'exam': 'तपासणी',
+                'medsec': 'औषधे (Rx)',
+                'th-med': 'औषधे',
+                'th-dose': 'डोस',
+                'th-freq': 'वारंवारता',
+                'th-when': 'कालावधी',
+                'th-days': 'दिवस',
+                'th-qty': 'एकूण प्रमाण',
+                'nomed': 'कोणतेही औषध लिहून दिलेले नाही.',
+                'advice': 'सल्ला / सूचना',
+                'sig': 'स्वाक्षरी',
+                'pat-sig': 'रुग्णाची स्वाक्षरी',
+                'footer': 'हे संगणक-निर्मित प्रिस्क्रिप्शन आहे, त्यासाठी स्वाक्षरी आवश्यक नाही.'
+            },
+            hi: {
+                'lbl-lang': 'भाषा चुनें',
+                'rxbadge': 'प्रिस्क्रिप्शन',
+                'patname': 'मरीज़',
+                'agegender': 'उम्र / लिंग',
+                'datetime': 'दिनांक और समय',
+                'rxno': 'प्रिस्क्रिप्शन सं.',
+                'bp': 'रक्तचाप:',
+                'pulse': 'नाड़ी:',
+                'symptoms': 'लक्षण',
+                'exam': 'जाँच',
+                'medsec': 'दवाइयाँ (Rx)',
+                'th-med': 'दवाई',
+                'th-dose': 'खुराक',
+                'th-freq': 'आवृत्ति',
+                'th-when': 'कब',
+                'th-days': 'दिन',
+                'th-qty': 'कुल मात्रा',
+                'nomed': 'कोई दवा नहीं लिखी गई।',
+                'advice': 'सलाह / निर्देश',
+                'sig': 'हस्ताक्षर',
+                'pat-sig': 'मरीज़ के हस्ताक्षर',
+                'footer': 'यह कंप्यूटर जनरेटेड प्रिस्क्रिप्शन है, इसके लिए हस्ताक्षर की आवश्यकता नहीं है।'
+            }
+        };
+
+        function applyLanguage(lang) {
+            var dict = T[lang] || T['en'];
+            var lbl = document.getElementById('lbl-lang');
+            if (lbl) lbl.textContent = dict['lbl-lang'];
+            document.querySelectorAll('[data-key]').forEach(function (el) {
+                var k = el.getAttribute('data-key');
+                if (dict[k]) el.textContent = dict[k];
+            });
+        }
+
+        /* ── PRINT OPTIONS ── */
+        function applyPrintOptions() {
+            document.querySelectorAll('.po-sec').forEach(function (cb) {
+                var cls = cb.value + '-sec';
+                var target = document.querySelector('.' + cls);
+                if (target) {
+                    target.style.display = cb.checked ? '' : 'none';
+                }
+            });
+        }
+
+        function toggleAll(checked) {
+            document.querySelectorAll('.po-sec').forEach(function (cb) {
+                cb.checked = checked;
+            });
+            applyPrintOptions();
+        }
+
+        function printPrescription() {
+            applyPrintOptions();
+            window.print();
+        }
+
+        /* ── PDF DOWNLOAD ── */
+        function downloadPDF() {
+            applyPrintOptions();
+            var el = document.getElementById('prescriptionContent');
+            html2canvas(el, { scale: 2, useCORS: true }).then(function (canvas) {
+                var { jsPDF } = window.jspdf;
+                var pdf = new jsPDF('p', 'mm', 'a4');
+                var pw = pdf.internal.pageSize.getWidth();
+                var ph = pdf.internal.pageSize.getHeight();
+                var imgData = canvas.toDataURL('image/png');
+                var imgH = (canvas.height * pw) / canvas.width;
+                var left = imgH;
+                var pos = 0;
+                pdf.addImage(imgData, 'PNG', 0, pos, pw, imgH);
+                left -= ph;
+                while (left > 0) {
+                    pos = left - imgH;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, pos, pw, imgH);
+                    left -= ph;
+                }
+                pdf.save('Prescription_' + '@Model.PatientName'.replace(/\s+/g, '_') + '.pdf');
+            });
+        }
+    </script>
+</body>
+</html>
+

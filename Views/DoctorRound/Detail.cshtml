@@ -1,0 +1,355 @@
+﻿@model WebApplicationSampleTest2.Models.IPDDoctorRound
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var userRole = HttpContextAccessor.HttpContext.Session.GetString("UserRole") ?? "";
+}
+<div class="d-flex flex-column align-items-end gap-2">
+
+    <a asp-controller="DoctorRound"
+       asp-action="PrintPrescription"
+       asp-route-roundId="@Model.RoundId"
+       asp-route-ipdId="@ViewBag.IPDId"
+       target="_blank"
+       class="btn btn-sm btn-outline-primary mb-3">
+        🖨 Print Prescription
+    </a>
+
+</div>
+<div class="container-fluid">
+
+    @* {{!-- ===== ROUND HEADER INFO ===== --}} *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+                <h4>Doctor Round Detail</h4>
+                <a asp-controller="IPDAdmission"
+                   asp-action="Details"
+                   asp-route-id="@ViewBag.IPDId"
+                   class="btn btn-secondary btn-sm">
+                    Back
+                </a>
+            </div>
+            <hr />
+
+            <div class="row">
+                <div class="col-md-3">
+                    <p><strong>Doctor:</strong> @Model.DoctorName</p>
+                    <p><strong>Specialization:</strong> @Model.Specialization</p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Round Type:</strong>
+                        <span class="badge
+                            @(Model.RoundType == "Emergency" ? "bg-danger" :
+                                                            Model.RoundType == "ICU" ? "bg-warning" :
+                                                            "bg-info")">
+                            @Model.RoundType
+                        </span>
+                    </p>
+                    <p><strong>Date & Time:</strong> @Model.RoundDateTime.ToString("dd-MM-yyyy HH:mm")</p>
+                </div>
+                <div class="col-md-3">
+                    <p>
+                        <strong>Status:</strong>
+                        @if (Model.IsAbnormal)
+                        {
+                            <span class="badge bg-danger">Abnormal</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Normal</span>
+                        }
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <p><strong>Patient Condition:</strong></p>
+                    <p class="text-muted">
+                        @(string.IsNullOrEmpty(Model.PatientCondition) ? "N/A" : Model.PatientCondition)
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Diagnosis:</strong></p>
+                    <p class="text-muted">
+                        @(string.IsNullOrEmpty(Model.Diagnosis) ? "N/A" : Model.Diagnosis)
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Instructions:</strong></p>
+                    <p class="text-muted">
+                        @(string.IsNullOrEmpty(Model.Instructions) ? "N/A" : Model.Instructions)
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Notes:</strong></p>
+                    <p class="text-muted">
+                        @(string.IsNullOrEmpty(Model.Notes) ? "N/A" : Model.Notes)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* {{!-- ===== SYMPTOMS ===== --}} *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="mb-3">Symptoms</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Symptom Name</th>
+                        <th>Sub Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Symptoms != null && Model.Symptoms.Any())
+                    {
+                        int i = 1;
+                        foreach (var s in Model.Symptoms)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>@s.SymptomName</td>
+                                <td>@(string.IsNullOrEmpty(s.SubName) ? "-" : s.SubName)</td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center">No symptoms recorded</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @* {{!-- ===== PRESCRIPTION ===== --}} *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="mb-3">Prescription</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Medicine</th>
+                        <th>Type</th>
+                        <th>Morning</th>
+                        <th>Afternoon</th>
+                        <th>Evening</th>
+                        <th>Days</th>
+                        <th>Route</th>
+                        <th>Dosage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Prescriptions != null && Model.Prescriptions.Any())
+                    {
+                        int i = 1;
+                        foreach (var p in Model.Prescriptions)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>@p.MedicineName</td>
+                                <td>@p.MedicineType</td>
+                                <td>
+                                    @if (p.Morning)
+                                    {
+                                        <span class="badge bg-success">✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (p.Afternoon)
+                                    {
+                                        <span class="badge bg-success">✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (p.Evening)
+                                    {
+                                        <span class="badge bg-success">✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                        </td>
+                        <td>@(p.Days.HasValue? p.Days.Value + " days" : "-")</td>
+                        <td>@p.Route</td>
+                        <td>@(string.IsNullOrEmpty(p.Dosage) ? "-" : p.Dosage)</td>
+                        <td>
+                            <span class="badge
+                                        @(p.Status == "Active" ? "bg-success" :
+                                                                            p.Status == "Stopped" ? "bg-danger" :
+                                                                            "bg-secondary")">
+                                @p.Status
+                            </span>
+                        </td>
+                    </tr>
+                                        i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center">No medicines prescribed</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @* {{!-- ===== INVESTIGATION ===== --}} *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="mb-3">Investigations</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Type</th>
+                        <th>Test Name</th>
+                        <th>Priority</th>
+                        <th>Instructions</th>
+                        <th>Ordered On</th>
+                        <th>Status</th>
+                        <th>Result</th>
+                        <th>Report</th>  
+                        @if (userRole == "LabStaff")
+                        {
+                            <th>Action</th>
+                            @* { { !-- ✅ ONLY FOR LAB STAFF --} } *@
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Investigations != null && Model.Investigations.Any())
+                    {
+                        int i = 1;
+                        foreach (var inv in Model.Investigations)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>
+                                    <span class="badge bg-info">@inv.InvestigationType</span>
+                                </td>
+                                <td>@inv.TestName</td>
+                                <td>
+                                    <span class="badge
+                                                @(inv.Priority == "Emergency" ? "bg-danger" :
+                                                                                    inv.Priority == "Urgent" ? "bg-warning" :
+                                                                                    "bg-secondary")">
+                                                                                                 @inv.Priority
+                                                                                             </span>
+                                                                                         </td>
+                                                                                         <td>@(string.IsNullOrEmpty(inv.Instructions) ? "-" : inv.Instructions)</td>
+                                                                                         <td>@inv.OrderedDateTime.ToString("dd-MM-yyyy HH:mm")</td>
+                                                                                         <td>
+                                                                                             <span class="badge
+                                                @(inv.Status == "Completed" ? "bg-success" :
+                                                                                    inv.Status == "Cancelled" ? "bg-danger" :
+                                                                                    inv.Status == "Collected" ? "bg-warning" :
+                                                                                    "bg-info")">
+                                @inv.Status
+                            </span>
+                        </td>
+
+                                @* {{!-- ✅ RESULT --}} *@
+                                <td>@(string.IsNullOrEmpty(inv.Result) ? "-" : inv.Result)</td>
+
+                                @* {{!-- ✅ REPORT FILE --}} *@
+                                <td>
+                            @if (!string.IsNullOrEmpty(inv.ResultFilePath))
+                                    {
+                                        var ext = System.IO.Path.GetExtension(inv.ResultFilePath).ToLower();
+                                        if (ext == ".pdf")
+                                        {
+                                            <a href="@inv.ResultFilePath"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@inv.ResultFilePath" target="_blank">
+                                                <img src="@inv.ResultFilePath"
+                                                     style="max-height:50px; border:1px solid #ddd; border-radius:4px;"
+                                                     alt="Report" />
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                @* {{!-- ✅ ACTION - ONLY LAB STAFF --}} *@
+                                @if (userRole == "LabStaff")
+                                {
+                                    <td>
+                                        @if (inv.Status != "Completed" && inv.Status != "Cancelled")
+                                        {
+                                            <a asp-controller="LabInvestigation"
+                                               asp-action="Update"
+                                               asp-route-id="@inv.Id"
+                                               class="btn btn-sm btn-warning">
+                                                Update
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Done</span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="@(userRole == "LabStaff" ? "10" : "9")"
+                                class="text-center">
+                                No investigations ordered
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        @if (TempData["Success"] != null)
+        {
+                <text>toastr.success("@TempData["Success"]");</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+                <text>toastr.error("@TempData["Error"]");</text>
+        }
+    </script>
+}

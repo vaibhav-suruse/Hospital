@@ -1,0 +1,55 @@
+﻿@model WebApplicationSampleTest2.Models.Room
+
+@{
+    ViewBag.Title = "Edit Room";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Edit Room</h4>
+
+                <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                    <div class="row">
+                        <input type="hidden" asp-for="RoomId" />
+
+                        <div class="col-lg-6 mb-3">
+                            <label asp-for="RoomNumber">Room Number</label>
+                            <input asp-for="RoomNumber" class="form-control" />
+                            <span asp-validation-for="RoomNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <label asp-for="RoomType">Room Type</label>
+                            <select asp-for="RoomType" asp-items="ViewBag.RoomTypes" class="form-control" required></select>
+                            <span asp-validation-for="RoomType" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <label>Status</label>
+                            <select asp-for="IsActive" class="form-control">
+                                <option value="true" selected="@Model.IsActive">Active</option>
+                                <option value="false" selected="@(Model.IsActive == false)">Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+                    <button type="submit" class="btn btn-primary mt-3">Update</button>
+                    <a asp-action="Index" asp-route-wardId="@Model.WardId" class="btn btn-secondary mt-3">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

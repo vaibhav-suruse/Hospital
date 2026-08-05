@@ -1,0 +1,311 @@
+﻿@{
+    ViewData["Title"] = "Diagnosis Reports";
+}
+
+<div class="container-fluid mt-3">
+    @await Html.PartialAsync("_IPDTabs", "Diagnosis")
+</div>
+
+<style>
+    .rpt-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        margin-bottom: 25px;
+    }
+
+    .rpt-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .rpt-filter-bar {
+        display: flex;
+        gap: 12px;
+        align-items: end;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+        .rpt-filter-bar label {
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+    .rpt-summary-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .rpt-summary-tile {
+        flex: 1;
+        min-width: 150px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        text-align: center;
+    }
+
+        .rpt-summary-tile .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .rpt-summary-tile .lbl {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+    .chart-wrap {
+        position: relative;
+        height: 280px;
+    }
+
+    @@media(max-width:768px) {
+        .rpt-filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Diagnosis Reports</h4>
+        <a asp-controller="Diagnosis" asp-action="Index" asp-route-ipdId="@Context.Request.Query["ipdId"]" asp-route-patientId="@Context.Request.Query["patientId"]" class="btn btn-outline-secondary btn-sm">
+            &larr; Back to Diagnosis
+        </a>
+    </div>
+
+    <div class="rpt-card">
+        <div class="rpt-filter-bar">
+            <div>
+                <label>From Date</label>
+                <input type="date" id="rptFromDate" class="form-control" />
+            </div>
+            <div>
+                <label>To Date</label>
+                <input type="date" id="rptToDate" class="form-control" />
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="loadReports()">Apply</button>
+                <button class="btn btn-outline-secondary" onclick="clearFilter()">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="rpt-summary-row" id="summaryTiles"></div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="rpt-card">
+                <div class="rpt-title">Doctor-wise Diagnosis Count</div>
+                <div class="chart-wrap"><canvas id="doctorChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rpt-card">
+                <div class="rpt-title">Diagnosis Status Summary</div>
+                <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="rpt-card">
+                <div class="rpt-title">Severity Distribution</div>
+                <div class="chart-wrap"><canvas id="severityChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rpt-card">
+                <div class="rpt-title">Diagnosis Sub-Type Distribution</div>
+                <div class="chart-wrap"><canvas id="subTypeChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rpt-card">
+        <div class="rpt-title">Top Diagnoses (ICD-10)</div>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead><tr><th>ICD Code</th><th>Diagnosis</th><th>Count</th></tr></thead>
+                <tbody id="tbodyIcd"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rpt-card">
+        <div class="rpt-title">Hospital-Acquired Conditions <span class="text-muted" style="font-size:12px;">(NABH/JCI patient-safety report)</span></div>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead><tr><th>Diagnosis</th><th>ICD Code</th><th>Severity</th><th>Doctor</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody id="tbodyHac"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+    (function () {
+    var doctorChart = null, statusChart = null, severityChart = null, subTypeChart = null;
+    var palette = ['#556ee6', '#34c38f', '#f1b44c', '#f46a6a', '#6610f2', '#20c997', '#fd7e14', '#6c757d'];
+
+    $(function () {
+        loadReports();
+    });
+
+    window.clearFilter = function () {
+        $("#rptFromDate, #rptToDate").val("");
+        loadReports();
+    }
+
+    window.loadReports = function () {
+        var fromDate = $("#rptFromDate").val();
+        var toDate = $("#rptToDate").val();
+
+        $.getJSON('/Diagnosis/GetReportData', { fromDate: fromDate || null, toDate: toDate || null }, function (data) {
+            renderSummaryTiles(data);
+            renderDoctorChart(pick(data, 'doctorWise', 'DoctorWise'));
+            renderStatusChart(pick(data, 'statusSummary', 'StatusSummary'));
+            renderSeverityChart(pick(data, 'severityDistribution', 'SeverityDistribution'));
+            renderSubTypeChart(pick(data, 'subTypeDistribution', 'SubTypeDistribution'));
+            renderIcdTable(pick(data, 'icdDistribution', 'IcdDistribution'));
+            renderHacTable(pick(data, 'hospitalAcquiredConditions', 'HospitalAcquiredConditions'));
+        }).fail(function () {
+            alert('Could not load report data. Please check your connection and try again.');
+        });
+    }
+
+    function pick(obj, camel, pascal) {
+        return (obj && (obj[camel] || obj[pascal])) || [];
+    }
+
+    function field(item, camel, pascal) {
+        return item[camel] !== undefined && item[camel] !== null ? item[camel] : item[pascal];
+    }
+
+    function renderSummaryTiles(data) {
+        var statusRows = pick(data, 'statusSummary', 'StatusSummary');
+        var hacRows = pick(data, 'hospitalAcquiredConditions', 'HospitalAcquiredConditions');
+        var total = statusRows.reduce(function (sum, r) { return sum + (field(r, 'diagnosisCount', 'DiagnosisCount') || 0); }, 0);
+        var pendingVerify = findCount(statusRows, 'Active');
+        var pendingApprove = findCount(statusRows, 'Verified');
+        var approved = findCount(statusRows, 'Approved');
+
+        var tiles = [
+            { num: total, lbl: 'Total Diagnoses' },
+            { num: pendingVerify, lbl: 'Pending Verification' },
+            { num: pendingApprove, lbl: 'Pending Approval' },
+            { num: approved, lbl: 'Approved' },
+            { num: hacRows.length, lbl: 'Hospital-Acquired Conditions' }
+        ];
+
+        var $row = $("#summaryTiles").empty();
+        tiles.forEach(function (t) {
+            $row.append('<div class="rpt-summary-tile"><div class="num">' + t.num + '</div><div class="lbl">' + t.lbl + '</div></div>');
+        });
+    }
+
+    function findCount(rows, status) {
+        var row = rows.find(function (r) { return field(r, 'status', 'Status') === status; });
+        return row ? field(row, 'diagnosisCount', 'DiagnosisCount') : 0;
+    }
+
+    function renderDoctorChart(rows) {
+        var ctx = document.getElementById('doctorChart');
+        if (!ctx) return;
+        if (doctorChart) doctorChart.destroy();
+        doctorChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rows.map(function (r) { return field(r, 'doctorName', 'DoctorName'); }),
+                datasets: [{ label: 'Diagnoses', data: rows.map(function (r) { return field(r, 'diagnosisCount', 'DiagnosisCount'); }), backgroundColor: '#556ee6' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    function renderStatusChart(rows) {
+        var ctx = document.getElementById('statusChart');
+        if (!ctx) return;
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: rows.map(function (r) { return field(r, 'status', 'Status'); }),
+                datasets: [{ data: rows.map(function (r) { return field(r, 'diagnosisCount', 'DiagnosisCount'); }), backgroundColor: palette }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function renderSeverityChart(rows) {
+        var ctx = document.getElementById('severityChart');
+        if (!ctx) return;
+        if (severityChart) severityChart.destroy();
+        severityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rows.map(function (r) { return field(r, 'severity', 'Severity'); }),
+                datasets: [{ label: 'Count', data: rows.map(function (r) { return field(r, 'diagnosisCount', 'DiagnosisCount'); }), backgroundColor: '#f46a6a' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+    }
+
+    function renderSubTypeChart(rows) {
+        var ctx = document.getElementById('subTypeChart');
+        if (!ctx) return;
+        if (subTypeChart) subTypeChart.destroy();
+        subTypeChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: rows.map(function (r) { return field(r, 'diagnosisSubType', 'DiagnosisSubType'); }),
+                datasets: [{ data: rows.map(function (r) { return field(r, 'diagnosisCount', 'DiagnosisCount'); }), backgroundColor: palette }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function renderIcdTable(rows) {
+        var $tbody = $("#tbodyIcd").empty();
+        if (!rows.length) { $tbody.append('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>'); return; }
+        rows.forEach(function (r) {
+            $tbody.append('<tr><td>' + escapeHtml(field(r, 'icdCode', 'IcdCode')) + '</td><td>' +
+                escapeHtml(field(r, 'diagnosisName', 'DiagnosisName')) + '</td><td>' +
+                field(r, 'diagnosisCount', 'DiagnosisCount') + '</td></tr>');
+        });
+    }
+
+    function renderHacTable(rows) {
+        var $tbody = $("#tbodyHac").empty();
+        if (!rows.length) { $tbody.append('<tr><td colspan="6" class="text-center text-muted">No hospital-acquired conditions in this period</td></tr>'); return; }
+        rows.forEach(function (r) {
+            var date = field(r, 'diagnosisDate', 'DiagnosisDate');
+            $tbody.append('<tr><td>' + escapeHtml(field(r, 'diagnosisName', 'DiagnosisName')) + '</td><td>' +
+                escapeHtml(field(r, 'icdCode', 'IcdCode') || '-') + '</td><td>' +
+                escapeHtml(field(r, 'severity', 'Severity') || '-') + '</td><td>' +
+                escapeHtml(field(r, 'doctorName', 'DoctorName') || '-') + '</td><td>' +
+                (date ? new Date(date).toLocaleDateString('en-GB') : '-') + '</td><td>' +
+                escapeHtml(field(r, 'status', 'Status')) + '</td></tr>');
+        });
+    }
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    })();
+</script>

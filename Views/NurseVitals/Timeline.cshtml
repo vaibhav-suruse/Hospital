@@ -1,0 +1,247 @@
+﻿@* Views/NurseVitals/Timeline.cshtml *@
+@model WebApplicationSampleTest2.Models.NurseVitalsTimelineVM
+@{
+    ViewData["Title"] = "";
+    int ipdId = Model.Admission.IPDId;
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-heartbeat me-1"></i>
+                <strong>Vital Parameters</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.Admission.PatientName
+                    <small>(Adm# @Model.Admission.AdmissionNumber)</small>
+                </span>
+            </div>
+            <div>
+                <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId"
+                   class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Patient
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            @* ── Day Tabs ───────────────────────────────────────────── *@
+            <ul class="nav nav-tabs" id="vitalsDayTabs" role="tablist">
+                @for (int day = 1; day <= Model.TotalDays; day++)
+                {
+                    var dayDate = Model.Admission.AdmissionDateTime.Date.AddDays(day - 1);
+                    bool isActive = day == Model.ActiveDay;
+                    bool hasData = Model.VitalsByDay.ContainsKey(day);
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(isActive ? "active" : "") day-tab-btn"
+                                data-day="@day"
+                                type="button">
+                            Day @day
+                            <div class="small @(isActive ? "text-white-50" : "text-muted")">@dayDate.ToString("dd MMM")</div>
+                            @if (hasData)
+                            {
+                                <span class="badge rounded-pill bg-success ms-1">@Model.VitalsByDay[day].Count</span>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <div id="dayTabContent" class="border border-top-0 p-3 rounded-bottom">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm me-2"></div> Loading vitals...
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+        var activeDay = @Model.ActiveDay;
+        var currentDay = activeDay;
+
+        function loadDay(day) {
+            currentDay = day;
+
+            document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+                btn.classList.toggle('active', parseInt(btn.dataset.day) === day);
+            });
+
+            var target = document.getElementById('dayTabContent');
+            target.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div> Loading vitals...</div>';
+
+            fetch('@Url.Action("DayVitals", "NurseVitals")?ipdId=' + ipdId + '&dayNumber=' + day)
+                .then(function (r) { return r.text(); })
+                .then(function (html) { target.innerHTML = html; })
+                .catch(function () {
+                    target.innerHTML = '<div class="alert alert-danger">Could not load vitals for this day. Please try again.</div>';
+                });
+        }
+
+        document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { loadDay(parseInt(btn.dataset.day)); });
+        });
+
+        var dayTabContent = document.getElementById('dayTabContent');
+
+        function getAntiForgeryToken() {
+            var el = dayTabContent.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : null;
+        }
+
+        function refreshCurrentDay() { loadDay(currentDay); }
+
+      
+        function toggleRecordedByFor(suffix) {
+            var role = document.getElementById('ddlRole_' + suffix).value;
+            var nurseField = document.getElementById('nurseField_' + suffix);
+            var doctorField = document.getElementById('doctorField_' + suffix);
+            if (nurseField) nurseField.classList.toggle('d-none', role !== 'Nurse');
+            if (doctorField) doctorField.classList.toggle('d-none', role !== 'Doctor');
+        }
+
+  
+        function forceCloseModalCleanup() {
+            document.body.classList.remove('modal-open');
+            document.documentElement.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('overflow-x');
+            document.body.style.removeProperty('padding-right');
+            document.documentElement.style.removeProperty('overflow');
+            document.documentElement.style.removeProperty('overflow-x');
+            document.documentElement.style.removeProperty('padding-right');
+            document.body.style.removeProperty('position');
+            document.documentElement.style.removeProperty('position');
+            document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
+            document.querySelectorAll('.modal').forEach(function (modalEl) {
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                modalEl.setAttribute('aria-hidden', 'true');
+            });
+        }
+
+        function closeExtraModal(modalEl) {
+            if (!modalEl) return;
+            if (window.bootstrap && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl) ||
+                    (bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(modalEl) : null);
+                if (modal) {
+                    if (typeof modal.hide === 'function') {
+                        modal.hide();
+                    }
+                    if (typeof modal.dispose === 'function') {
+                        modal.dispose();
+                    }
+                }
+            }
+            else if (window.jQuery && typeof jQuery === 'function' && typeof jQuery(modalEl).modal === 'function') {
+                try {
+                    jQuery(modalEl).modal('hide');
+                } catch (ignore) {}
+            }
+            forceCloseModalCleanup();
+        }
+
+        // "Add New Examination / Input-Output / Wellbeing / Body Composition"
+        dayTabContent.addEventListener('submit', function (event) {
+            var form = event.target.closest('.extra-form');
+            if (!form) return;
+
+            event.preventDefault();
+
+            var formData = new FormData(form);
+            if (!form.querySelector('[name="ipdId"]')) {
+                formData.append('ipdId', ipdId);
+            }
+            if (!form.querySelector('[name="dayNumber"]')) {
+                formData.append('dayNumber', currentDay);
+            }
+            var token = getAntiForgeryToken();
+            if (token) formData.append('__RequestVerificationToken', token);
+
+            fetch('/NurseVitals/' + form.dataset.endpoint, { method: 'POST', body: formData })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        var modalEl = form.closest('.modal');
+                        closeExtraModal(modalEl);
+                        form.reset();
+                        refreshCurrentDay();
+                    } else {
+                        alert(data.message || 'Could not save this record.');
+                    }
+                })
+                .catch(function () { alert('Could not save this record.'); });
+        });
+
+        // Delete a vitals row
+        dayTabContent.addEventListener('click', function (event) {
+            var vitalBtn = event.target.closest('.btn-delete-vital');
+            if (vitalBtn) {
+                if (!confirm('Delete this vitals record?')) return;
+
+                var formData = new FormData();
+                formData.append('vitalsId', vitalBtn.dataset.vitalsId);
+                var token = getAntiForgeryToken();
+                if (token) formData.append('__RequestVerificationToken', token);
+
+                fetch('@Url.Action("DeleteVitalAjax", "NurseVitals")', { method: 'POST', body: formData })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) refreshCurrentDay();
+                        else alert(data.message || 'Could not delete this record.');
+                    })
+                    .catch(function () { alert('Could not delete this record.'); });
+                return;
+            }
+
+            // Delete an Examination / Input-Output / Wellbeing / Body Composition row
+            var extraBtn = event.target.closest('.btn-delete-extra');
+            if (extraBtn) {
+                if (!confirm('Delete this record?')) return;
+
+                var formData = new FormData();
+                formData.append('id', extraBtn.dataset.id);
+                var token = getAntiForgeryToken();
+                if (token) formData.append('__RequestVerificationToken', token);
+
+                fetch('/NurseVitals/' + extraBtn.dataset.endpoint, { method: 'POST', body: formData })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) refreshCurrentDay();
+                        else alert(data.message || 'Could not delete this record.');
+                    })
+                    .catch(function () { alert('Could not delete this record.'); });
+            }
+        });
+
+        loadDay(activeDay);
+    </script>
+}
+
+<style>
+    .day-tab-btn {
+        min-width: 84px;
+    }
+
+    .vital-badge-normal {
+        background-color: #198754;
+    }
+
+    .vital-badge-critical {
+        background-color: #dc3545;
+    }
+
+    .vital-badge-warning {
+        background-color: #fd7e14;
+    }
+
+    .vital-badge-empty {
+        background-color: #adb5bd;
+    }
+</style>

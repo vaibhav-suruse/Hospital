@@ -1,0 +1,107 @@
+﻿@model List<WebApplicationSampleTest2.Models.PatientProfileVM>
+@{
+    ViewData["Title"] = "Registration Successful";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">
+                                        Account Created!
+                                    </h5>
+                                    <p>Welcome to the patient portal</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png"
+                                     class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3 text-center">
+
+                            <div class="avatar-sm mx-auto mb-3 mt-3">
+                                <span class="avatar-title rounded-circle
+                                             bg-success bg-soft">
+                                    <i class="mdi mdi-check-circle
+                                               text-success font-size-24"></i>
+                                </span>
+                            </div>
+
+                            @if (Model != null && Model.Count > 0)
+                            {
+                                <div class="alert alert-success text-start">
+                                    <i class="mdi mdi-link-variant me-1"></i>
+                                    Your account has been created and we found
+                                    <strong>@Model.Count existing record(s)</strong>
+                                    at hospitals. They have been linked
+                                    to your account automatically.
+                                </div>
+
+                                <p class="text-muted text-start mb-2">
+                                    Linked records:
+                                </p>
+
+                                @foreach (var profile in Model)
+                                {
+                                    <div class="d-flex align-items-center
+                                                        border rounded p-2 mb-2
+                                                        text-start">
+                                        <div class="avatar-sm me-2">
+                                            <span class="avatar-title
+                                                                 rounded-circle
+                                                                 bg-primary bg-soft
+                                                                 text-primary
+                                                                 font-size-12">
+                                                @profile.Initials
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">
+                                                @profile.FullName
+                                            </div>
+                                            <small class="text-muted">
+                                                @profile.HospitalName
+                                            </small>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted">
+                                    Your account has been created successfully.
+                                    No existing hospital records were found.
+                                    Book your first appointment to get started.
+                                </p>
+                            }
+
+                            <div class="d-grid gap-2 mt-3">
+                                <a asp-action="Dashboard"
+                                   asp-controller="PatientPortal"
+                                   class="btn btn-primary">
+                                    Go to Dashboard
+                                </a> 
+                                 <a asp-action="BookAppointment"
+                                   asp-controller="PatientPortal"
+                                   class="btn btn-outline-primary">
+                                    Book Appointment
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,144 @@
+﻿@using WebApplicationSampleTest2.Models
+@model SupplierModel
+
+@{
+    ViewData["Title"] = Model.IsUpdate ? "Edit Supplier" : "Add Supplier";
+}
+
+<h4 class="card-title">
+    @(Model.IsUpdate ? "Edit Supplier" : "Add Supplier")
+</h4>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <!-- Breadcrumb hint -->
+                <p class="card-title-desc">
+                    @(Model.IsUpdate
+                                        ? "Update supplier details for your hospital inventory."
+                                        : "Fill in the details below to add a new supplier to the inventory.")
+                </p>
+
+                <form id="supplierForm"
+                      asp-action="Create"
+                      asp-controller="Supplier"
+                      method="post"
+                      novalidate>
+
+                    <!-- Hidden fields -->
+                    @Html.HiddenFor(x => x.SupplierId)
+                    @Html.HiddenFor(x => x.IsUpdate)
+
+                    <div class="row">
+
+                        <!-- Supplier Name -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Supplier Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       asp-for="SupplierName"
+                                       id="SupplierName"
+                                       class="form-control"
+                                       placeholder="e.g. Sun Pharma, Cipla" />
+                                <small class="text-danger" id="errSupplierName"></small>
+                            </div>
+                        </div>
+
+                        <!-- Contact No -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Contact No</label>
+                                <input type="text"
+                                       asp-for="ContactNo"
+                                       id="ContactNo"
+                                       class="form-control"
+                                       placeholder="e.g. 9876543210"
+                                       maxlength="15" />
+                                <small class="text-danger" id="errContactNo"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Address -->
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea asp-for="Address"
+                                          id="Address"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="Enter supplier address..."></textarea>
+                                <small class="text-danger" id="errAddress"></small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bx @(Model.IsUpdate ? "bx-save" : "bx-plus-circle") me-1"></i>
+                            @(Model.IsUpdate ? "Update Supplier" : "Add Supplier")
+                        </button>
+
+                        <a asp-action="Index"
+                           asp-controller="Supplier"
+                           class="btn btn-secondary ms-1">
+                            <i class="bx bx-arrow-back me-1"></i> Cancel
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        function clearErrors() {
+            $(".text-danger").text("");
+            $(".form-control").removeClass("is-invalid");
+        }
+
+        function setError(inputId, errorId, message) {
+            if (inputId !== "") {
+                $("#" + inputId).addClass("is-invalid");
+            }
+            $("#" + errorId).text(message);
+        }
+
+        $("#supplierForm").on("submit", function (e) {
+            clearErrors();
+            let isValid = true;
+
+            // Supplier Name — required
+            const name = $("#SupplierName").val().trim();
+            if (name === "") {
+                setError("SupplierName", "errSupplierName", "Supplier name is required.");
+                isValid = false;
+            }
+
+            // Contact No — optional but validate format if provided
+            const contact = $("#ContactNo").val().trim();
+            if (contact !== "" && !/^\d{7,15}$/.test(contact)) {
+                setError("ContactNo", "errContactNo", "Enter a valid contact number (7–15 digits).");
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+    </script>
+}

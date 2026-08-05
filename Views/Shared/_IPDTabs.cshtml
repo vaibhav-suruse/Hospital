@@ -1,0 +1,479 @@
+﻿@model string
+@{
+    string active = Model ?? "AdmissionNotes";
+    Func<string, string> cls = (key) => active == key ? "ipd-tab active" : "ipd-tab";
+
+
+    string ipdIdRaw = Context.Request.Query["ipdId"].ToString();
+    if (string.IsNullOrEmpty(ipdIdRaw))
+    {
+        ipdIdRaw = Context.Request.Query["ipId"].ToString();
+    }
+    // Safety net: some pages receive the admission id as a route value
+    // (e.g. /Controller/Index/123) or under a differently-named parameter
+    // (e.g. "id") rather than as ?ipdId=/?ipId= on the query string. Without
+    // this fallback the tab bar silently defaults to ipdId=0, which then
+    // 404s every Clinical Details link rendered from this page.
+    if (string.IsNullOrEmpty(ipdIdRaw) && Context.Request.RouteValues.TryGetValue("ipdId", out var rvIpdId))
+    {
+        ipdIdRaw = rvIpdId?.ToString();
+    }
+    if (string.IsNullOrEmpty(ipdIdRaw) && Context.Request.RouteValues.TryGetValue("ipId", out var rvIpId))
+    {
+        ipdIdRaw = rvIpId?.ToString();
+    }
+    if (string.IsNullOrEmpty(ipdIdRaw) && Context.Request.RouteValues.TryGetValue("id", out var rvId))
+    {
+        ipdIdRaw = rvId?.ToString();
+    }
+    string ipdIdValue = string.IsNullOrEmpty(ipdIdRaw) ? "0" : ipdIdRaw;
+
+    string patientIdRaw = Context.Request.Query["patientId"].ToString();
+    string patientIdValue = string.IsNullOrEmpty(patientIdRaw) ? "0" : patientIdRaw;
+}
+
+<style>
+    .ipd-tabbar {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        background: #fff;
+        padding: 8px 16px;
+        border-bottom: 1px solid #e5e5e5;
+        gap: 6px;
+    }
+
+        .ipd-tabbar::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .ipd-tabbar::-webkit-scrollbar-thumb {
+            background: #d0d0d0;
+            border-radius: 10px;
+        }
+
+    .ipd-tab,
+    .ipd-dropdown-toggle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 115px;
+        min-width: 90px;
+        padding: 4px 4px;
+        text-align: center;
+        text-decoration: none;
+        color: #4f63ff;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.25;
+        transition: .2s;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+        .ipd-tab i,
+        .ipd-dropdown-toggle > i {
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+
+        .ipd-tab:hover,
+        .ipd-dropdown-toggle:hover {
+            color: #222;
+            text-decoration: none;
+        }
+
+        .ipd-tab.active,
+        .ipd-dropdown-toggle.active {
+            color: #222;
+            border-bottom: 3px solid #6f42c1;
+        }
+
+    .dropdown {
+        display: flex;
+    }
+
+    .dropdown-menu {
+        margin-top: 8px;
+        border: 0;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    }
+
+    .dropdown-item {
+        font-size: 14px;
+        padding: 8px 18px;
+    }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+    .tab-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .tab-label {
+        line-height: 1.2;
+        text-align: center;
+    }
+    /* Icon colors matching screenshot */
+    .icon-registration {
+        color: #4a4ae0;
+    }
+
+    .icon-opconsult {
+        color: #20c997;
+    }
+
+    .icon-admissionnotes {
+        color: #6f42c1;
+    }
+
+    .icon-diagnosis {
+        color: #28a745;
+    }
+
+    .icon-clinicaldetails {
+        color: #fd7e14;
+    }
+
+    .icon-procedures {
+        color: #dc3545;
+    }
+
+    .icon-dailynotes {
+        color: #0d6efd;
+    }
+
+    .icon-otherdocs {
+        color: #ffc107;
+    }
+
+    .icon-billingsheet {
+        color: #20c997;
+    }
+
+    .icon-discharge {
+        color: #fd7e14;
+    }
+
+    .icon-bedshift {
+        color: #17a2b8;
+    }
+</style>
+
+<div class="ipd-tabbar" id="ipdTabBar">
+    <a class="@cls("Registration")"
+       asp-controller="WalkInConsultation"
+       asp-action="Index"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-clipboard icon-registration"></i>
+
+        <span class="tab-label">
+            Registration
+        </span>
+
+    </a>
+    <a class="@cls("OPConsultation")"
+       asp-controller="WalkInConsultation"
+       asp-action="Index"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-user-md icon-opconsult"></i>
+
+        <span class="tab-label">
+            OP Consultations
+        </span>
+
+    </a>
+
+    <a class="@cls("AdmissionNotes")"
+       asp-controller="AdmissionNotes"
+       asp-action="Index"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-edit icon-admissionnotes"></i>
+
+        <span class="tab-label">
+            Admission Notes
+        </span>
+
+    </a>
+    <a class="@cls("Diagnosis")"
+       asp-controller="Diagnosis"
+       asp-action="Index"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-file-medical-alt icon-diagnosis"></i>
+
+        <span class="tab-label">
+            Diagnosis
+        </span>
+
+    </a>
+
+    <div class="dropdown">
+
+        <button type="button" class="@cls("ClinicalDetails") ipd-dropdown-toggle"
+                data-bs-toggle="dropdown">
+
+            <i class="fas fa-flask icon-clinicaldetails"></i>
+
+            <span class="tab-label">
+                Clinical Details
+                <i class="fas fa-angle-down"></i>
+            </span>
+
+        </button>
+
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="NurseVitals"
+                   asp-action="Timeline"
+                   asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-heartbeat me-2 text-danger"></i> Vital Parameters
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="TreatmentSheet"
+                   asp-action="Index"
+                   asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-file-medical me-2 text-primary"></i> Treatment Sheet
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="ExtraOrders"
+                   asp-action="Index"
+                   asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-clipboard-list me-2 text-primary"></i> Extra Orders
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="LabReports"
+                   asp-action="Index"
+                   asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-flask me-2 text-primary"></i> Lab Reports
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="Radiology"
+                   asp-action="Index"
+                   asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-x-ray me-2 text-primary"></i> Radiology Reports
+                </a>
+            </li>
+        </ul>
+
+    </div>
+    <a class="@cls("Procedures")"
+       asp-action="Index"
+       asp-controller="Procedure"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-clipboard-list icon-procedures"></i>
+
+        <span class="tab-label">
+            Procedures
+        </span>
+
+    </a>
+
+    <a class="@cls("OTScheduling")"
+       asp-action="Index"
+       asp-controller="OTScheduling"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-hospital-user icon-otscheduling"></i>
+
+        <span class="tab-label">
+            OT Management
+        </span>
+
+    </a>
+
+
+    <a class="@cls("DailyNotes")"
+       asp-action="Index"
+       asp-controller="DailyNotes"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-clipboard icon-dailynotes"></i>
+
+        <span class="tab-label">
+            Daily Notes
+        </span>
+
+    </a>
+
+    <a class="@cls("OtherDocuments")"
+       asp-action="Index"
+       asp-controller="InpatientDocument"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-folder-open icon-otherdocs"></i>
+
+        <span class="tab-label">
+            Other Documents
+        </span>
+
+    </a>
+
+    <a class="@cls("BillingSheet")"
+       asp-action="GenerateBill"
+       asp-controller="IPDBilling"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-ipId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue">
+
+        <i class="fas fa-file-invoice icon-billingsheet"></i>
+
+        <span class="tab-label">
+            Billing Sheet
+        </span>
+
+    </a>
+    <div class="dropdown">
+
+        <button type="button" class="@cls("Discharge") ipd-dropdown-toggle"
+                data-bs-toggle="dropdown">
+
+            <i class="fas fa-calendar-check icon-discharge"></i>
+
+            <span class="tab-label">
+                Discharge
+                <i class="fas fa-angle-down"></i>
+            </span>
+
+        </button>
+
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item" asp-controller="Discharge" asp-action="Discharge" asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-file-medical me-2 text-primary"></i> Discharge Summary
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-controller="DischargePlanning" asp-action="Index" asp-route-ipdId="@ipdIdValue">
+                    <i class="fas fa-clipboard-list me-2 text-primary"></i> Discharge Planning
+                </a>
+            </li>
+        </ul>
+
+    </div>
+
+    <a class="@cls("BedShift")"
+       asp-controller="IPDBedAllocation"
+       asp-action="ShiftBed"
+       asp-route-ipdId="@ipdIdValue"
+       asp-route-patientId="@patientIdValue"
+       asp-route-returnUrl="@((Context.Request.Path + Context.Request.QueryString).ToString())">
+        <i class="fas fa-exchange-alt icon-bedshift"></i>
+        <span class="tab-label">Bed Shift</span>
+    </a>
+
+</div>
+
+@* ===================================================================
+   This no longer calls the Bootstrap JS Dropdown component AT ALL.
+   Every previous fix called bootstrap.Dropdown(...) and relied on
+   window.bootstrap being the real Bootstrap library - but we only ever
+   confirmed `typeof bootstrap === 'object'`, never that
+   `bootstrap.Dropdown` itself exists. If something else on this page
+   also defines a global named `bootstrap` (unrelated to the library),
+   every previous script's own safety check
+   (`if (!bootstrap.Dropdown) return;`) would silently no-op - which
+   exactly matches what's been happening (no errors, nothing happens).
+
+   This version depends on nothing but plain DOM APIs: it toggles a
+   custom class ourselves and positions the menu with
+   getBoundingClientRect() math. Bootstrap's CSS (just the visual
+   classes, not its JS) is still used so the menu still looks the
+   same. The window-capture click interception from the previous fix
+   is kept, since that part was sound regardless of the bootstrap.js
+   question.
+   =================================================================== *@
+<style>
+    #ipdTabBar .dropdown-menu.ipd-open {
+        display: block !important;
+        position: fixed !important;
+    }
+</style>
+<script>
+    (function () {
+        function closeAllMenus() {
+            document.querySelectorAll('#ipdTabBar .dropdown-menu.ipd-open').forEach(function (m) {
+                m.classList.remove('ipd-open');
+            });
+        }
+
+        function openMenu(toggleEl, menuEl) {
+            closeAllMenus();
+            var rect = toggleEl.getBoundingClientRect();
+            menuEl.style.top = (rect.bottom + 4) + 'px';
+            menuEl.style.left = rect.left + 'px';
+            menuEl.classList.add('ipd-open');
+        }
+
+        window.addEventListener('click', function (event) {
+            var toggleEl = event.target.closest('#ipdTabBar .ipd-dropdown-toggle');
+
+            if (toggleEl) {
+                var menuEl = toggleEl.nextElementSibling;
+                if (!menuEl || !menuEl.classList.contains('dropdown-menu')) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+
+                var alreadyOpen = menuEl.classList.contains('ipd-open');
+                closeAllMenus();
+                if (!alreadyOpen) openMenu(toggleEl, menuEl);
+                return;
+            }
+
+            // Clicked somewhere else entirely - close any open menu,
+            // unless the click was inside the open menu itself.
+            if (!event.target.closest('#ipdTabBar .dropdown-menu')) {
+                closeAllMenus();
+            }
+        }, true); // capture phase on window - earliest possible interception point
+
+        window.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeAllMenus();
+        });
+    })();
+</script>
+
+
+

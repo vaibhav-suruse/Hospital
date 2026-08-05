@@ -1,0 +1,482 @@
+﻿@{
+    ViewData["Title"] = "IPD Medicine Billing";
+
+    var notif = ViewBag.Notification as MedicineNotificationModel;
+    var medicines = ViewBag.Medicines as List<PharmacyMedicineLineVM>
+                    ?? new List<PharmacyMedicineLineVM>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-controller="IPDPharmacyQueue" asp-action="Index"
+           class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to IPD Queue
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- ══ LEFT: Bill Form ══ -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">IPD Medicine Bill</h4>
+                <p class="card-title-desc">
+                    Doctor Round prescription from Dr. @(notif?.DoctorName ?? "—")
+                </p>
+
+                <!-- Patient & Ward info -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Patient Name</label>
+                        <input type="text" class="form-control" id="patientName"
+                               value="@(notif?.PatientName ?? "")" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Mobile Number</label>
+                        <input type="text" class="form-control" id="mobileNumber"
+                               value="@(ViewBag.MobileNumber ?? "")"
+                               placeholder="Enter mobile number" maxlength="10" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Ward / Bed</label>
+                        <input type="text" class="form-control"
+                               value="@(notif?.WardName ?? "—")  @(notif?.BedNo != null ? "| Bed: " + notif.BedNo : "")"
+                               readonly />
+                    </div>
+                </div>
+
+                <!-- Stock warning banner -->
+                @if (medicines.Any(m => m.StockStatus == "partial" || m.StockStatus == "outofstock"))
+                {
+                    <div class="alert alert-warning d-flex align-items-start mb-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                        <div>
+                            <strong>Stock Alert</strong> — Some medicines have insufficient stock.<br />
+                            <small>
+                                Bill quantities have been auto-adjusted to available stock.
+                                Out-of-stock items are set to <strong>0</strong> and will not be billed.
+                                Please inform the patient about pending medicines.
+                            </small>
+                        </div>
+                    </div>
+                }
+
+                <!-- Medicine lines table -->
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered" id="medicineTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Medicine</th>
+                                <th>Type</th>
+                                <th>Route</th>
+                                <th class="text-center">M/A/E</th>
+                                <th class="text-center">Days</th>
+                                <th class="text-center">Prescribed</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-center" style="width:100px">Bill Qty</th>
+                                <th style="width:120px">Rate (₹)</th>
+                                <th class="text-end">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medicineLines">
+                            @if (!medicines.Any())
+                            {
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted py-3">
+                                        No medicines in this IPD prescription
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var (med, i) in medicines.Select((m, i) => (m, i)))
+                            {
+                                var schedule = new List<string>();
+                                if (med.Morning) schedule.Add("M");
+                                if (med.Afternoon) schedule.Add("A");
+                                if (med.Evening) schedule.Add("E");
+
+                                var stockBadgeClass = med.StockStatus == "outofstock" ? "bg-danger"
+                                : med.StockStatus == "partial" ? "bg-warning text-dark"
+                                : "bg-success";
+                                var stockLabel = med.StockStatus == "outofstock" ? "Out of Stock"
+                                : med.StockStatus == "partial" ? "Only " + med.AvailableStock
+                                : med.AvailableStock.ToString();
+
+                                var billQty = med.AvailableStock <= 0 ? 0
+                                : med.AvailableStock < med.TotalQty ? med.AvailableStock
+                                : med.TotalQty;
+
+                                var rowClass = med.StockStatus == "outofstock" ? "table-danger"
+                                : med.StockStatus == "partial" ? "table-warning"
+                                : "";
+
+                                <tr data-medicine-id="@med.MedicineId"
+                                    data-medicine-name="@med.MedicineName"
+                                    data-prescribed-qty="@med.TotalQty"
+                                    data-available-stock="@med.AvailableStock"
+                                    class="@rowClass">
+                                    <td>@(i + 1)</td>
+                                    <td>
+                                        <strong>@med.MedicineName</strong>
+                                        <input type="hidden" class="med-id" value="@med.MedicineId" />
+                                        <input type="hidden" class="med-name" value="@med.MedicineName" />
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            @(med.MedicineType ?? "Tablet")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@(med.Route ?? "Oral")</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <small class="fw-bold">@string.Join("/", schedule)</small>
+                                        <br /><small class="text-muted">×@med.Days days</small>
+                                    </td>
+                                    <td class="text-center">@med.Days</td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">@med.TotalQty</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @stockBadgeClass">@stockLabel</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number"
+                                               class="form-control form-control-sm qty-input text-center @(med.StockStatus == "outofstock" ? "border-danger" : med.StockStatus == "partial" ? "border-warning" : "")"
+                                               value="@billQty"
+                                               min="0"
+                                               max="@med.AvailableStock"
+                                               data-prescribed="@med.TotalQty"
+                                               data-stock="@med.AvailableStock"
+                                               style="width:75px;margin:auto"
+                                               oninput="validateQty(this)" onchange="recalc()" />
+                                        @if (med.StockStatus == "partial")
+                                        {
+                                            <small class="text-danger d-block mt-1" style="font-size:10px;">
+                                                Rx: @med.TotalQty
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm rate-input text-end"
+                                               value="@med.SellingPrice.ToString("F2")"
+                                               min="0" step="0.01"
+                                               onchange="recalc()" />
+                                    </td>
+                                    <td class="text-end fw-bold line-total">
+                                        ₹@((billQty * med.SellingPrice).ToString("F2"))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals section -->
+                <div class="row justify-content-end">
+                    <div class="col-md-5">
+                        <table class="table table-borderless table-sm mb-0">
+                            <tr>
+                                <td class="text-muted">Sub Total</td>
+                                <td class="text-end fw-bold" id="subTotal">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Discount (%)</td>
+                                <td class="text-end">
+                                    <input type="number" class="form-control form-control-sm text-end"
+                                           id="discountPct" value="0" min="0" max="100"
+                                           style="width:80px;float:right"
+                                           onchange="recalc()" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Discount Amount</td>
+                                <td class="text-end text-danger" id="discountAmt">₹0.00</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="fw-bold fs-5">Total</td>
+                                <td class="text-end fw-bold fs-5 text-primary" id="grandTotal">₹0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT: Payment Panel ══ -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+
+                <h5 class="card-title">Payment</h5>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Payment Mode</label>
+                    <select class="form-select" id="paymentMode">
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                        <option value="Pending">Pending (Due)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Amount Paid (₹)</label>
+                    <input type="number" class="form-control" id="paidAmount"
+                           placeholder="0.00" min="0" step="0.01"
+                           onchange="calcDue()" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Due Amount (₹)</label>
+                    <input type="text" class="form-control bg-light" id="dueAmount"
+                           value="0.00" readonly />
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-danger btn-lg" id="btnSaveBill"
+                            onclick="saveBill()">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        Save &amp; Print IPD Bill
+                    </button>
+                    <a asp-controller="IPDPharmacyQueue" asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+                <div id="billSuccessCard" class="alert alert-success mt-3 d-none">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Bill saved!</strong><br />
+                    Bill No: <span id="savedBillNo"></span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- IPD Prescription summary -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title text-muted">IPD Prescription Info</h6>
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <td class="text-muted">Patient</td>
+                        <td class="fw-bold">@(notif?.PatientName ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Doctor</td>
+                        <td>Dr. @(notif?.DoctorName ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Ward</td>
+                        <td>@(notif?.WardName ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Bed</td>
+                        <td>@(notif?.BedNo ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Prescribed</td>
+                        <td>@(notif?.CreatedAt.ToString("dd-MM-yyyy hh:mm tt") ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Medicines</td>
+                        <td><span class="badge bg-info text-dark">@(notif?.MedicineCount ?? 0)</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var notificationId = @(notif?.NotificationId ?? 0);
+        var ipdId          = @(notif?.IPDId ?? 0);
+
+        // ── VALIDATE QTY — cap at available stock ─────────────────
+        function validateQty(input) {
+            var val        = parseInt(input.value) || 0;
+            var maxStock   = parseInt(input.getAttribute('data-stock'))      || 0;
+            var prescribed = parseInt(input.getAttribute('data-prescribed')) || 0;
+            var row        = input.closest('tr');
+
+            if (val > maxStock) {
+                input.value = maxStock;
+                val = maxStock;
+                showQtyToast('Cannot exceed available stock (' + maxStock + ' units).');
+            }
+            if (val < 0) { input.value = 0; val = 0; }
+
+            var hint = row.querySelector('.partial-hint');
+            if (val < prescribed && val > 0) {
+                input.classList.add('border-warning');
+                if (!hint) {
+                    hint = document.createElement('small');
+                    hint.className = 'partial-hint text-warning d-block mt-1';
+                    hint.style.fontSize = '10px';
+                    input.parentNode.appendChild(hint);
+                }
+                hint.textContent = 'Partial: ' + val + ' of ' + prescribed;
+            } else if (val === 0) {
+                input.classList.add('border-danger');
+                if (hint) hint.remove();
+            } else {
+                input.classList.remove('border-warning');
+                input.classList.remove('border-danger');
+                if (hint) hint.remove();
+            }
+
+            recalc();
+        }
+
+        function showQtyToast(msg) {
+            if (typeof toastr !== 'undefined') { toastr.warning(msg); return; }
+            var t = document.getElementById('qtyToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'qtyToast';
+                t.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;' +
+                    'background:#f1b44c;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(function() { t.style.display = 'none'; }, 3000);
+        }
+
+        // ── RECALCULATE TOTALS ────────────────────────────────────
+        function recalc() {
+            var subTotal = 0;
+            document.querySelectorAll('#medicineLines tr[data-medicine-id]').forEach(function(row) {
+                var qty    = parseFloat(row.querySelector('.qty-input')?.value  || 0);
+                var rate   = parseFloat(row.querySelector('.rate-input')?.value || 0);
+                var line   = qty * rate;
+                var lineEl = row.querySelector('.line-total');
+                if (lineEl) lineEl.textContent = '₹' + line.toFixed(2);
+                subTotal += line;
+            });
+
+            var discPct = parseFloat(document.getElementById('discountPct').value || 0);
+            var discAmt = (subTotal * discPct) / 100;
+            var total   = subTotal - discAmt;
+
+            document.getElementById('subTotal').textContent    = '₹' + subTotal.toFixed(2);
+            document.getElementById('discountAmt').textContent = '₹' + discAmt.toFixed(2);
+            document.getElementById('grandTotal').textContent  = '₹' + total.toFixed(2);
+
+            document.getElementById('paidAmount').value = total.toFixed(2);
+            document.getElementById('dueAmount').value  = '0.00';
+        }
+
+        function calcDue() {
+            var total = parseFloat(document.getElementById('grandTotal').textContent.replace('₹','') || 0);
+            var paid  = parseFloat(document.getElementById('paidAmount').value || 0);
+            document.getElementById('dueAmount').value = Math.max(0, total - paid).toFixed(2);
+        }
+
+        // ── SAVE IPD MEDICINE BILL ────────────────────────────────
+        function saveBill() {
+            var items         = [];
+            var hasPartial    = false;
+            var hasOutOfStock = false;
+
+            document.querySelectorAll('#medicineLines tr[data-medicine-id]').forEach(function(row) {
+                var medId      = parseInt(row.querySelector('.med-id').value);
+                var medName    = row.querySelector('.med-name').value;
+                var qty        = parseInt(row.querySelector('.qty-input').value || 0);
+                var rate       = parseFloat(row.querySelector('.rate-input').value || 0);
+                var prescribed = parseInt(row.getAttribute('data-prescribed-qty') || 0);
+                var stock      = parseInt(row.getAttribute('data-available-stock') || 0);
+
+                if (stock <= 0) { hasOutOfStock = true; return; }
+                if (qty < prescribed) hasPartial = true;
+                if (qty <= 0) return;
+
+                items.push({
+                    medicineId:   medId,
+                    medicineName: medName,
+                    quantity:     qty,
+                    unitPrice:    rate,
+                    totalPrice:   qty * rate
+                });
+            });
+
+            if (items.length === 0) {
+                alert('No billable items — all medicines are out of stock or set to zero quantity.');
+                return;
+            }
+
+            if (hasPartial || hasOutOfStock) {
+                var msg = 'Some medicines could not be fully dispensed due to insufficient stock.\n\n';
+                if (hasOutOfStock) msg += '• Out-of-stock items will NOT be included in this bill.\n';
+                if (hasPartial)    msg += '• Some medicines are billed at reduced quantity.\n';
+                msg += '\nProceed with partial bill?';
+                if (!confirm(msg)) return;
+            }
+
+            var subTotal = parseFloat(document.getElementById('subTotal').textContent.replace('₹',''));
+            var discPct  = parseFloat(document.getElementById('discountPct').value || 0);
+            var discAmt  = (subTotal * discPct) / 100;
+            var total    = subTotal - discAmt;
+            var paid     = parseFloat(document.getElementById('paidAmount').value || 0);
+            var due      = Math.max(0, total - paid);
+
+            var bill = {
+                notificationId: notificationId,
+                ipdId:          ipdId,
+                patientName:    document.getElementById('patientName').value,
+                mobileNumber:   document.getElementById('mobileNumber').value,
+                subTotal:       subTotal,
+                discountType:   'Percentage',
+                discountValue:  discPct,
+                discountAmount: discAmt,
+                totalAmount:    total,
+                paidAmount:     paid,
+                dueAmount:      due,
+                paymentMode:    document.getElementById('paymentMode').value,
+                items:          items
+            };
+
+            var btn = document.getElementById('btnSaveBill');
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            $.ajax({
+                url:         '/IPDPharmacyQueue/SaveMedicineBill',
+                type:        'POST',
+                contentType: 'application/json',
+                data:        JSON.stringify(bill),
+                headers:     { 'RequestVerificationToken': $('input[name=__RequestVerificationToken]').val() },
+                success: function(res) {
+                    if (res.success) {
+                        document.getElementById('billSuccessCard').classList.remove('d-none');
+                        document.getElementById('savedBillNo').textContent = 'IPD-PHARM-' + res.billId;
+                        btn.innerHTML = '<i class="fas fa-check me-2"></i>Bill Saved!';
+                        btn.classList.replace('btn-danger','btn-success');
+                        if (typeof toastr !== 'undefined')
+                            toastr.success('IPD Medicine bill saved successfully!');
+                        setTimeout(function() { window.location.href = '/IPDPharmacyQueue/Index'; }, 2000);
+                    } else {
+                        btn.disabled  = false;
+                        btn.innerHTML = '<i class="fas fa-file-invoice-dollar me-2"></i>Save & Print IPD Bill';
+                        alert(res.message || 'Could not save bill.');
+                    }
+                },
+                error: function() {
+                    btn.disabled  = false;
+                    btn.innerHTML = '<i class="fas fa-file-invoice-dollar me-2"></i>Save & Print IPD Bill';
+                    alert('Server error. Please try again.');
+                }
+            });
+        }
+
+        $(document).ready(function() { recalc(); });
+    </script>
+
+    @Html.AntiForgeryToken()
+}

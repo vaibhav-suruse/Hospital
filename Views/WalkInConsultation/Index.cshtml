@@ -1,0 +1,857 @@
+﻿@model WebApplicationSampleTest2.Models.WalkInConsultationVM
+
+@{
+    ViewData["Title"] = "Walk-In Consultation";
+}
+
+<!-- PAGE HEADER -->
+<div class="d-flex align-items-center mb-4">
+    <a href="javascript:history.back()" class="me-3 text-muted">
+        <i class="mdi mdi-arrow-left font-size-20"></i>
+    </a>
+    <h4 class="mb-0">Start Walk-In Consultation</h4>
+</div>
+
+<!-- SEARCH SECTION -->
+<div class="card">
+    <div class="card-body">
+        <label class="form-label fw-semibold">
+            Enter Patient's Name, Phone number or Id
+        </label>
+
+        <div class="position-relative">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="mdi mdi-magnify text-muted"></i>
+                </span>
+                <input type="text"
+                       id="walkInSearch"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="Search by Patient's Name, Phone number or Id"
+                       autocomplete="off" />
+            </div>
+
+            <!-- Search Results Dropdown -->
+            <div id="searchResults"
+                 class="border rounded bg-white shadow-sm position-absolute w-100"
+                 style="z-index:1050; display:none; top:100%; left:0; max-height:320px; overflow-y:auto;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TODAY'S WALK-IN CONSULTS TABLE -->
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="card-title mb-0">Walk-In Consults</h5>
+                <p class="text-muted mb-0 font-size-13">
+                    Today's Total: <strong id="totalConsultCount">@(Model?.TodayCount ?? 0)</strong> &nbsp;|&nbsp;
+                    Selected Date: <strong>@(Model?.SelectedDateCount ?? 0)</strong>
+                </p>
+            </div>
+            <div class="d-flex align-items-center">
+                <label class="form-label me-2 mb-0 text-muted font-size-13">Date:</label>
+                <input type="date" id="walkInDateFilter" name="date" value="@Model?.SelectedDate.ToString("yyyy-MM-dd")"
+                       class="form-control" style="width:180px;" />
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0" id="consultTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Patient Name</th>
+                        <th>Mobile No</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+<tbody id="consultTableBody">
+                    @if (Model?.SelectedDateConsults != null && Model.SelectedDateConsults.Any())
+                    {
+                        int sr = 1;
+                        foreach (var c in Model.SelectedDateConsults)
+                        {
+                            <tr>
+                                <td>@sr</td>
+                                <td>@c.PatientName</td>
+                                <td>@c.MobileNo</td>
+                                <td>@DateTime.Today.Add(c.AppointmentTime).ToString("hh:mm tt")</td>
+                                <td>
+                                    @if (c.Status == "OPD Completed")
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (c.OPDId > 0)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" asp-action="EditAsOPD" asp-controller="Patient"
+                                               asp-route-appointmentId="@c.AppointmentId" title="Edit OPD">
+                                                <i class="mdi mdi-pencil me-1"></i> OPD
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" asp-action="EditAsOPD" asp-controller="Patient"
+                                               asp-route-appointmentId="@c.AppointmentId" title="Create OPD">
+                                                <i class="mdi mdi-plus me-1"></i> OPD
+                                            </a>
+                                        }
+                                        <a class="btn btn-sm btn-primary" asp-controller="OPDBilling" asp-action="GenerateBill"
+                                           asp-route-appointmentId="@c.AppointmentId">
+                                            <i class="mdi mdi-receipt me-1"></i> Bill
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-primary" asp-controller="OPDBilling" asp-action="PrintBill"
+                                           asp-route-appointmentId="@c.AppointmentId" target="_blank" title="Print Bill">
+                                            <i class="mdi mdi-printer me-1"></i> Print Bill
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary" asp-action="PrintPriscription" asp-controller="Patient"
+                                           asp-route-appointmentId="@c.AppointmentId">
+                                            <i class="mdi mdi-printer me-1"></i> Print
+                                        </a>
+                                        <a class="btn btn-sm btn-info text-white" asp-action="PatientHistory" asp-controller="OPDAppointment"
+                                           asp-route-appointmentId="@c.AppointmentId">
+                                            <i class="mdi mdi-history me-1"></i> History
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    }
+                    else
+                    {
+                        <tr id="noConsultRow">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="mdi mdi-clipboard-pulse-outline font-size-24 d-block mb-2"></i>
+                                No walk-in consults yet today
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     ADD NEW PATIENT MODAL
+═══════════════════════════════════════════════════ -->
+<div class="modal fade" id="addPatientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPatientForm" novalidate>
+
+                    <h6 class="mb-3 text-primary">Personal Details</h6>
+                    <hr class="mb-4" />
+
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label class="form-label">Salutation</label>
+                                <select id="ap_Salutation" name="Salutation" class="form-select">
+                                    <option value="">Select</option>
+                                    <option value="Mr">Mr</option>
+                                    <option value="Mrs">Mrs</option>
+                                    <option value="Ms">Ms</option>
+                                    <option value="Dr">Dr</option>
+                                    <option value="Baby">Baby</option>
+                                    <option value="Master">Master</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" id="ap_FullName" name="FullName" class="form-control" placeholder="Enter Full Name" />
+                                <small class="text-danger" id="err_FullName"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <input type="text" id="ap_PhoneNumber" name="PhoneNumber" class="form-control" placeholder="Enter 10 Digit Number" maxlength="10" />
+                                <small class="text-danger" id="err_PhoneNumber"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-2 mt-1">
+                                    <button type="button" class="btn btn-outline-secondary ap-gender-btn flex-fill" data-value="Male">Male</button>
+                                    <button type="button" class="btn btn-outline-secondary ap-gender-btn flex-fill" data-value="Female">Female</button>
+                                    <button type="button" class="btn btn-outline-secondary ap-gender-btn flex-fill" data-value="Other">Other</button>
+                                </div>
+                                <input type="hidden" id="ap_Gender" name="Gender" />
+                                <small class="text-danger" id="err_Gender"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" id="ap_DateOfBirth" name="DateOfBirth" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Age in Years &amp; Months <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-2">
+                                    <input type="text" id="ap_Age" name="Age" class="form-control" placeholder="Years" />
+                                    <input type="text" id="ap_AgeMonths" name="AgeMonths" class="form-control" placeholder="Months" />
+                                </div>
+                                <small class="text-danger" id="err_Age"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" id="ap_Address" name="Address" placeholder="Enter Address" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Patient Reference ID</label>
+                                <input type="text" id="ap_ReferenceId" name="ReferenceId" class="form-control" placeholder="Patient Reference ID" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3 mt-4 text-primary">Secondary Details</h6>
+                    <hr class="mb-4" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Blood Group</label>
+                                <select id="ap_BloodGroup" name="BloodGroup" class="form-select">
+                                    <option value="">Select Blood Group</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Marital Status</label>
+                                <select id="ap_MaritalStatus" name="MaritalStatus" class="form-select">
+                                    <option value="">Select Marital Status</option>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="Divorced">Divorced</option>
+                                    <option value="Widowed">Widowed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" id="ap_Occupation" name="Occupation" class="form-control" placeholder="Enter Patient's Occupation" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email ID</label>
+                                <input type="email" id="ap_Email" name="Email" class="form-control" placeholder="Enter Patient's Email ID" />
+                                <small class="text-danger" id="err_Email"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSavePatient">
+                    <span id="btnSavePatientText">Add Patient</span>
+                    <span id="btnSavePatientSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PATIENT ADDED POPUP
+═══════════════════════════════════════════════════ -->
+<div class="modal fade" id="patientAddedModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+        <div class="modal-content" style="border-radius:12px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Patient Added</h5>
+                <button type="button" class="btn-close" id="closePatientAddedModal"></button>
+            </div>
+            <div class="modal-body pt-2 pb-0">
+                <div class="d-flex align-items-center gap-2 p-3 rounded mb-3"
+                     style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                    <i class="mdi mdi-check-circle text-success font-size-20"></i>
+                    <span class="text-success fw-medium">Patient has been successfully added.</span>
+                </div>
+                <p class="text-muted mb-2 fw-semibold">Choose Action</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-3">
+                <button type="button"
+                        id="btnStartConsult"
+                        class="btn btn-primary w-100 fw-semibold"
+                        style="border-radius:8px; font-size:15px;">
+                    Consult
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+var emailRegex = new RegExp("^[^\\s" + String.fromCharCode(64) + "]+" + String.fromCharCode(64) + "[^\\s" + String.fromCharCode(64) + "]+\\.[^\\s" + String.fromCharCode(64) + "]+$");
+            var newPatientId = 0;
+            var searchTimer = null;
+            var doctorConfirmed = false;
+
+// ═══════════════════════════════════════════════
+            // DATE FILTER — auto-submit on change (mirrors OPD Appointments)
+            // ═══════════════════════════════════════════════
+            $("#walkInDateFilter").on("change", function () {
+                var val = $(this).val();
+                if (val) {
+                    window.location.href = '/WalkInConsultation/Index?date=' + val;
+                }
+            });
+
+            // ═══════════════════════════════════════════════
+            // SEARCH — shows results with Consult button,
+            //          or "Add New Patient" if no results
+            // ═══════════════════════════════════════════════
+            $("#walkInSearch").on("input", function () {
+                clearTimeout(searchTimer);
+                var query = $(this).val().trim();
+
+                if (query.length < 2) {
+                    $("#searchResults").hide().empty();
+                    return;
+                }
+
+                searchTimer = setTimeout(function () {
+                    $.ajax({
+                        url: '/WalkInConsultation/SearchPatient',
+                        type: 'GET',
+                        data: { query: query },
+                        success: function (res) {
+                            $("#searchResults").empty();
+
+                            if (!res || res.length === 0) {
+                                // ── No patient found: show "Add New Patient" option ──
+                                var safeName = $('<span>').text(query).html();
+                                $("#searchResults").append(
+                                    '<div class="p-3 text-muted border-bottom">' +
+                                        'No patient found for "<strong>' + safeName + '</strong>"' +
+                                    '</div>' +
+                                    '<div class="p-2">' +
+                                        '<button type="button" class="btn btn-outline-primary w-100" id="openAddPatientModal">' +
+                                            '<i class="mdi mdi-plus me-1"></i> Add New Patient' +
+                                        '</button>' +
+                                    '</div>'
+                                );
+                            } else {
+                                // ── Patients found: show each with Consult button ──
+                                $.each(res, function (i, p) {
+                                    $("#searchResults").append(
+                                        '<div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">' +
+                                            '<div>' +
+                                                '<div class="fw-semibold">' + $('<span>').text(p.name).html() + '</div>' +
+                                                '<small class="text-muted">' + p.mobile + ' &nbsp;|&nbsp; ID: ' + p.id + '</small>' +
+                                            '</div>' +
+                                            '<button class="btn btn-sm btn-primary consult-btn" ' +
+                                                'data-id="' + p.id + '">' +
+                                                'Consult' +
+                                            '</button>' +
+                                        '</div>'
+                                    );
+                                });
+                            }
+
+                            $("#searchResults").show();
+                        },
+                        error: function () {
+                            $("#searchResults").html(
+                                '<div class="p-3 text-danger">Search failed. Please try again.</div>'
+                            ).show();
+                        }
+                    });
+                }, 400);
+            });
+
+            // Hide dropdown when clicking outside
+            $(document).on("click", function (e) {
+                if (!$(e.target).closest("#walkInSearch, #searchResults").length) {
+                    $("#searchResults").hide();
+                }
+            });
+
+            // ═══════════════════════════════════════════════
+            // CONSULT BUTTON — existing patient
+            // Step 1: create walk-in appointment
+            // Step 2: open doctor selection popup
+            // Step 3: assign doctor → go to OPD
+            // ═══════════════════════════════════════════════
+            $(document).on("click", ".consult-btn", function (e) {
+                e.stopPropagation();
+                var patientId = $(this).data("id");
+                var btn = $(this);
+                btn.prop("disabled", true).text("...");
+
+                $.ajax({
+                    url: '/WalkInConsultation/CreateWalkInAppointment',
+                    type: 'POST',
+                    data: {
+                        patientId: patientId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (res) {
+                        btn.prop("disabled", false).text("Consult");
+                        if (res.success) {
+                            openDoctorPopup(res.appointmentId);
+                        } else {
+                            alert(res.message || 'Failed to start consult.');
+                        }
+                    },
+                    error: function () {
+                        alert('Something went wrong. Please try again.');
+                        btn.prop("disabled", false).text("Consult");
+                    }
+                });
+            });
+
+            // ═══════════════════════════════════════════════
+            // OPEN ADD PATIENT MODAL
+            // Pre-fills FullName or PhoneNumber from search bar
+            // ═══════════════════════════════════════════════
+            $(document).on("click", "#openAddPatientModal", function () {
+                var searchVal = $("#walkInSearch").val().trim();
+                resetPatientForm();
+
+                // If digits → pre-fill phone, else → pre-fill name
+                if (/^\d+$/.test(searchVal)) {
+                    $("#ap_PhoneNumber").val(searchVal);
+                } else if (searchVal.length > 0) {
+                    $("#ap_FullName").val(searchVal);
+                }
+
+                $("#searchResults").hide();
+                new bootstrap.Modal(document.getElementById('addPatientModal')).show();
+            });
+
+            // ═══════════════════════════════════════════════
+            // GENDER TOGGLE
+            // ═══════════════════════════════════════════════
+            $(document).on("click", ".ap-gender-btn", function () {
+                $(".ap-gender-btn").removeClass("active btn-secondary").addClass("btn-outline-secondary");
+                $(this).removeClass("btn-outline-secondary").addClass("active btn-secondary");
+                $("#ap_Gender").val($(this).data("value"));
+                $("#err_Gender").text("");
+            });
+
+            // DOB → auto-fill age
+            $("#ap_DateOfBirth").on("change", function () {
+                var dob = new Date($(this).val());
+                if (isNaN(dob.getTime())) return;
+                var today  = new Date();
+                var years  = today.getFullYear() - dob.getFullYear();
+                var months = today.getMonth() - dob.getMonth();
+                if (months < 0) { years--; months += 12; }
+                $("#ap_Age").val(years);
+                $("#ap_AgeMonths").val(months);
+                $("#err_Age").text("");
+            });
+
+            // Inline validations
+            $("#ap_FullName").on("input", function () {
+                var v = $(this).val().replace(/[^A-Za-z\s]/g, '');
+                $(this).val(v);
+                $("#err_FullName").text(v.trim() === "" ? "Full Name is required" : "");
+            });
+            $("#ap_PhoneNumber").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                $(this).val(v);
+                $("#err_PhoneNumber").text(v.length !== 10 ? "Mobile number must be 10 digits" : "");
+            });
+            $("#ap_Age").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                $(this).val(v);
+                $("#err_Age").text(v === "" || parseInt(v) > 120 ? "Valid age (0-120) is required" : "");
+            });
+            $("#ap_AgeMonths").on("input", function () {
+                var v = $(this).val().replace(/[^0-9]/g, '');
+                if (parseInt(v) > 11) v = "11";
+                $(this).val(v);
+            });
+            $("#ap_Email").on("input", function () {
+                var v = $(this).val().trim();
+                $("#err_Email").text(v !== "" && !emailRegex.test(v) ? "Enter a valid email address" : "");
+            });
+
+            // ═══════════════════════════════════════════════
+            // SAVE PATIENT
+            // ═══════════════════════════════════════════════
+            $("#btnSavePatient").on("click", function () {
+                if (!validatePatientForm()) return;
+
+                $("#btnSavePatientText").text("Saving...");
+                $("#btnSavePatientSpinner").show();
+                $("#btnSavePatient").prop("disabled", true);
+
+                var formData = {
+                    Salutation:    $("#ap_Salutation").val(),
+                    FullName:      $("#ap_FullName").val().trim(),
+                    PhoneNumber:   $("#ap_PhoneNumber").val().trim(),
+                    Gender:        $("#ap_Gender").val(),
+                    DateOfBirth:   $("#ap_DateOfBirth").val(),
+                    Age:           $("#ap_Age").val(),
+                    AgeMonths:     $("#ap_AgeMonths").val() || "0",
+                    Address:       $("#ap_Address").val().trim(),
+                    ReferenceId:   $("#ap_ReferenceId").val().trim(),
+                    BloodGroup:    $("#ap_BloodGroup").val(),
+                    MaritalStatus: $("#ap_MaritalStatus").val(),
+                    Occupation:    $("#ap_Occupation").val().trim(),
+                    Email:         $("#ap_Email").val().trim(),
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                };
+
+                $.ajax({
+                    url: '/WalkInConsultation/AddPatient',
+                    type: 'POST',
+                    data: formData,
+                    success: function (res) {
+                        $("#btnSavePatientText").text("Add Patient");
+                        $("#btnSavePatientSpinner").hide();
+                        $("#btnSavePatient").prop("disabled", false);
+
+if (res.success) {
+                            // Store the patient id. The walk-in appointment is
+                            // NOT created yet — it is only created when the user
+                            // clicks "Consult". This ensures that closing the
+                            // popup does not leave a "Pending" appointment.
+                            newPatientId = res.patientId;
+
+                            // Close add patient modal
+                            bootstrap.Modal.getInstance(
+                                document.getElementById('addPatientModal')
+                            ).hide();
+
+                            // Show "Patient Added → Consult" popup
+                            // (no row added to the table yet)
+                            new bootstrap.Modal(
+                                document.getElementById('patientAddedModal')
+                            ).show();
+                        } else {
+                            alert(res.message || 'Failed to add patient.');
+                        }
+                    },
+                    error: function () {
+                        $("#btnSavePatientText").text("Add Patient");
+                        $("#btnSavePatientSpinner").hide();
+                        $("#btnSavePatient").prop("disabled", false);
+                        alert('Something went wrong. Please try again.');
+                    }
+                });
+            });
+
+// ═══════════════════════════════════════════════
+            // CONSULT button in "Patient Added" popup
+            // Creates the walk-in appointment for the new patient,
+            // then opens the doctor selection popup.
+            // ═══════════════════════════════════════════════
+            $("#btnStartConsult").on("click", function () {
+                if (newPatientId <= 0) return;
+
+                var btn = $(this);
+                btn.prop("disabled", true).text("Please wait...");
+
+                $.ajax({
+                    url: '/WalkInConsultation/CreateWalkInAppointment',
+                    type: 'POST',
+                    data: {
+                        patientId: newPatientId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (res) {
+                        btn.prop("disabled", false).text("Consult");
+                        if (res.success) {
+                            bootstrap.Modal.getInstance(
+                                document.getElementById('patientAddedModal')
+                            ).hide();
+                            newPatientId = 0;
+                            openDoctorPopup(res.appointmentId);
+                        } else {
+                            alert(res.message || 'Failed to start consult.');
+                        }
+                    },
+                    error: function () {
+                        btn.prop("disabled", false).text("Consult");
+                        alert('Something went wrong. Please try again.');
+                    }
+                });
+            });
+
+            // Close popup — stay on page.
+            // No appointment is created, so nothing is left "Pending".
+            $("#closePatientAddedModal").on("click", function () {
+                bootstrap.Modal.getInstance(
+                    document.getElementById('patientAddedModal')
+                ).hide();
+                newPatientId = 0;
+            });
+
+            // ═══════════════════════════════════════════════
+            // ADD ROW TO TABLE (real-time, no page refresh)
+            // ═══════════════════════════════════════════════
+            function addRowToTable(res) {
+                $("#noConsultRow").remove();
+                var count = $("#consultTable tbody tr").length + 1;
+                var time  = new Date().toLocaleTimeString('en-IN', {
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                });
+
+                var row =
+                    '<tr>' +
+                        '<td>' + count + '</td>' +
+                        '<td>' + $('<span>').text(res.patientName || '').html() + '</td>' +
+                        '<td>' + (res.mobile || '') + '</td>' +
+                        '<td>' + time + '</td>' +
+                        '<td><span class="badge bg-warning text-dark">Pending</span></td>' +
+                        '<td>' +
+                            '<div class="d-flex flex-wrap gap-1">' +
+                                '<a class="btn btn-sm btn-outline-primary" href="/Patient/EditAsOPD?appointmentId=' + res.appointmentId + '" title="Create OPD"><i class="mdi mdi-plus me-1"></i> OPD</a>' +
+                                '<a class="btn btn-sm btn-primary" href="/OPDBilling/GenerateBill?appointmentId=' + res.appointmentId + '"><i class="mdi mdi-receipt me-1"></i> Bill</a>' +
+                                '<a class="btn btn-sm btn-outline-primary" href="/OPDBilling/PrintBill?appointmentId=' + res.appointmentId + '" target="_blank" title="Print Bill"><i class="mdi mdi-printer me-1"></i> Print Bill</a>' +
+                                '<a class="btn btn-sm btn-outline-secondary" href="/Patient/PrintPriscription?appointmentId=' + res.appointmentId + '"><i class="mdi mdi-printer me-1"></i> Print</a>' +
+                                '<a class="btn btn-sm btn-info text-white" href="/OPDAppointment/PatientHistory?appointmentId=' + res.appointmentId + '"><i class="mdi mdi-history me-1"></i> History</a>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>';
+
+                $("#consultTableBody").append(row);
+                $("#totalConsultCount").text(count);
+            }
+
+            // ═══════════════════════════════════════════════
+            // FORM VALIDATION
+            // ═══════════════════════════════════════════════
+            function validatePatientForm() {
+                var isValid = true;
+                if ($("#ap_FullName").val().trim() === "") {
+                    $("#err_FullName").text("Full Name is required");
+                    isValid = false;
+                }
+                if ($("#ap_Gender").val() === "") {
+                    $("#err_Gender").text("Gender is required");
+                    isValid = false;
+                }
+                var age = $("#ap_Age").val();
+                if (age === "" || isNaN(age) || parseInt(age) < 0 || parseInt(age) > 120) {
+                    $("#err_Age").text("Valid age (0-120) is required");
+                    isValid = false;
+                }
+                if ($("#ap_PhoneNumber").val().length !== 10) {
+                    $("#err_PhoneNumber").text("Mobile number must be 10 digits");
+                    isValid = false;
+                }
+                var email = $("#ap_Email").val().trim();
+                if (email !== "" && !emailRegex.test(email)) {
+                    $("#err_Email").text("Enter a valid email address");
+                    isValid = false;
+                }
+                return isValid;
+            }
+
+            function resetPatientForm() {
+                $("#addPatientForm")[0].reset();
+                $("#ap_Gender").val("");
+                $(".ap-gender-btn").removeClass("active btn-secondary").addClass("btn-outline-secondary");
+                $("[id^='err_']").text("");
+            }
+
+            // ═══════════════════════════════════════════════
+            // OPEN DOCTOR SELECTION POPUP
+            // Called after appointment is created (walk-in)
+            // Loads doctors for this hospital then shows popup
+            // ═══════════════════════════════════════════════
+            function openDoctorPopup(appointmentId) {
+                doctorConfirmed = false;
+                $("#hdnDoctorAppointmentId").val(appointmentId);
+                $("#selectDoctor").empty().append('<option value="">-- Select Doctor --</option>');
+                $("#btnConfirmDoctor").prop("disabled", false).text("Start Consultation");
+                $("#errDoctor").text("");
+
+                // Load doctors via existing OPDAppointment endpoint
+                $.ajax({
+                    url: '/OPDAppointment/GetDoctors',
+                    type: 'GET',
+                    success: function (data) {
+                        if (!data || data.length === 0) {
+                            $("#selectDoctor").append('<option value="" disabled>No doctors found</option>');
+                        } else {
+                            $.each(data, function (i, d) {
+                                $("#selectDoctor").append(
+                                    '<option value="' + d.id + '">Dr. ' + d.name + '</option>'
+                                );
+                            });
+                        }
+                        new bootstrap.Modal(document.getElementById('doctorSelectModal')).show();
+                    },
+                    error: function () {
+                        alert('Could not load doctors. Please try again.');
+                    }
+                });
+            }
+
+// ── Confirm doctor → assign then go to OPD ────────────
+            $("#btnConfirmDoctor").on("click", function () {
+                var doctorId      = $("#selectDoctor").val();
+                var appointmentId = $("#hdnDoctorAppointmentId").val();
+
+                if (!doctorId || doctorId === "") {
+                    $("#errDoctor").text("Please select a doctor to continue.");
+                    return;
+                }
+
+                $("#btnConfirmDoctor").prop("disabled", true).text("Please wait...");
+
+                $.ajax({
+                    url: '/WalkInConsultation/AssignDoctor',
+                    type: 'POST',
+                    data: {
+                        appointmentId: appointmentId,
+                        doctorId: doctorId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+success: function (res) {
+                        if (res.success) {
+                            doctorConfirmed = true;
+                            window.location.href = '/Patient/EditAsOPD?appointmentId=' + appointmentId;
+                        } else {
+                            $("#btnConfirmDoctor").prop("disabled", false).text("Start Consultation");
+                            alert(res.message || 'Failed to assign doctor.');
+                        }
+                    },
+                    error: function () {
+                        $("#btnConfirmDoctor").prop("disabled", false).text("Start Consultation");
+                        alert('Something went wrong. Please try again.');
+                    }
+                });
+            });
+
+            // ── Close doctor-select popup without consulting → cancel appointment ──
+            // If the user closes the doctor selection popup (X or outside click)
+            // without starting the consultation, soft-delete the appointment so
+            // it does not remain as "Pending" in Today's Walk-In Consults.
+$("#doctorSelectModal").on("hidden.bs.modal", function () {
+                var appointmentId = $("#hdnDoctorAppointmentId").val();
+                // Only cancel if the consultation was NOT confirmed (user closed
+                // the popup without clicking "Start Consultation").
+                if (!doctorConfirmed && appointmentId && appointmentId > 0) {
+                    $.ajax({
+                        url: '/WalkInConsultation/CancelWalkInAppointment',
+                        type: 'POST',
+                        data: {
+                            appointmentId: appointmentId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        }
+                    });
+                    $("#hdnDoctorAppointmentId").val("");
+                }
+                doctorConfirmed = false;
+                $("#btnConfirmDoctor").prop("disabled", false).text("Start Consultation");
+            });
+
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}
+
+
+<!-- ═══════════════════════════════════════════════════
+     DOCTOR SELECTION POPUP
+     Shown for all walk-in patients before opening OPD.
+     Regular appointments (DoctorId > 0) skip this entirely.
+═══════════════════════════════════════════════════ -->
+<div class="modal fade" id="doctorSelectModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:12px;">
+
+<div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Select Doctor</h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"
+                        id="closeDoctorSelectModal"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <p class="text-muted mb-3">
+                    Please assign a doctor before starting the consultation.
+                </p>
+
+                <input type="hidden" id="hdnDoctorAppointmentId" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Doctor <span class="text-danger">*</span>
+                    </label>
+                    <select id="selectDoctor" class="form-select">
+                        <option value="">-- Select Doctor --</option>
+                    </select>
+                    <small class="text-danger" id="errDoctor"></small>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0 pb-4 px-3">
+                <button type="button"
+                        id="btnConfirmDoctor"
+                        class="btn btn-primary w-100 fw-semibold"
+                        style="border-radius:8px; font-size:15px;">
+                    Start Consultation
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+

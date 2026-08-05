@@ -1,0 +1,604 @@
+﻿@model DiagnosisPageVM
+
+<input type="hidden" id="hdnIpdId" value="@Model.IpdId" />
+<input type="hidden" id="hdnPatientId" value="@Model.PatientId" />
+<input type="hidden" id="hdnUserRole" value="@Model.CurrentUserRole" />
+@Html.AntiForgeryToken()
+
+<style>
+    .diagnosis-section {
+        margin-bottom: 35px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .btn-diagnosis {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 5px;
+    }
+
+        .btn-diagnosis:hover {
+            background: #0b5ed7;
+        }
+
+    .table th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .delete-btn {
+        border: none;
+        background: #dc3545;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+
+    .action-btn {
+        border: none;
+        padding: 4px 10px;
+        border-radius: 4px;
+        color: #fff;
+        margin-right: 4px;
+        font-size: 12px;
+    }
+
+    .verify-btn { background: #6610f2; }
+    .approve-btn { background: #198754; }
+    .history-btn { background: #6c757d; }
+
+    .status-badge, .severity-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .status-Active { background: #e2e3ff; color: #4338ca; }
+    .status-Verified { background: #ede9fe; color: #6610f2; }
+    .status-Approved { background: #d1fae5; color: #047857; }
+    .status-Resolved { background: #e5e7eb; color: #374151; }
+
+    .severity-Mild { background: #d1fae5; color: #047857; }
+    .severity-Moderate { background: #fef3c7; color: #92400e; }
+    .severity-Severe { background: #fee2e2; color: #b91c1c; }
+    .severity-Critical { background: #7f1d1d; color: #fff; }
+
+    .principal-badge {
+        background: #fde68a;
+        color: #78350f;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        margin-left: 6px;
+    }
+
+    .icd-suggest-list {
+        position: absolute;
+        z-index: 1060;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        max-height: 220px;
+        overflow-y: auto;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+        display: none;
+    }
+
+        .icd-suggest-list .icd-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+            .icd-suggest-list .icd-item:hover {
+                background: #f1f3ff;
+            }
+
+    @@media(max-width:768px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .table {
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="container-fluid mt-3">
+    @await Html.PartialAsync("_IPDTabs", "Diagnosis")
+</div>
+
+<div class="diagnosis-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Diagnosis</h4>
+        <a asp-controller="Diagnosis" asp-action="Reports" asp-route-ipdId="@Model.IpdId" asp-route-patientId="@Model.PatientId" class="btn btn-outline-primary btn-sm">
+            View Reports
+        </a>
+    </div>
+
+    <!-- Admission Diagnosis -->
+    <div class="diagnosis-section">
+        <div class="section-header">
+            <h5 class="section-title">On Admission Diagnosis</h5>
+            <button class="btn-diagnosis" onclick="openDiagnosisModal('Admission')">Add Diagnosis</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="tblAdmissionDiagnosis">
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>ICD Code</th>
+                        <th>Sub-Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Recorded By</th>
+                        <th>Date</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAdmissionDiagnosis">
+                    <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Discharge Diagnosis -->
+    <div class="diagnosis-section">
+        <div class="section-header">
+            <h5 class="section-title">Discharge Diagnosis</h5>
+            <button class="btn-diagnosis" onclick="openDiagnosisModal('Discharge')">Add Diagnosis</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="tblDischargeDiagnosis">
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>ICD Code</th>
+                        <th>Sub-Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Recorded By</th>
+                        <th>Date</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyDischargeDiagnosis">
+                    <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add Diagnosis Modal -->
+<div class="modal fade" id="diagnosisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Diagnosis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="diagnosisType" />
+                <input type="hidden" id="diagnosisMasterId" />
+
+                <div class="mb-3 position-relative">
+                    <label class="form-label">Diagnosis <span class="text-danger">*</span></label>
+                    <textarea id="txtDiagnosis" class="form-control" rows="2" autocomplete="off"></textarea>
+                    <div id="icdSuggestList" class="icd-suggest-list"></div>
+                    <small class="text-muted">Start typing to search the ICD-10 diagnosis master list, or enter free text.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Diagnosed By <span class="text-danger">*</span></label>
+                    <select id="ddlDoctor" class="form-select">
+                        <option value="">-- Select Doctor --</option>
+                    </select>
+                    <small class="text-muted">The clinically accountable doctor. This is logged separately from who is entering the record.</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">ICD Code</label>
+                        <input type="text" id="txtIcdCode" class="form-control" placeholder="e.g. J06.9" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Diagnosis Sub-Type</label>
+                        <select id="ddlSubType" class="form-select">
+                            <option value="">-- Select --</option>
+                            @foreach (var t in Model.DiagnosisSubTypes)
+                            {
+                                <option value="@t">@t</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Severity</label>
+                        <select id="ddlSeverity" class="form-select">
+                            <option value="">-- Select --</option>
+                            @foreach (var s in Model.SeverityLevels)
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3 form-check ms-1">
+                        <input type="checkbox" class="form-check-input" id="chkPrincipal" />
+                        <label class="form-check-label" for="chkPrincipal">Principal Diagnosis</label>
+                    </div>
+                    <div class="col-md-4 mb-3 form-check ms-1">
+                        <input type="checkbox" class="form-check-input" id="chkPOA" />
+                        <label class="form-check-label" for="chkPOA">Present on Admission</label>
+                    </div>
+                    <div class="col-md-4 mb-3 form-check ms-1">
+                        <input type="checkbox" class="form-check-input" id="chkHAC" />
+                        <label class="form-check-label" for="chkHAC">Hospital Acquired</label>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Clinical Notes</label>
+                    <textarea id="txtClinicalNotes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDiagnosis()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Remark Modal (shared by Verify / Approve / Delete) -->
+<div class="modal fade" id="actionRemarkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionRemarkTitle">Confirm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="remarkDiagnosisId" />
+                <input type="hidden" id="remarkAction" />
+                <input type="hidden" id="remarkGridType" />
+                <label class="form-label" id="actionRemarkLabel">Remarks</label>
+                <textarea id="txtActionRemark" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="btnConfirmActionRemark" onclick="confirmActionRemark()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audit Trail Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Diagnosis History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="historyHeader" class="mb-3 p-2" style="background:#f8f9fa;border-radius:6px;font-size:14px;"></div>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr><th>Action</th><th>By</th><th>When</th><th>Remarks</th></tr>
+                    </thead>
+                    <tbody id="tbodyHistory">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+    var ipdId = $("#hdnIpdId").val();
+    var patientId = $("#hdnPatientId").val();
+    var userRole = $("#hdnUserRole").val();
+    var csrfToken = $("input[name='__RequestVerificationToken']").val();
+    var canApprove = ["Doctor", "Consultant", "HOD", "Admin", "SuperAdmin"].indexOf(userRole) !== -1;
+
+    var diagnosisModal = new bootstrap.Modal(document.getElementById('diagnosisModal'));
+    var actionRemarkModal = new bootstrap.Modal(document.getElementById('actionRemarkModal'));
+    var historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+
+    $(function () {
+        loadDiagnosisGrid('Admission');
+        loadDiagnosisGrid('Discharge');
+        loadDoctorDropdown();
+    });
+
+    var doctorsLoaded = false;
+    function loadDoctorDropdown() {
+        $.getJSON('/Diagnosis/GetDoctorsForDropdown', function (data) {
+            var $ddl = $("#ddlDoctor");
+            $ddl.find('option:not(:first)').remove();
+            (data || []).forEach(function (d) {
+                var id = d.doctor_Id || d.Doctor_Id;
+                var name = d.name || d.Name;
+                var spec = d.specialization || d.Specialization;
+                $ddl.append('<option value="' + id + '">' + name + (spec ? ' (' + spec + ')' : '') + '</option>');
+            });
+            doctorsLoaded = true;
+        }).fail(function () {
+            alert('Could not load the doctors list. Please check your connection and try again.');
+        });
+    }
+
+    window.openDiagnosisModal = function (type) {
+        $("#diagnosisType").val(type);
+        $("#diagnosisMasterId").val("");
+        $("#txtDiagnosis, #txtIcdCode, #txtClinicalNotes").val("");
+        $("#ddlSubType, #ddlSeverity, #ddlDoctor").val("");
+        $("#chkPrincipal, #chkPOA, #chkHAC").prop("checked", false);
+        $("#diagnosisModal .modal-title").text("Add " + type + " Diagnosis");
+        if (!doctorsLoaded) { loadDoctorDropdown(); }
+        diagnosisModal.show();
+    }
+
+    // ── ICD-10 autocomplete (reuses existing diagnosis_master lookup) ──────
+    var icdSearchTimer = null;
+    $("#txtDiagnosis").on("input", function () {
+        var term = $(this).val();
+        $("#diagnosisMasterId").val("");
+        clearTimeout(icdSearchTimer);
+
+        if (!term || term.length < 2) {
+            $("#icdSuggestList").hide().empty();
+            return;
+        }
+
+        icdSearchTimer = setTimeout(function () {
+            $.getJSON('/Diagnosis/SearchDiagnosisMaster', { term: term }, function (data) {
+                var $list = $("#icdSuggestList").empty();
+                if (!data || data.length === 0) { $list.hide(); return; }
+
+                data.forEach(function (d) {
+                    var $item = $('<div class="icd-item"></div>')
+                        .text(d.Name + (d.IcdCode ? " (" + d.IcdCode + ")" : ""))
+                        .on("click", function () {
+                            $("#txtDiagnosis").val(d.Name);
+                            $("#txtIcdCode").val(d.IcdCode || "");
+                            $("#diagnosisMasterId").val(d.Id);
+                            $list.hide();
+                        });
+                    $list.append($item);
+                });
+                $list.show();
+            }).fail(function () {
+                $("#icdSuggestList").hide();
+            });
+        }, 250);
+    });
+
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest("#icdSuggestList, #txtDiagnosis").length) {
+            $("#icdSuggestList").hide();
+        }
+    });
+
+    window.saveDiagnosis = function () {
+        var name = $("#txtDiagnosis").val().trim();
+        if (!name) { alert("Diagnosis is required."); return; }
+
+        var doctorId = $("#ddlDoctor").val();
+        if (!doctorId) { alert("Please select the diagnosing doctor."); return; }
+
+        if ($("#chkHAC").is(":checked") && $("#chkPOA").is(":checked")) {
+            alert("A condition present on admission cannot also be marked hospital-acquired.");
+            return;
+        }
+
+        $.ajax({
+            url: '/Diagnosis/AddDiagnosisEnterprise',
+            type: 'POST',
+            data: {
+                __RequestVerificationToken: csrfToken,
+                IpdId: ipdId,
+                PatientId: patientId,
+                DiagnosisName: name,
+                DiagnosisType: $("#diagnosisType").val(),
+                DiagnosisSubType: $("#ddlSubType").val(),
+                IcdCode: $("#txtIcdCode").val(),
+                DiagnosisMasterId: $("#diagnosisMasterId").val() || null,
+                Severity: $("#ddlSeverity").val(),
+                IsPrincipal: $("#chkPrincipal").is(":checked"),
+                PresentOnAdmission: $("#chkPOA").is(":checked"),
+                HospitalAcquired: $("#chkHAC").is(":checked"),
+                DoctorId: doctorId,
+                ClinicalNotes: $("#txtClinicalNotes").val()
+            },
+            success: function (res) {
+                if (!res.success && !res.Success) {
+                    alert(res.message || res.Message || "Could not save diagnosis.");
+                    return;
+                }
+                diagnosisModal.hide();
+                loadDiagnosisGrid($("#diagnosisType").val());
+            },
+            error: function () { alert('Could not save the diagnosis. Please check your connection and try again.'); }
+        });
+    }
+
+    function loadDiagnosisGrid(type) {
+        $.getJSON('/Diagnosis/GetDiagnosisList', { ipdId: ipdId, diagnosisType: type }, function (data) {
+            var $tbody = type === 'Admission' ? $("#tbodyAdmissionDiagnosis") : $("#tbodyDischargeDiagnosis");
+            $tbody.empty();
+
+            if (!data || data.length === 0) {
+                $tbody.append('<tr><td colspan="8" class="text-center text-muted">No ' + type.toLowerCase() + ' diagnosis added</td></tr>');
+                return;
+            }
+
+            data.forEach(function (item) {
+                var status = item.status || item.Status || 'Active';
+                var severity = item.severity || item.Severity || '';
+                var isPrincipal = item.isPrincipal || item.IsPrincipal;
+                var diagnosisId = item.diagnosisId || item.DiagnosisId;
+                var diagName = item.diagnosisName || item.DiagnosisName;
+                var icdCode = item.icdCode || item.IcdCode || '-';
+                var subType = item.diagnosisSubType || item.DiagnosisSubType || '-';
+                var recordedBy = item.recordedBy || item.RecordedBy || '-';
+                var diagDate = item.diagnosisDate || item.DiagnosisDate;
+
+                var row = '<tr>' +
+                    '<td>' + escapeHtml(diagName) + (isPrincipal ? '<span class="principal-badge">PRINCIPAL</span>' : '') + '</td>' +
+                    '<td>' + escapeHtml(icdCode) + '</td>' +
+                    '<td>' + escapeHtml(subType) + '</td>' +
+                    '<td>' + (severity ? '<span class="severity-badge severity-' + severity + '">' + severity + '</span>' : '-') + '</td>' +
+                    '<td><span class="status-badge status-' + status + '">' + status + '</span></td>' +
+                    '<td>' + escapeHtml(recordedBy) + '</td>' +
+                    '<td>' + (diagDate ? new Date(diagDate).toLocaleDateString('en-GB') : '-') + '</td>' +
+                    '<td>' + buildActionButtons(diagnosisId, status, type) + '</td>' +
+                    '</tr>';
+                $tbody.append(row);
+            });
+        }).fail(function () {
+            var $tbody = type === 'Admission' ? $("#tbodyAdmissionDiagnosis") : $("#tbodyDischargeDiagnosis");
+            $tbody.empty().append('<tr><td colspan="8" class="text-center text-danger">Could not load diagnoses. Please refresh the page.</td></tr>');
+        });
+    }
+
+    function buildActionButtons(id, status, type) {
+        var html = '';
+        if (canApprove && status === 'Active') {
+            html += '<button class="action-btn verify-btn" onclick="verifyDiagnosis(' + id + ', \'' + type + '\')">Verify</button>';
+        }
+        if (canApprove && (status === 'Active' || status === 'Verified')) {
+            html += '<button class="action-btn approve-btn" onclick="approveDiagnosis(' + id + ', \'' + type + '\')">Approve</button>';
+        }
+        html += '<button class="action-btn history-btn" onclick="viewHistory(' + id + ')">History</button>';
+        if (status !== 'Approved') {
+            html += '<button class="delete-btn" onclick="openDeleteReason(' + id + ', \'' + type + '\')">Delete</button>';
+        }
+        return html;
+    }
+
+    // Shared modal config per action type. Delete requires a remark;
+    // Verify/Approve keep it optional (clinical remark, not a justification).
+    var actionConfig = {
+        Verify:  { title: 'Verify Diagnosis',  label: 'Remarks (optional)',         required: false, btnClass: 'btn-primary',  btnText: 'Verify',  endpoint: '/Diagnosis/VerifyDiagnosis' },
+        Approve: { title: 'Approve Diagnosis', label: 'Remarks (optional)',         required: false, btnClass: 'btn-success',  btnText: 'Approve', endpoint: '/Diagnosis/ApproveDiagnosis' },
+        Delete:  { title: 'Delete Diagnosis',  label: 'Reason for deletion *',      required: true,  btnClass: 'btn-danger',   btnText: 'Delete',  endpoint: '/Diagnosis/DeleteDiagnosisEnterprise' }
+    };
+
+    function openActionRemark(action, id, type) {
+        var cfg = actionConfig[action];
+        $("#remarkDiagnosisId").val(id);
+        $("#remarkAction").val(action);
+        $("#remarkGridType").val(type);
+        $("#txtActionRemark").val("");
+        $("#actionRemarkTitle").text(cfg.title);
+        $("#actionRemarkLabel").text(cfg.label);
+        $("#btnConfirmActionRemark").attr("class", "btn " + cfg.btnClass).text(cfg.btnText);
+        actionRemarkModal.show();
+    }
+
+    window.verifyDiagnosis = function (id, type) {
+        openActionRemark('Verify', id, type);
+    }
+
+    window.approveDiagnosis = function (id, type) {
+        openActionRemark('Approve', id, type);
+    }
+
+    window.openDeleteReason = function (id, type) {
+        openActionRemark('Delete', id, type);
+    }
+
+    window.confirmActionRemark = function () {
+        var action = $("#remarkAction").val();
+        var cfg = actionConfig[action];
+        var id = $("#remarkDiagnosisId").val();
+        var type = $("#remarkGridType").val();
+        var remark = $("#txtActionRemark").val().trim();
+
+        if (cfg.required && !remark) {
+            alert(cfg.label.replace(' *', '') + ' is required.');
+            return;
+        }
+
+        $.post(cfg.endpoint, {
+            __RequestVerificationToken: csrfToken,
+            DiagnosisId: id, IpdId: ipdId, PatientId: patientId, Reason: remark
+        }, function (res) {
+            if (!res.success && !res.Success) { alert(res.message || res.Message); return; }
+            actionRemarkModal.hide();
+            loadDiagnosisGrid(type);
+        }).fail(function () {
+            alert('Could not complete this action. Please check your connection and try again.');
+        });
+    }
+
+    window.viewHistory = function (id) {
+        $.getJSON('/Diagnosis/GetAuditTrail', { diagnosisId: id }, function (data) {
+            var $tbody = $("#tbodyHistory").empty();
+            var $header = $("#historyHeader").empty().hide();
+
+            if (!data || data.length === 0) {
+                $tbody.append('<tr><td colspan="4" class="text-center text-muted">No history yet</td></tr>');
+            } else {
+                var diagName = data[0].diagnosisName || data[0].DiagnosisName || '-';
+                $header.show().html('<strong>Diagnosis:</strong> ' + escapeHtml(diagName));
+
+                data.forEach(function (h) {
+                    var action = h.action || h.Action;
+                    // Always show the diagnosing doctor here, not who happened to be
+                    // logged in when each action was performed — Diagnosed By and
+                    // By are treated as the same identity throughout the UI.
+                    var by = h.diagnosedByName || h.DiagnosedByName || '-';
+                    var when = h.actionDate || h.ActionDate;
+                    var reason = h.reason || h.Reason || '-';
+                    $tbody.append('<tr><td>' + action + '</td><td>' + escapeHtml(by) + '</td><td>' +
+                        new Date(when).toLocaleString('en-GB') + '</td><td>' + escapeHtml(reason) + '</td></tr>');
+                });
+            }
+            historyModal.show();
+        }).fail(function () {
+            alert('Could not load diagnosis history. Please check your connection and try again.');
+        });
+    }
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    })();
+</script>

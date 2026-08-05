@@ -1,0 +1,100 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@* Views/OTScheduling/Register.cshtml *@
+@using System.Linq
+@model List<WebApplicationSampleTest2.Models.OTRegisterRowModel>
+@{
+    ViewData["Title"] = "OT Register";
+    Layout = null;
+    DateTime dateFrom = ViewBag.DateFrom;
+    DateTime dateTo = ViewBag.DateTo;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>OT Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            padding: 24px;
+            font-size: 13px;
+        }
+
+        table {
+            font-size: 12px;
+        }
+
+        @@media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <h4><i class="fas fa-book"></i> OT Register</h4>
+        <div>
+            <form method="get" class="d-inline-flex gap-2 align-items-center">
+                <input type="date" name="from" value="@dateFrom.ToString("yyyy-MM-dd")" class="form-control form-control-sm">
+                <span>to</span>
+                <input type="date" name="to" value="@dateTo.ToString("yyyy-MM-dd")" class="form-control form-control-sm">
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            </form>
+            <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+        </div>
+    </div>
+
+    <p class="text-muted">@dateFrom.ToString("dd MMM yyyy") &ndash; @dateTo.ToString("dd MMM yyyy")</p>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-light border text-center">No OT cases in this date range.</div>
+    }
+    else
+    {
+        <table class="table table-sm table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Theatre</th>
+                    <th>Patient</th>
+                    <th>Procedure</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Surgeon</th>
+                    <th>Anaesthetist</th>
+                    <th>Booking Status</th>
+                    <th>Outcome</th>
+                    <th>Cancel Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr class="@(r.BookingStatus == "Cancelled" ? "table-secondary" : "")">
+                        <td>@r.ScheduledStart.ToString("dd/MM/yyyy")</td>
+                        <td>@r.ScheduledStart.ToString("hh:mm tt") - @r.ScheduledEnd.ToString("hh:mm tt")</td>
+                        <td>@r.TheatreName @(string.IsNullOrEmpty(r.TheatreNumber) ? "" : "(" + r.TheatreNumber + ")")</td>
+                        <td>@r.PatientName</td>
+                        <td>@r.ProcedureName <small class="text-muted">(@r.ProcedureUID)</small></td>
+                        <td>@r.ProcedureCategory</td>
+                        <td>@r.Priority</td>
+                        <td>@r.PrimarySurgeonName</td>
+                        <td>@r.AnaesthetistName</td>
+                        <td>@r.BookingStatus</td>
+                        <td>@r.Outcome</td>
+                        <td class="text-danger">@r.CancelReason</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="text-muted small">Total cases: @Model.Count &middot; Completed: @Model.Count(x => x.BookingStatus == "Completed") &middot; Cancelled: @Model.Count(x => x.BookingStatus == "Cancelled")</p>
+    }
+</body>
+</html>

@@ -1,0 +1,93 @@
+﻿@* Views/NursingChargesMaster/Create.cshtml *@
+@model WebApplicationSampleTest2.Models.NursingChargesMaster
+@{
+    ViewData["Title"] = Model.isUpdate
+        ? "Edit Nursing Charge" : "Add Nursing Charge";
+}
+
+<div class="container-fluid">
+    <div class="card" style="max-width:600px;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h4>
+                    <i class="fas fa-user-nurse me-2"></i>
+                    @(Model.isUpdate
+                                        ? "Edit Nursing Charge"
+                                        : "Add Nursing Charge")
+                </h4>
+                <a asp-action="Index" class="btn btn-secondary btn-sm">
+                    ← Back
+                </a>
+            </div>
+            <hr />
+
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <input type="hidden" asp-for="isUpdate" />
+                <input type="hidden" asp-for="NursingId" />
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Charge Name <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="ChargeName"
+                           class="form-control"
+                           placeholder="e.g. IV Insertion, Dressing Change" />
+                    <span asp-validation-for="ChargeName"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Charge Type <span class="text-danger">*</span>
+                    </label>
+                    <select asp-for="ChargeType" class="form-control">
+                        <option value="PerProcedure">
+                            Per Procedure
+                            (charged once each time done)
+                        </option>
+                        <option value="PerDay">
+                            Per Day
+                            (charged daily automatically)
+                        </option>
+                    </select>
+                    <small class="text-muted">
+                        Per Procedure = each time nurse does it (IV, Dressing)<br />
+                        Per Day = daily nursing care charge
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Default Charge (₹)
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="DefaultCharge"
+                           class="form-control"
+                           type="number" min="0" step="0.01" />
+                    <span asp-validation-for="DefaultCharge"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input asp-for="IsActive"
+                           class="form-check-input"
+                           type="checkbox" />
+                    <label class="form-check-label">Active</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    @(Model.isUpdate ? "Update" : "Save")
+                </button>
+                <a asp-action="Index" class="btn btn-secondary ms-2">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

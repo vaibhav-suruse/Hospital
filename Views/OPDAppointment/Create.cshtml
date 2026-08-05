@@ -1,0 +1,241 @@
+﻿@using WebApplicationSampleTest2.Models
+@model OPDAppointmentModel
+
+@{
+    ViewData["Title"] = (Model?.isUpdate == true)
+        ? "Edit OPD Appointment"
+        : "Book OPD Appointment";
+}
+<h5 class="mb-3">
+    @(Model != null && Model.isUpdate ? "Edit OPD Appointment" : "Book OPD Appointment")
+</h5>
+
+<div class="d-flex justify-content-end mb-3">
+    <a class="btn btn-primary" asp-controller="Patient" asp-action="Create">
+        + Add Patient
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+
+                    <form asp-controller="OPDAppointment"
+                          asp-action="Create"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <input asp-for="Id" type="hidden" />
+                        <input asp-for="PatientId" id="PatientId" type="hidden" />
+
+                        <!-- ================= SEARCH PATIENT ================= -->
+                        <div class="row mb-3 justify-content-end">
+                            <div class="col-md-4 position-relative">
+                                <label class="form-label">Search Patient (Mobile No)</label>
+                                <input type="text"
+                                       id="SearchPatient"
+                                       class="form-control"
+                                       placeholder="Enter mobile number"
+                                       maxlength="10"
+                                       autocomplete="off" />
+
+                                <ul id="patientResult"
+                                    class="list-group position-absolute w-100"
+                                    style="z-index:1000; display:none;">
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- ================= PATIENT DETAILS ================= -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Patient Name</label>
+                                <input asp-for="PatientName"
+                                       id="PatientName"
+                                       class="form-control"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile No</label>
+                                <input asp-for="MobileNo"
+                                       id="MobileNo"
+                                       class="form-control"
+                                       readonly />
+                            </div>
+                        </div>
+
+                        <!-- ================= APPOINTMENT DETAILS ================= -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Appointment Date</label>
+                                <input asp-for="AppointmentDate"
+                                       type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                       class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Appointment Time</label>
+                                <input asp-for="AppointmentTime"
+                                       type="time"
+                                       class="form-control"  />
+                            </div>
+                        </div>
+
+                        <!-- ================= DOCTOR ================= -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label>Doctor</label>
+                                <select asp-for="DoctorId" class="form-control" id="Doctor_Id">
+                                    <option value="">-- Select Doctor --</option>
+                                </select>
+                                <span asp-validation-for="DoctorId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- ================= BUTTONS ================= -->
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                @(Model != null && Model.isUpdate
+                                                                ? "Update Appointment"
+                                                                : "Book Appointment")
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-secondary ms-2">
+                                Cancel
+                            </a>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+
+    <!-- ================= PATIENT SEARCH ================= -->
+    <script>
+        $(document).ready(function () {
+
+            // ================= SEARCH PATIENT =================
+            $("#SearchPatient").keyup(function () {
+                let search = $(this).val();
+
+                if (search.length < 3) {
+                    $("#patientResult").hide();
+                    return;
+                }
+
+                $.ajax({
+                    url: '/OPDAppointment/SearchPatientByMobile',
+                    type: 'GET',
+                    data: { search: search },
+                    success: function (res) {
+
+                        $("#patientResult").empty();
+
+                        if (!res || res.length === 0) {
+                            $("#patientResult").append(
+                                '<li class="list-group-item text-danger">Patient not found</li>'
+                            );
+                            $("#patientResult").show();
+                            return;
+                        }
+
+                               $.each(res, function (i, item) {
+            $("#patientResult").append(`
+                <li class="list-group-item patient-item"
+                    data-id="${item.id}"
+                    data-name="${item.name}"
+                    data-mobile="${item.mobile}">
+                    <strong>${item.mobile}</strong>
+                    - ${item.name}
+                </li>
+            `);
+        });
+
+
+                        $("#patientResult").show();
+                    }
+                });
+            });
+
+            // ================= SELECT PATIENT =================
+                 $(document).on("click", ".patient-item", function () {
+            var id = $(this).data("id");
+            var name = $(this).data("name");
+            var mobile = $(this).data("mobile");
+
+            console.log("Selected Patient:", id, name, mobile);
+
+            $("#PatientId").val(id);
+            $("#PatientName").val(name);
+            $("#MobileNo").val(mobile);
+            $("#SearchPatient").val(mobile);
+            $("#patientResult").hide();
+        });
+
+
+            // ================= CLICK OUTSIDE =================
+            $(document).click(function (e) {
+                if (!$(e.target).closest("#SearchPatient").length) {
+                    $("#patientResult").hide();
+                }
+            });
+
+            // ================= DOCTOR DROPDOWN AJAX =================
+            loadDoctors();
+
+            function loadDoctors() {
+                $.ajax({
+                    url: '/OPDAppointment/GetDoctors',
+                    type: 'GET',
+                    success: function (data) {
+                        var doctorDropdown = $('#Doctor_Id');
+                        doctorDropdown.empty();
+                        doctorDropdown.append('<option value="">-- Select Doctor --</option>');
+
+                        $.each(data, function (i, d) {
+                            doctorDropdown.append(
+                                '<option value="' + d.id + '">Dr. ' + d.name + '</option>'
+                            );
+                        });
+
+                        // ✅ Edit mode selection
+                        var selectedDoctorId = '@(Model?.DoctorId ?? 0)';
+                        if (selectedDoctorId > 0) {
+                            doctorDropdown.val(selectedDoctorId);
+                        }
+                    },
+                    error: function () {
+                        alert('Doctor list load failed');
+                    }
+                });
+            }
+
+            // ================= FORM SUBMIT VALIDATION =================
+            $('form').submit(function () {
+                    var patientId = parseInt($('#PatientId').val()) || 0;
+        var mobile = $('#MobileNo').val().trim();
+
+        if (patientId <= 0 || mobile === "") {
+            alert("Please select a patient from search list");
+            return false; // block submit
+        }
+
+        return true; // allow submit
+            });
+
+        });
+    </script>
+   
+    
+}

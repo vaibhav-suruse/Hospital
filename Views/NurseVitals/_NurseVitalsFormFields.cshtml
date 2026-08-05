@@ -1,0 +1,112 @@
+@model WebApplicationSampleTest2.Models.IPDNurseVitals
+
+<input type="hidden" asp-for="VitalsId" />
+<input type="hidden" asp-for="IPDId" />
+<input type="hidden" asp-for="ParentHospitalId" />
+<input type="hidden" asp-for="SubHospitalId" />
+
+<div class="row g-3 mb-1">
+    <div class="col-md-4">
+        <label class="form-label">Vital Parameter Set</label>
+        <select id="vitalPreset" class="form-control">
+            <option value="adult">Adult (Standard)</option>
+            <option value="pediatric">Pediatric</option>
+            <option value="critical">Critical / ICU</option>
+        </select>
+        <div class="form-text">Adjusts the normal-range guide shown below each reading. Does not change what gets saved.</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">Recorded By</label>
+        <select asp-for="RecordedByRole" class="form-control" id="ddlRecordedByRole" onchange="toggleRecordedBy()">
+            <option value="Nurse">Nurse</option>
+            <option value="Doctor">Doctor</option>
+        </select>
+        <span asp-validation-for="RecordedByRole" class="text-danger"></span>
+    </div>
+    <div class="col-md-4" id="nurseField">
+        <label class="form-label">Nurse</label>
+        <select asp-for="NurseId" class="form-control" asp-items="ViewBag.Nurses">
+            <option value="">-- Select Nurse --</option>
+        </select>
+        <span asp-validation-for="NurseId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4" id="doctorField" style="display:none;">
+        <label class="form-label">Doctor</label>
+        <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.Doctors">
+            <option value="">-- Select Doctor --</option>
+        </select>
+        <span asp-validation-for="DoctorId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date & Time</label>
+        <input asp-for="RecordedDateTime" class="form-control" type="datetime-local" />
+        <span asp-validation-for="RecordedDateTime" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Shift</label>
+        <select asp-for="Shift" class="form-control">
+            <option value="">-- Select Shift --</option>
+            <option value="Morning">Morning</option>
+            <option value="Afternoon">Afternoon</option>
+            <option value="Night">Night</option>
+        </select>
+        <span asp-validation-for="Shift" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Temperature (°C)</label>
+        <div class="input-group">
+            <input asp-for="Temperature" class="form-control" placeholder="e.g. 36.8" />
+            <span class="input-group-text vital-badge" id="TemperatureBadge">--</span>
+        </div>
+        <div class="form-text" id="TemperatureRange"></div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Pulse (bpm)</label>
+        <div class="input-group">
+            <input asp-for="Pulse" class="form-control" placeholder="e.g. 72" />
+            <span class="input-group-text vital-badge" id="PulseBadge">--</span>
+        </div>
+        <div class="form-text" id="PulseRange"></div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Systolic (mmHg)</label>
+        <div class="input-group">
+            <input asp-for="Systolic" class="form-control" placeholder="e.g. 120" />
+            <span class="input-group-text vital-badge" id="SystolicBadge">--</span>
+        </div>
+        <div class="form-text" id="SystolicRange"></div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Diastolic (mmHg)</label>
+        <div class="input-group">
+            <input asp-for="Diastolic" class="form-control" placeholder="e.g. 80" />
+            <span class="input-group-text vital-badge" id="DiastolicBadge">--</span>
+        </div>
+        <div class="form-text" id="DiastolicRange"></div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Respiration Rate</label>
+        <div class="input-group">
+            <input asp-for="RespirationRate" class="form-control" placeholder="e.g. 16" />
+            <span class="input-group-text vital-badge" id="RespirationRateBadge">--</span>
+        </div>
+        <div class="form-text" id="RespirationRateRange"></div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Oxygen Saturation (%)</label>
+        <div class="input-group">
+            <input asp-for="OxygenSaturation" class="form-control" placeholder="e.g. 98" />
+            <span class="input-group-text vital-badge" id="OxygenSaturationBadge">--</span>
+        </div>
+        <div class="form-text" id="OxygenSaturationRange"></div>
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Notes</label>
+        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+    </div>
+</div>

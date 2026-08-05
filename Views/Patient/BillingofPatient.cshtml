@@ -1,0 +1,99 @@
+﻿
+@using WebApplicationSampleTest2.Models
+@model OPDAppointmentModel
+
+@{
+    ViewData["Title"] = "Billing for " + @Model.PatientName;
+}
+
+<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+
+                <form class="custom-validation" novalidate asp-action="BillingofPatient" asp-controller="Patient">
+                    <input type="hidden"
+                           id="hdnAppointmentId"
+                           name="appointmentId"
+                           value="@Model.Id" />
+
+
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ddlMedicines" class="form-label">Treatment</label>
+                                <select id="ddlBillingTypes" class="form-select">
+                                    <option selected disabled value="0">Select Bill Type</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" style="margin-top:25px">
+                            <button type="button" class="btn btn-primary waves-effect waves-light" onclick="SaveBilling()">Add Charges</button>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12" id="BillingList"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12" id="Medicineslist"></div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn btn-primary w-md">Pay</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="~/js/ShowNotification.js"></script>
+    <script type="text/javascript">
+        var appointmentId = 0;
+
+        $(document).ready(function () {
+            appointmentId = $("#hdnAppointmentId").val();
+
+            $.getJSON('/Patient/GetBillingTypes', function (data) {
+                $.each(data, function (i, item) {
+                    $("#ddlBillingTypes").append(
+                        '<option value="' + item.Id + '">' + item.Name + '</option>'
+                    );
+                });
+            });
+        });
+
+              function SaveBilling() {
+            var billingId = $("#ddlBillingTypes").val();
+            if (!billingId) return;
+
+            billingId = parseInt(billingId);
+
+            $.get('/Patient/SaveBilling',
+                { Command: billingId },
+                function (data) {
+                    $("#BillingList").html(data);
+                });
+        }
+
+              function deleteBilling(billingId) {
+            $.get('/Patient/DeleteBilling',
+                { Command: billingId },
+                function (data) {
+                    $("#BillingList").html(data);
+                });
+        }
+
+
+
+
+
+    </script>
+}

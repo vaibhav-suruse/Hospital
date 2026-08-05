@@ -1,0 +1,103 @@
+﻿@* Views/TreatmentSheet/_MedicationsPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.TreatmentMedicineVM>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle" id="medicationsTable">
+        <thead class="table-light">
+            <tr>
+                <th style="width:24px;"></th>
+                <th>Medicine</th>
+                <th>Dose / Frequency</th>
+                <th>Duration</th>
+                <th>Order By</th>
+                <th>Status</th>
+                <th class="text-end">Action</th>
+            </tr>
+        </thead>
+        <tbody id="medicationsTbody">
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-3">No medications added</td></tr>
+            }
+            else
+            {
+                foreach (var med in Model)
+                {
+                    <tr data-id="@med.Id" class="@(med.Status != "Active" ? "text-muted" : "")">
+                        <td class="text-muted @(med.Status == "Active" ? "drag-handle" : "")" style="cursor:@(med.Status == "Active" ? "grab" : "default");">
+                            @if (med.Status == "Active")
+                            {
+                                <i class="fas fa-grip-vertical"></i>
+                            }
+                        </td>
+                        <td>
+                            <strong>@med.MedicineName</strong>
+                            @if (!string.IsNullOrWhiteSpace(med.MedicineType))
+                            {
+                                <div class="small text-muted">@med.MedicineType</div>
+                            }
+                        </td>
+                        <td>
+                            @med.Dosage
+                            <span class="text-muted">(@med.FrequencySummary@(string.IsNullOrWhiteSpace(med.FoodInstruction) || med.FoodInstruction == "None" ? "" : ", " + med.FoodInstruction))</span>
+                            @if (!string.IsNullOrWhiteSpace(med.Instructions))
+                            {
+                                <div class="small text-muted">@med.Instructions</div>
+                            }
+                        </td>
+                        <td>
+                            @if (med.DurationType == "Add Till Discontinued")
+                            {
+                                <span>Till Discontinued</span>
+                            }
+                            else if (med.DurationType == "SOS")
+                            {
+
+                                <span>SOS</span>
+                            }
+                            else
+                            {
+
+                                <span>@(med.Days.HasValue? med.Days + " day(s)" : "-")</span>
+                            }
+                        </td>
+                        <td>@med.OrderByName</td>
+                        <td>
+                            @{
+                                string mBadge = med.Status == "Active" ? "bg-success" : med.Status == "Completed" ? "bg-secondary" : "bg-danger";
+                            }
+                            <span class="badge @mBadge">@(med.Status == "Active" ? "On Going" : med.Status)</span>
+                        </td>
+                        <td class="text-end">
+                            @if (med.Status == "Active")
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary med-edit-btn" title="Edit"
+                                        data-id="@med.Id"
+                                        data-medicine-id="@med.MedicineId"
+                                        data-medicine-name="@med.MedicineName"
+                                        data-dosage="@med.Dosage"
+                                        data-route="@med.Route"
+                                        data-morning="@med.Morning.ToString().ToLower()"
+                                        data-afternoon="@med.Afternoon.ToString().ToLower()"
+                                        data-evening="@med.Evening.ToString().ToLower()"
+                                        data-frequency-text="@med.FrequencyText"
+                                        data-food-instruction="@med.FoodInstruction"
+                                        data-duration-type="@med.DurationType"
+                                        data-days="@med.Days"
+                                        data-qty="@med.Qty"
+                                        data-instructions="@med.Instructions">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger med-discontinue-btn" title="Discontinue" data-id="@med.Id">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

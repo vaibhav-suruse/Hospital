@@ -1,0 +1,519 @@
+﻿@* Views/LabReports/Index.cshtml *@
+@model WebApplicationSampleTest2.Models.LabReportsVM
+@{
+    ViewData["Title"] = "Lab Reports";
+    int ipdId = Model.Admission.IPDId;
+    ViewBag.IPDId = ipdId;
+}
+
+<div class="container-fluid">
+
+    <form id="globalTokenForm">@Html.AntiForgeryToken()</form>
+    <div id="pageAlert"></div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-flask me-1"></i>
+                <strong>Inpatient Lab Reports</strong>
+                <span class="ms-2 opacity-75">
+                    @Model.Admission.PatientName
+                    <small>(Adm# @Model.Admission.AdmissionNumber)</small>
+                </span>
+            </div>
+            <div>
+                <a asp-controller="LabReports" asp-action="Print" asp-route-ipdId="@ipdId" target="_blank" class="btn btn-sm btn-light me-1">
+                    <i class="fas fa-print me-1"></i> Print
+                </a>
+                <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <ul class="nav nav-tabs mb-0" id="dayTabs" role="tablist">
+                    @for (int day = 1; day <= Model.TotalDays; day++)
+                    {
+                        var dayDate = Model.Admission.AdmissionDateTime.Date.AddDays(day - 1);
+                        bool isActive = day == Model.ActiveDay;
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(isActive ? "active" : "") day-tab-btn" data-day="@day" type="button">
+                                Day @day
+                                <div class="small @(isActive ? "text-white-50" : "text-muted")">@dayDate.ToString("dd MMM")</div>
+                            </button>
+                        </li>
+                    }
+                </ul>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#manageParametersModal">
+                        <i class="fas fa-sliders-h me-1"></i> Manage Parameters
+                    </button>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addLabValueModal">
+                        <i class="fas fa-plus me-1"></i> Add New Value
+                    </button>
+                </div>
+            </div>
+
+            <div class="border border-top-0 rounded-bottom p-3">
+                <div id="labValuesContainer">
+                    @await Html.PartialAsync("_LabValuesPartial", Model.Values)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@* ============================= MANAGE PARAMETERS (master catalog) ============================= *@
+<div class="modal fade" id="manageParametersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Lab Parameter</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="mpNewCategoryName" class="form-control" placeholder="e.g. CBC, LFT, KFT">
+                            <button class="btn btn-primary" type="button" id="mpAddCategoryBtn"><i class="fas fa-arrow-right"></i></button>
+                        </div>
+                        <div id="mpCategoryList" class="list-group" style="max-height:280px; overflow-y:auto;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Parameter <span id="mpSelectedCategoryLabel" class="text-muted small"></span></label>
+                        <div class="row g-1 mb-1">
+                            <div class="col-6"><input type="text" id="mpNewParamName" class="form-control form-control-sm" placeholder="Parameter name"></div>
+                            <div class="col-3"><input type="text" id="mpNewParamUnit" class="form-control form-control-sm" placeholder="Unit"></div>
+                            <div class="col-3">
+                                <button class="btn btn-primary btn-sm w-100" type="button" id="mpAddParamBtn"><i class="fas fa-arrow-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="row g-1 mb-1">
+                            <div class="col-4"><input type="text" id="mpNewParamRangeLow" class="form-control form-control-sm" placeholder="Range low"></div>
+                            <div class="col-4"><input type="text" id="mpNewParamRangeHigh" class="form-control form-control-sm" placeholder="Range high"></div>
+                            <div class="col-4"><input type="text" id="mpNewParamRangeText" class="form-control form-control-sm" placeholder="or text e.g. Negative"></div>
+                        </div>
+                        <label class="form-label small text-danger mb-1">Critical Thresholds (life-threatening - optional, tighter than normal range)</label>
+                        <div class="row g-1 mb-2">
+                            <div class="col-4"><input type="text" id="mpNewParamCriticalLow" class="form-control form-control-sm border-danger" placeholder="Critical low"></div>
+                            <div class="col-4"><input type="text" id="mpNewParamCriticalHigh" class="form-control form-control-sm border-danger" placeholder="Critical high"></div>
+                            <div class="col-4"><input type="text" id="mpNewParamCriticalText" class="form-control form-control-sm border-danger" placeholder="or text e.g. Positive"></div>
+                        </div>
+                        <div id="mpParamList" class="list-group" style="max-height:220px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ============================= ADD LAB VALUE ============================= *@
+<div class="modal fade" id="addLabValueModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addLabValueForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ipdId" value="@ipdId" />
+                <input type="hidden" name="dayNumber" id="lvDayNumber" value="@Model.ActiveDay" />
+                <div class="modal-header"><h5 class="modal-title">Add New Lab Value</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-light border py-1 px-2 mb-3 small" id="lvAddingForDayLabel">Adding for <strong>Day @Model.ActiveDay</strong></div>
+                    <label class="form-label">Category</label>
+                    <select id="lvCategorySelect" class="form-select mb-3">
+                        <option value="">-- Select Category --</option>
+                    </select>
+                    <div id="lvParameterInputs">
+                        <div class="text-muted small">Select a category above to see its parameters.</div>
+                    </div>
+                    <label class="form-label mt-3">Entered By (Doctor)</label>
+                    <select name="doctorId" class="form-select" asp-items="ViewBag.Doctors"><option value="">-- Select Doctor --</option></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i> Submit</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= EDIT LAB VALUE ============================= *@
+<div class="modal fade" id="editLabValueModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editLabValueForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="editLvId" />
+                <div class="modal-header"><h5 class="modal-title">Edit Value - <span id="editLvParamLabel"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label">Value</label>
+                    <input type="text" name="resultValue" id="editLvValue" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="editLvSubmitBtn" class="btn btn-primary"><i class="fas fa-check me-1"></i> Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ============================= CRITICAL VALUE - NOTIFY DOCTOR ============================= *@
+<div class="modal fade" id="notifyCriticalModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <form id="notifyCriticalForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-1"></i> Critical Value - Notify Doctor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger fw-bold mb-2">The following result(s) are outside the critical threshold and must be reported to the doctor immediately:</p>
+                    <ul id="notifyCriticalList" class="mb-3"></ul>
+                    <label class="form-label">Notified To (Doctor)</label>
+                    <select id="notifyCriticalDoctorId" class="form-select mb-2" asp-items="ViewBag.Doctors" required><option value="">-- Select Doctor --</option></select>
+                    <label class="form-label">Remarks (optional)</label>
+                    <input type="text" id="notifyCriticalRemarks" class="form-control" placeholder="e.g. Informed telephonically, advised repeat test">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="notifyCriticalSubmitBtn" class="btn btn-danger"><i class="fas fa-check me-1"></i> Confirm Notified</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">I'll do this later</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var ipdId = @ipdId;
+        var currentDay = @Model.ActiveDay;
+
+        function getGlobalToken() {
+            return document.querySelector('#globalTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+        function showAlert(message, type) {
+            var box = document.getElementById('pageAlert');
+            box.innerHTML = '<div class="alert alert-' + (type || 'success') + ' alert-dismissible fade show py-2">' +
+                message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { box.innerHTML = ''; }, 4000);
+        }
+        function ajaxSubmitForm(url, formEl, callback) {
+            var fd = new FormData(formEl);
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function ajaxPost(url, dataObj, callback) {
+            var fd = new FormData();
+            for (var k in dataObj) fd.append(k, dataObj[k]);
+            fd.append('__RequestVerificationToken', getGlobalToken());
+            fetch(url, { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { callback(res); }
+                    else { showAlert(res.message || 'Something went wrong.', 'danger'); }
+                })
+                .catch(function (err) { showAlert('Request failed: ' + err, 'danger'); });
+        }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            var inst = bootstrap.Modal.getInstance(el);
+            if (inst) { inst.hide(); }
+            cleanupStrayModalBackdrops();
+        }
+        function cleanupStrayModalBackdrops() {
+            setTimeout(function () {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function (bd) { bd.remove(); });
+                }
+            }, 350);
+        }
+        document.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrops);
+
+        var labValuesPartialUrl = '@Url.Action("LabValuesPartial", "LabReports")';
+        function reloadLabValues() {
+            fetch(labValuesPartialUrl + '?ipdId=' + ipdId + '&dayNumber=' + currentDay, { cache: 'no-store' })
+                .then(function (r) { return r.text(); })
+                .then(function (html) { document.getElementById('labValuesContainer').innerHTML = html; })
+                .catch(function () { showAlert('Could not refresh lab values. Please reload the page.', 'danger'); });
+        }
+
+        function loadDay(day) {
+            currentDay = day;
+            document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+                btn.classList.toggle('active', parseInt(btn.dataset.day) === day);
+            });
+            document.getElementById('lvDayNumber').value = day;
+            document.getElementById('lvAddingForDayLabel').innerHTML = 'Adding for <strong>Day ' + day + '</strong>';
+            reloadLabValues();
+        }
+        document.querySelectorAll('.day-tab-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { loadDay(parseInt(btn.dataset.day)); });
+        });
+
+        // =====================================================================
+        // MANAGE PARAMETERS (master catalog: Category -> Parameter)
+        // =====================================================================
+        var mpSelectedCategoryId = null;
+        var mpCategoryList = document.getElementById('mpCategoryList');
+        var mpParamList = document.getElementById('mpParamList');
+
+        function mpLoadCategories(afterLoad) {
+            fetch('@Url.Action("GetCategories", "LabReports")', { cache: 'no-store' })
+                .then(r => r.json())
+                .then(function (cats) {
+                    mpCategoryList.innerHTML = '';
+                    var lvSelect = document.getElementById('lvCategorySelect');
+                    var previousLvValue = lvSelect.value;
+                    lvSelect.innerHTML = '<option value="">-- Select Category --</option>';
+                    (cats || []).forEach(function (c) {
+                        var a = document.createElement('a');
+                        a.href = '#'; a.className = 'list-group-item list-group-item-action py-1';
+                        a.textContent = c.categoryName;
+                        a.dataset.id = c.categoryId;
+                        a.onclick = function (e) {
+                            e.preventDefault();
+                            mpCategoryList.querySelectorAll('a').forEach(x => x.classList.remove('active'));
+                            a.classList.add('active');
+                            mpSelectedCategoryId = c.categoryId;
+                            document.getElementById('mpSelectedCategoryLabel').textContent = '(' + c.categoryName + ')';
+                            mpLoadParameters(c.categoryId);
+                        };
+                        mpCategoryList.appendChild(a);
+
+                        var opt = document.createElement('option');
+                        opt.value = c.categoryId; opt.textContent = c.categoryName;
+                        lvSelect.appendChild(opt);
+                    });
+                    lvSelect.value = previousLvValue; // keep whatever was picked, if it still exists
+                    if (typeof afterLoad === 'function') afterLoad();
+                });
+        }
+
+        function mpLoadParameters(categoryId) {
+            fetch('@Url.Action("GetParametersByCategory", "LabReports")?categoryId=' + categoryId, { cache: 'no-store' })
+                .then(r => r.json())
+                .then(function (params) {
+                    mpParamList.innerHTML = '';
+                    (params || []).forEach(function (p) {
+                        var row = document.createElement('div');
+                        row.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
+                        row.innerHTML = '<span>' + p.parameterName + (p.unit ? ' <small class="text-muted">(' + p.unit + ')</small>' : '') + '</span>';
+                        var btnGroup = document.createElement('span');
+                        var delBtn = document.createElement('button');
+                        delBtn.type = 'button'; delBtn.className = 'btn btn-sm btn-outline-danger';
+                        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        delBtn.onclick = function () {
+                            if (!confirm('Delete this parameter?')) return;
+                            ajaxPost('@Url.Action("DeleteParameter", "LabReports")', { parameterId: p.parameterId },
+                                function () { mpLoadParameters(categoryId); });
+                        };
+                        btnGroup.appendChild(delBtn);
+                        row.appendChild(btnGroup);
+                        mpParamList.appendChild(row);
+                    });
+                });
+        }
+
+        document.getElementById('mpAddCategoryBtn').addEventListener('click', function () {
+            var name = document.getElementById('mpNewCategoryName').value.trim();
+            if (!name) return;
+            ajaxPost('@Url.Action("AddCategory", "LabReports")', { categoryName: name }, function (res) {
+                document.getElementById('mpNewCategoryName').value = '';
+                mpLoadCategories(function () {
+                    // Auto-select the category we just created, so you can add
+                    // its parameters right away without clicking it again.
+                    var newItem = mpCategoryList.querySelector('a[data-id="' + res.id + '"]');
+                    if (newItem) newItem.click();
+                });
+            });
+        });
+
+        document.getElementById('mpAddParamBtn').addEventListener('click', function () {
+            if (!mpSelectedCategoryId) { showAlert('Please select a category first (click it in the list on the left).', 'warning'); return; }
+            var name = document.getElementById('mpNewParamName').value.trim();
+            if (!name) return;
+            ajaxPost('@Url.Action("AddParameter", "LabReports")', {
+                CategoryId: mpSelectedCategoryId,
+                ParameterName: name,
+                Unit: document.getElementById('mpNewParamUnit').value.trim(),
+                NormalRangeLow: document.getElementById('mpNewParamRangeLow').value.trim(),
+                NormalRangeHigh: document.getElementById('mpNewParamRangeHigh').value.trim(),
+                NormalRangeText: document.getElementById('mpNewParamRangeText').value.trim(),
+                CriticalLow: document.getElementById('mpNewParamCriticalLow').value.trim(),
+                CriticalHigh: document.getElementById('mpNewParamCriticalHigh').value.trim(),
+                CriticalText: document.getElementById('mpNewParamCriticalText').value.trim()
+            }, function () {
+                document.getElementById('mpNewParamName').value = '';
+                document.getElementById('mpNewParamUnit').value = '';
+                document.getElementById('mpNewParamRangeLow').value = '';
+                document.getElementById('mpNewParamRangeHigh').value = '';
+                document.getElementById('mpNewParamRangeText').value = '';
+                document.getElementById('mpNewParamCriticalLow').value = '';
+                document.getElementById('mpNewParamCriticalHigh').value = '';
+                document.getElementById('mpNewParamCriticalText').value = '';
+                mpLoadParameters(mpSelectedCategoryId);
+            });
+        });
+
+        // Load categories as soon as the page loads (not only when Manage
+        // Parameters happens to be opened first) - this is what was leaving
+        // the Add New Lab Value category dropdown empty.
+        document.getElementById('manageParametersModal').addEventListener('shown.bs.modal', function () { mpLoadCategories(); });
+        document.getElementById('addLabValueModal').addEventListener('shown.bs.modal', function () { mpLoadCategories(); });
+        mpLoadCategories();
+
+        // =====================================================================
+        // ADD LAB VALUE (pick category -> dynamic parameter inputs -> submit all)
+        // =====================================================================
+        var lvCategorySelect = document.getElementById('lvCategorySelect');
+        var lvParameterInputs = document.getElementById('lvParameterInputs');
+
+        function lvLoadParameters() {
+            var categoryId = lvCategorySelect.value;
+            if (!categoryId) { lvParameterInputs.innerHTML = '<div class="text-muted small">Select a category above to see its parameters.</div>'; return; }
+            fetch('@Url.Action("GetParametersByCategory", "LabReports")?categoryId=' + categoryId, { cache: 'no-store' })
+                .then(r => r.json())
+                .then(function (params) {
+                    lvParameterInputs.innerHTML = '';
+                    if (!params || params.length === 0) {
+                        lvParameterInputs.innerHTML = '<div class="text-muted small">No parameters configured for this category yet - add some via "Manage Parameters".</div>';
+                        return;
+                    }
+                    params.forEach(function (p, idx) {
+                        var row = document.createElement('div');
+                        row.className = 'row g-2 align-items-center mb-2';
+                        var range = p.normalRangeText ? p.normalRangeText : (p.normalRangeLow != null && p.normalRangeHigh != null ? p.normalRangeLow + '-' + p.normalRangeHigh : '');
+                        // The range is shown ONCE, as a plain muted hint label to the
+                        // right - the input box itself always starts genuinely empty
+                        // (no placeholder text that could be mistaken for a real value).
+                        row.innerHTML =
+                            '<div class="col-5">' + p.parameterName + (p.unit ? ' <small class="text-muted">(' + p.unit + ')</small>' : '') + '</div>' +
+                            '<div class="col-4"><input type="text" name="values[' + idx + '].ResultValue" class="form-control form-control-sm" placeholder="Value"></div>' +
+                            '<div class="col-3 text-muted small">' + (range ? 'Normal: ' + range : '') + '</div>' +
+                            '<input type="hidden" name="values[' + idx + '].ParameterId" value="' + p.parameterId + '">';
+                        lvParameterInputs.appendChild(row);
+                    });
+                });
+        }
+
+        lvCategorySelect.addEventListener('change', lvLoadParameters);
+
+        // Re-fetch the parameter list every time this modal opens - even if the
+        // category dropdown already had a value selected from before (in which
+        // case "change" never fires again on its own) - so a parameter you just
+        // added via Manage Parameters shows up immediately, no page reload needed.
+        document.getElementById('addLabValueModal').addEventListener('shown.bs.modal', lvLoadParameters);
+
+        document.getElementById('addLabValueForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            ajaxSubmitForm('@Url.Action("AddLabValues", "LabReports")', this, function (res) {
+                reloadLabValues();
+                showAlert(res.message || 'Values saved.');
+                closeModal('addLabValueModal');
+                lvCategorySelect.value = '';
+                lvParameterInputs.innerHTML = '<div class="text-muted small">Select a category above to see its parameters.</div>';
+
+                // If any just-saved result is CRITICAL, raise the notify-doctor
+                // prompt immediately - don't wait for someone to spot a badge.
+                if (res.criticalAlerts && res.criticalAlerts.length > 0) {
+                    openNotifyCriticalModal(res.criticalAlerts.map(function (a) {
+                        return { id: a.labValueId, parameterName: a.parameterName, value: a.resultValue, unit: a.unit };
+                    }));
+                }
+            });
+        });
+
+        // =====================================================================
+        // EDIT / DELETE / NOTIFY CRITICAL for lab values
+        // =====================================================================
+        document.getElementById('editLvSubmitBtn').addEventListener('click', function () {
+            ajaxSubmitForm('@Url.Action("EditLabValue", "LabReports")', document.getElementById('editLabValueForm'), function () {
+                reloadLabValues(); showAlert('Value updated.'); closeModal('editLabValueModal');
+            });
+        });
+
+        var notifyCriticalPending = []; // [{ id, parameterName, value, unit }]
+
+        function openNotifyCriticalModal(alerts) {
+            notifyCriticalPending = alerts;
+            var list = document.getElementById('notifyCriticalList');
+            list.innerHTML = '';
+            alerts.forEach(function (a) {
+                var li = document.createElement('li');
+                li.innerHTML = '<strong>' + a.parameterName + '</strong>: ' + a.value + (a.unit ? ' ' + a.unit : '');
+                list.appendChild(li);
+            });
+            document.getElementById('notifyCriticalDoctorId').value = '';
+            document.getElementById('notifyCriticalRemarks').value = '';
+            new bootstrap.Modal(document.getElementById('notifyCriticalModal')).show();
+        }
+
+        document.getElementById('notifyCriticalSubmitBtn').addEventListener('click', function () {
+            var doctorId = document.getElementById('notifyCriticalDoctorId').value;
+            if (!doctorId) { showAlert('Please select which doctor was notified.', 'warning'); return; }
+            var remarks = document.getElementById('notifyCriticalRemarks').value;
+            var token = document.querySelector('#notifyCriticalForm input[name="__RequestVerificationToken"]').value;
+
+            var calls = notifyCriticalPending.map(function (a) {
+                var fd = new FormData();
+                fd.append('labValueId', a.id);
+                fd.append('notifiedToDoctorId', doctorId);
+                fd.append('remarks', remarks);
+                fd.append('__RequestVerificationToken', token);
+                return fetch('@Url.Action("NotifyCritical", "LabReports")', { method: 'POST', body: fd }).then(r => r.json());
+            });
+
+            Promise.all(calls).then(function (results) {
+                var failed = results.filter(r => !r.success);
+                if (failed.length > 0) { showAlert(failed[0].message || 'Some notifications failed to save.', 'danger'); }
+                else { showAlert('Critical value notification recorded.'); }
+                reloadLabValues();
+                closeModal('notifyCriticalModal');
+            });
+        });
+
+        document.getElementById('labValuesContainer').addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.lv-edit-btn');
+            if (editBtn) {
+                document.getElementById('editLvId').value = editBtn.dataset.id;
+                document.getElementById('editLvParamLabel').textContent = editBtn.dataset.parameterName;
+                document.getElementById('editLvValue').value = editBtn.dataset.value;
+                new bootstrap.Modal(document.getElementById('editLabValueModal')).show();
+                return;
+            }
+            var delBtn = e.target.closest('.lv-delete-btn');
+            if (delBtn) {
+                if (!confirm('Delete this lab value?')) return;
+                ajaxPost('@Url.Action("DeleteLabValue", "LabReports")',
+                    { id: delBtn.dataset.id, ipdId: ipdId },
+                    function () { reloadLabValues(); showAlert('Value deleted.'); });
+                return;
+            }
+            var notifyBtn = e.target.closest('.lv-notify-btn');
+            if (notifyBtn) {
+                openNotifyCriticalModal([{
+                    id: notifyBtn.dataset.id,
+                    parameterName: notifyBtn.dataset.parameterName,
+                    value: notifyBtn.dataset.value,
+                    unit: notifyBtn.dataset.unit
+                }]);
+            }
+        });
+    </script>
+}

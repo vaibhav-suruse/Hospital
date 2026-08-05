@@ -1,0 +1,100 @@
+﻿@using WebApplicationSampleTest2.Models
+@model Symptom
+@{
+    ViewData["Title"] = Model.SymptomId > 0 ? "Edit Symptom" : "Add Symptom";
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="custom-validation" asp-action="Create" method="post" id="symptomForm">
+                    @Html.HiddenFor(model => model.SymptomId)
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="SymptomName" class="form-label">Symptom Name</label>
+                                <input type="text" asp-for="SymptomName" id="SymptomName" class="form-control" placeholder="Enter Symptom Name" value="@Model.SymptomName" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="SubName" class="form-label">Sub Name</label>
+                                <input type="text" asp-for="SubName" id="SubName" class="form-control" placeholder="Enter Sub Name" value="@Model.SubName" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="Description" class="form-label">Description</label>
+                                <textarea asp-for="Description" id="Description" class="form-control" rows="3" placeholder="Enter Description" required>@Model.Description</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        @if (Model.SymptomId > 0)
+                        {
+                            <button type="submit" class="btn btn-primary w-md">Update</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-primary w-md">Submit</button>
+                        }
+                        <a asp-controller="Symptom" asp-action="Index" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script src="~/js/ShowNotification.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            // 🔥 Allow only valid characters while typing
+            $("#SymptomName, #SubName").on("input", function () {
+                let value = $(this).val();
+                value = value.replace(/[^a-zA-Z0-9 \-(),.]/g, '');
+                $(this).val(value);
+            });
+
+            $("#symptomForm").on("submit", function (e) {
+                let isValid = true;
+
+                let symptom = $("#SymptomName").val().trim();
+                let sub = $("#SubName").val().trim();
+                let desc = $("#Description").val().trim();
+
+                // Symptom Name
+                if (symptom === "" || !/^[a-zA-Z0-9 \-(),.]+$/.test(symptom)) {
+                    isValid = false;
+                }
+
+                // Sub Name
+                if (sub === "" || !/^[a-zA-Z0-9 \-(),.]+$/.test(sub)) {
+                    isValid = false;
+                }
+
+                // Description
+                if (desc === "") {
+                    isValid = false;
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+        });
+    </script>
+}

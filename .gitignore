@@ -1,0 +1,24 @@
+# Dependencies
+/bin/
+/obj/
+
+# Local dev / user-specific settings — these may contain secrets
+appsettings.Development.json
+appsettings.Production.json
+
+# Logs
+Logs/
+logs/
+*.log
+
+# Temp / scratch
+/tmp/
+*.user
+
+# IDE
+.vs/
+.idea/
+*.user
+
+# Aider
+.aider*

@@ -1,0 +1,127 @@
+﻿@model WebApplicationSampleTest2.Models.IPDBillVM
+
+<div class="card border sticky-top" style="top:80px;">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Bill Summary</h5>
+    </div>
+    <div class="card-body p-2">
+        <table class="table table-sm mb-0">
+            <tr>
+                <td>🛏 Bed</td>
+                <td class="text-end" id="sumBed">₹@Model.TotalBedCharges.ToString("0.00")</td>
+            </tr>
+            <tr>
+                <td>👨‍⚕️ Doctor</td>
+                <td class="text-end" id="sumDoc">₹0.00</td>
+            </tr>
+            <tr>
+                <td>💊 Medicines</td>
+                <td class="text-end" id="sumMed">₹0.00</td>
+            </tr>
+            <tr>
+                <td>🔬 Investigations</td>
+                <td class="text-end" id="sumInv">₹0.00</td>
+            </tr>
+            <tr>
+                <td>📋 Discharge Med</td>
+                <td class="text-end" id="sumDMed">₹0.00</td>
+            </tr>
+            <tr>
+                <td>🩺 Nursing</td>
+                <td class="text-end" id="sumNurse">₹@Model.TotalNursingCharges.ToString("0.00")</td>
+            </tr>
+            <tr>
+                <td>🏥 Operations</td>
+                <td class="text-end" id="sumOp">₹@Model.TotalOperationCharges.ToString("0.00")</td>
+            </tr>
+            <tr>
+                <td>➕ Other</td>
+                <td class="text-end" id="sumOther">₹0.00</td>
+            </tr>
+            <tr class="table-light">
+                <td><strong>Sub Total</strong></td>
+                <td class="text-end"><strong id="sumSubTotal">₹@Model.TotalBedCharges.ToString("0.00")</strong></td>
+            </tr>
+            <tr>
+                <td>
+                    Discount
+                    <input type="number" id="txtDiscountPct"
+                           class="form-control form-control-sm d-inline"
+                           style="width:55px;" value="0" min="0" max="100" step="0.5"
+                           onchange="recalculate()" />
+                    %
+                </td>
+                <td class="text-end text-danger" id="sumDiscount">-₹0.00</td>
+            </tr>
+            <tr class="table-primary">
+                <td><strong>Total</strong></td>
+                <td class="text-end">
+                    <strong id="sumTotal" style="font-size:16px;">
+                        ₹@Model.TotalBedCharges.ToString("0.00")
+                    </strong>
+                </td>
+            </tr>
+        </table>
+
+        @if (!Model.BillId.HasValue)
+        {
+            <button class="btn btn-primary w-100 mt-2" onclick="saveBill()">
+                <i class="fas fa-save me-1"></i> Generate Bill
+            </button>
+        }
+        else
+        {
+            <hr />
+            <div class="alert alert-success py-2 mb-2">
+                <i class="fas fa-check-circle me-1"></i>
+                <strong>Bill No: @Model.BillNumber</strong><br />
+                Status: <strong>@Model.PaymentStatus</strong>
+                &nbsp;|&nbsp; Total: <strong>₹@Model.TotalAmount.ToString("0.00")</strong><br />
+                Paid: <strong class="text-success">₹@Model.PaidAmount.ToString("0.00")</strong>
+                &nbsp;|&nbsp; Due: <strong class="text-danger">₹@Model.DueAmount.ToString("0.00")</strong>
+            </div>
+
+            <h6>Add Payment</h6>
+            <input type="number" id="txtPayAmt" class="form-control mb-1"
+                   placeholder="Amount" min="0" step="0.01" />
+            <select id="ddlPayMode" class="form-control mb-1">
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="UPI">UPI</option>
+                <option value="NetBanking">Net Banking</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Insurance">Insurance</option>
+            </select>
+            <input type="text" id="txtTransRef" class="form-control mb-1"
+                   placeholder="Transaction Ref (optional)" />
+            <button class="btn btn-primary w-100" onclick="addPayment(@Model.BillId)">
+                💰 Add Payment
+            </button>
+
+            <hr />
+            <h6>Payment History</h6>
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Date</th><th>Mode</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Payments != null && Model.Payments.Any())
+                    {
+                        foreach (var p in Model.Payments)
+                        {
+                            <tr>
+                                <td>@p.PaymentDate.ToString("dd-MM-yy")</td>
+                                <td>@p.PaymentMode</td>
+                                <td>₹@p.Amount.ToString("0.00")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="3" class="text-center text-muted">No payments yet</td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

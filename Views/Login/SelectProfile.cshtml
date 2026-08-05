@@ -1,0 +1,199 @@
+﻿@using Microsoft.AspNetCore.Http
+@model List<WebApplicationSampleTest2.Models.PatientProfileVM>
+@{
+    ViewData["Title"] = "Select Profile";
+    Layout = "~/Views/Shared/_BlankLayout.cshtml";
+    string accountName = Context.Session
+        .GetString("AccountName") ?? "Patient";
+}
+
+<div class="account-pages my-5 pt-sm-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <div class="col-7">
+                                <div class="text-primary p-4">
+                                    <h5 class="text-primary">
+                                        Welcome, @accountName
+                                    </h5>
+                                    <p>Select a profile to continue</p>
+                                </div>
+                            </div>
+                            <div class="col-5 align-self-end">
+                                <img src="~/assets/images/profile-img.png"
+                                     class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <div class="p-3">
+
+                            @if (TempData["Error"] != null)
+                            {
+                                <div class="alert alert-danger">
+                                    @TempData["Error"]
+                                </div>
+                            }
+
+                            @if (TempData["Success"] != null)
+                            {
+                                <div class="alert alert-success">
+                                    @TempData["Success"]
+                                </div>
+                            }
+
+                            @if (Model == null ||
+                                 Model.Count == 0)
+                            {
+                                <!-- No profiles yet -->
+                                <div class="text-center py-3">
+                                    <div class="avatar-sm mx-auto mb-3">
+                                        <span class="avatar-title
+                                                     rounded-circle
+                                                     bg-primary bg-soft">
+                                            <i class="bx bx-user
+                                                       text-primary
+                                                       font-size-24"></i>
+                                        </span>
+                                    </div>
+                                    <h6>No profiles found</h6>
+                                    <p class="text-muted small">
+                                        You don't have any hospital
+                                        records yet. Add a family
+                                        member or book your first
+                                        appointment.
+                                    </p>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Show existing profiles -->
+                                <p class="text-muted mb-3 small">
+                                    Select whose records to view:
+                                </p>
+
+                                @foreach (var profile in Model)
+                                {
+                                    <form asp-action="SelectProfile"
+                                          asp-controller="Login"
+                                          method="post"
+                                          class="mb-2">
+                                        <input type="hidden"
+                                               name="patientId"
+                                               value="@profile.PatientId" />
+                                        <button type="submit"
+                                                class="btn btn-outline-primary
+                                                       w-100 text-start p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm me-3 flex-shrink-0">
+                                                    <span class="avatar-title
+                                                                 rounded-circle
+                                                                 bg-primary
+                                                                 bg-soft
+                                                                 text-primary
+                                                                 font-size-14">
+                                                        @profile.Initials
+                                                    </span>
+                                                </div>
+                                                <div class="flex-grow-1 text-start">
+                                                    <h6 class="mb-0">
+                                                        @profile.FullName
+                                                    </h6>
+                                                    <small class="text-muted">
+                                                        @if (!string.IsNullOrEmpty(
+                                                            profile.Relation) &&
+                                                            profile.Relation != "Self")
+                                                        {
+                                                            <span class="badge
+                                                                         bg-warning
+                                                                         text-dark
+                                                                         me-1">
+                                                                @profile.Relation
+                                                            </span>
+                                                        }
+                                                        <span class="badge
+                                                                     bg-primary
+                                                                     bg-soft
+                                                                     text-primary">
+                                                            @profile.HospitalName
+                                                        </span>
+                                                    </small>
+                                                </div>
+                                                <i class="mdi mdi-chevron-right
+                                                           text-muted ms-2"></i>
+                                            </div>
+                                        </button>
+                                    </form>
+                                }
+                            }
+
+                            <!-- Add Family Member Button -->
+                            <!-- Always visible -->
+                            <a asp-action="AddFamilyMember"
+                               asp-controller="Login"
+                               class="btn btn-outline-secondary
+                                      w-100 p-3 mt-2 text-start">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3 flex-shrink-0">
+                                        <span class="avatar-title
+                                                     rounded-circle
+                                                     bg-light
+                                                     text-dark
+                                                     font-size-20">
+                                            +
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">
+                                            Add Family Member
+                                        </h6>
+                                        <small class="text-muted">
+                                            Add mother, father, spouse etc.
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Go to Dashboard -->
+                            <!-- Only show if at least 1 profile -->
+                            @* @if (Model != null && Model.Count > 0)
+                            {
+                                <div class="text-center mt-3">
+                                    <a asp-action="Dashboard"
+                                       asp-controller="PatientPortal"
+                                       class="text-muted small">
+                                        Skip → Go to Dashboard
+                                    </a>
+                                </div>
+                            }
+
+                            <!-- Book Appointment -->
+                            <div class="text-center mt-2">
+                                <a asp-action="BookAppointment"
+                                   asp-controller="PatientPortal"
+                                   class="text-primary small fw-medium">
+                                    <i class="bx bx-calendar-plus me-1"></i>
+                                    Book First Appointment
+                                </a>
+                            </div> *@
+
+                            <div class="text-center mt-3">
+                                <a asp-action="Logout"
+                                   asp-controller="PatientPortal"
+                                   class="text-muted small">
+                                    <i class="mdi mdi-logout me-1"></i>
+                                    Sign out
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,718 @@
+﻿@model WebApplicationSampleTest2.Models.DischargeModel
+
+<style>
+    /* ── Professional polish applied to every card/table on this page,
+       including the pre-existing ones - CSS only, no markup changes,
+       so nothing that already works can break. ── */
+    .card.border-0.shadow-sm {
+        border-radius: 12px !important;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(15,23,42,0.07) !important;
+    }
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+        border: none;
+    }
+    .card-header { font-weight: 600; letter-spacing: .2px; }
+    .form-label strong { color: #1e293b; font-weight: 600; font-size: .9rem; }
+    table.table thead th, table.table thead.table-light th {
+        background: #f8fafc; font-size: .72rem; text-transform: uppercase;
+        letter-spacing: .5px; color: #64748b; font-weight: 700; border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* ── Allergy banner ── */
+    .allergy-banner { background: #fff5f5; border: 2px solid #fca5a5; border-radius: 10px; padding: .85rem 1.1rem; }
+    .allergy-banner-title { color: #991b1b; font-weight: 700; margin-bottom: .5rem; font-size: .95rem; }
+    .allergy-chip {
+        display: inline-flex; align-items: center; gap: .4rem; background: #fff; border: 1px solid #fca5a5;
+        color: #7f1d1d; padding: .35rem .75rem; border-radius: 20px; font-size: .85rem; margin: .2rem .3rem .2rem 0; font-weight: 500;
+    }
+    .allergy-chip.chip-severe { background: #fef2f2; border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626 inset; }
+    .chip-severity { font-weight: 700; margin-left: .2rem; }
+    .no-allergy-banner {
+        display: inline-flex; align-items: center; background: #f0fdf4; border: 1px solid #86efac;
+        color: #166534; padding: .5rem 1rem; border-radius: 8px; font-size: .88rem; font-weight: 500;
+    }
+
+    /* ── Clinical background reference card ── */
+    .clinical-bg-subheading {
+        font-size: .78rem; text-transform: uppercase; letter-spacing: .5px; color: #64748b;
+        font-weight: 700; margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem;
+    }
+    .dx-pill {
+        display: inline-block; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;
+        padding: .3rem .7rem; border-radius: 20px; font-size: .85rem; margin: .15rem .25rem .15rem 0;
+    }
+    .dx-pill.dx-final { background: #f0fdf4; border-color: #86efac; color: #14532d; }
+</style>
+
+<div class="container-fluid">
+
+    @* ── TOP BAR ── *@
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">
+            <i class="fas fa-sign-out-alt me-2 text-primary"></i>
+            Patient Discharge
+        </h4>
+        <a asp-controller="IPDAdmission"
+           asp-action="Details"
+           asp-route-id="@Model.IPDId"
+           class="btn btn-secondary btn-sm">
+            ← Back
+        </a>
+    </div>
+
+    @* ── ALLERGY BANNER (always shown first - patient safety) ── *@
+    @{
+        var _allergies = ViewBag.Allergies as List<WebApplicationSampleTest2.Models.PatientAllergyModel>
+        ?? new List<WebApplicationSampleTest2.Models.PatientAllergyModel>();
+    }
+    <div class="mb-3">
+        @if (_allergies.Any())
+        {
+            <div class="allergy-banner">
+                <div class="allergy-banner-title"><i class="fas fa-exclamation-triangle me-2"></i>Known Allergies</div>
+                <div>
+                    @foreach (var a in _allergies)
+                    {
+                        <span class="allergy-chip @(a.Severity == "Severe" ? "chip-severe" : "")">
+                            <i class="fas fa-allergies"></i>
+                            <strong>@a.AllergyName</strong>
+                            @if (!string.IsNullOrWhiteSpace(a.Reaction))
+                            {
+                                <text> — @a.Reaction</text>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(a.Severity))
+                            {
+                                <span class="chip-severity">(@a.Severity)</span>
+                            }
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="no-allergy-banner"><i class="fas fa-check-circle me-2"></i>No known allergies recorded</div>
+        }
+    </div>
+
+    @* ── PATIENT INFO BAR ── *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-2">
+                    <i class="fas fa-user me-1"></i> <strong>Patient</strong>
+                </div>
+                <div class="card-body py-2">
+                    <p class="mb-1"><strong>@Model.PatientName</strong></p>
+                    <p class="mb-1 text-muted small">@Model.Gender &nbsp;|&nbsp; @Model.Age years</p>
+                    <p class="mb-0 text-muted small"><i class="fas fa-phone me-1"></i>@Model.PhoneNumber</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-2">
+                    <i class="fas fa-hospital me-1"></i> <strong>Admission</strong>
+                </div>
+                <div class="card-body py-2">
+                    <p class="mb-1"><strong>IPD No:</strong> @Model.AdmissionNumber</p>
+                    <p class="mb-1 text-muted small"><i class="fas fa-calendar me-1"></i>@Model.AdmissionDateTime.ToString("dd-MM-yyyy HH:mm")</p>
+                    <p class="mb-0"><span class="badge bg-primary">@Model.TotalDaysStayed days stay</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-2">
+                    <i class="fas fa-bed me-1"></i> <strong>Ward / Bed</strong>
+                </div>
+                <div class="card-body py-2">
+                    <p class="mb-1"><strong>Doctor:</strong> Dr. @Model.PrimaryDoctorName</p>
+                    <p class="mb-1"><strong>Ward:</strong> @(Model.WardName ?? "-")</p>
+                    <p class="mb-0"><strong>Bed:</strong> @(Model.BedNumber ?? "-")</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-2">
+                    <i class="fas fa-notes-medical me-1"></i> <strong>Reason for Admission</strong>
+                </div>
+                <div class="card-body py-2">
+                    <p class="mb-0 text-muted">
+                        @(string.IsNullOrEmpty(Model.ReasonForAdmission) ? "N/A" : Model.ReasonForAdmission)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── CLINICAL BACKGROUND (from admission - read-only reference) ── *@
+    @{
+        var _complaints = ViewBag.ChiefComplaints as List<WebApplicationSampleTest2.Models.ChiefComplaintModel>
+        ?? new List<WebApplicationSampleTest2.Models.ChiefComplaintModel>();
+        var _history = ViewBag.MedicalHistory as List<WebApplicationSampleTest2.Models.PatientMedicalHistoryModel>
+        ?? new List<WebApplicationSampleTest2.Models.PatientMedicalHistoryModel>();
+        var _admissionDx = ViewBag.AdmissionDiagnoses as List<WebApplicationSampleTest2.Models.DiagnosisModel>
+        ?? new List<WebApplicationSampleTest2.Models.DiagnosisModel>();
+    }
+    @if (_complaints.Any() || _history.Any() || _admissionDx.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-history me-2"></i><strong>Clinical Background</strong>
+                <span class="opacity-75 small ms-1">(from admission)</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    @if (_admissionDx.Any())
+                    {
+                        <div class="col-md-4">
+                            <div class="clinical-bg-subheading"><i class="fas fa-diagnoses"></i> Admission Diagnosis</div>
+                            @foreach (var dx in _admissionDx)
+                            {
+                                <span class="dx-pill">@dx.DiagnosisName</span>
+                            }
+                        </div>
+                    }
+                    @if (_complaints.Any())
+                    {
+                        <div class="col-md-4">
+                            <div class="clinical-bg-subheading"><i class="fas fa-comment-medical"></i> Chief Complaints</div>
+                            <ul class="mb-0 ps-3 small">
+                                @foreach (var c in _complaints)
+                                {
+                                    <li>
+                                        @c.ComplaintName
+                                        @if (c.DurationValue.HasValue)
+                                        {
+                                            <span class="text-muted">— @c.DurationValue @c.DurationUnit</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(c.Severity))
+                                        {
+                                            <span class="text-muted">(@c.Severity)</span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (_history.Any())
+                    {
+                        <div class="col-md-4">
+                            <div class="clinical-bg-subheading"><i class="fas fa-file-medical-alt"></i> Medical History</div>
+                            <ul class="mb-0 ps-3 small">
+                                @foreach (var h in _history)
+                                {
+                                    <li>
+                                        @h.HistoryType
+                                        @if (!string.IsNullOrWhiteSpace(h.Description))
+                                        {
+                                            <text>: @h.Description</text>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(h.Status))
+                                        {
+                                            <span class="text-muted">(@h.Status)</span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── MAIN FORM ── *@
+    <form asp-action="Discharge" method="post" id="dischargeForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="IPDId" />
+
+        @* ── DISCHARGE INFORMATION ── *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-sign-out-alt me-2"></i><strong>Discharge Information</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Discharging Doctor</strong> <span class="text-danger">*</span></label>
+                        <select asp-for="DischargeDoctorId" class="form-control">
+                            <option value="">-- Select Doctor --</option>
+                            @foreach (var d in ViewBag.Doctors as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                            {
+                                <option value="@d.Value">@d.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="DischargeDoctorId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Discharge Type</strong> <span class="text-danger">*</span></label>
+                        <select asp-for="DischargeType"
+                                class="form-control"
+                                asp-items="ViewBag.DischargeTypes"
+                                id="dischargeTypeSelect">
+                            <option value="">-- Select Type --</option>
+                        </select>
+                        <span asp-validation-for="DischargeType" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Discharge Condition</strong> <span class="text-danger">*</span></label>
+                        <select asp-for="DischargeCondition"
+                                class="form-control"
+                                asp-items="ViewBag.DischargeConditions"
+                                id="conditionSelect">
+                            <option value="">-- Select Condition --</option>
+                        </select>
+                        <span asp-validation-for="DischargeCondition" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div id="lamaWarning" class="alert alert-warning mt-3 d-none">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>LAMA:</strong> Patient is leaving against medical advice. Please ensure patient/relative signs the LAMA form.
+                </div>
+                <div id="deathWarning" class="alert alert-danger mt-3 d-none">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Death:</strong> Please ensure death certificate is issued. Condition will be set to Expired automatically.
+                </div>
+            </div>
+        </div>
+
+        @* ── MEDICAL SUMMARY ── *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-stethoscope me-2"></i><strong>Medical Summary</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Final Diagnosis</strong> <span class="text-danger">*</span></label>
+                        <textarea asp-for="FinalDiagnosis" class="form-control" rows="3"
+                                  placeholder="Enter final diagnosis..."></textarea>
+                        <span asp-validation-for="FinalDiagnosis" class="text-danger small"></span>
+                        @{
+                            var _dischargeDxList = ViewBag.DischargeDiagnoses as List<WebApplicationSampleTest2.Models.DiagnosisModel>;
+                            var _admissionDxList = ViewBag.AdmissionDiagnoses as List<WebApplicationSampleTest2.Models.DiagnosisModel>;
+                            bool _prefilledFromDischarge = _dischargeDxList != null && _dischargeDxList.Any();
+                            bool _prefilledFromAdmission = !_prefilledFromDischarge && _admissionDxList != null && _admissionDxList.Any();
+                        }
+                        @if (_prefilledFromDischarge)
+                        {
+                            <div class="form-text"><i class="fas fa-info-circle me-1"></i>Pre-filled from recorded discharge diagnosis — edit as needed.</div>
+                        }
+                        else if (_prefilledFromAdmission)
+                        {
+                            <div class="form-text"><i class="fas fa-info-circle me-1"></i>No discharge diagnosis recorded yet — pre-filled from admission diagnosis, please confirm or update.</div>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Treatment Summary</strong></label>
+                        <textarea asp-for="TreatmentSummary" class="form-control" rows="3"
+                                  placeholder="Brief summary of treatment given..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── CLINICAL REFERENCE (auto-pulled, read-only) ── *@
+        @{
+            var _procedures = ViewBag.Procedures as List<WebApplicationSampleTest2.Models.IPDOperationModel>
+            ?? new List<WebApplicationSampleTest2.Models.IPDOperationModel>();
+            var _labResults = ViewBag.LabResults as List<WebApplicationSampleTest2.Models.LabReportValueVM>
+            ?? new List<WebApplicationSampleTest2.Models.LabReportValueVM>();
+            var _radiologyReports = ViewBag.RadiologyReports as List<WebApplicationSampleTest2.Models.RadiologyReportModel>
+            ?? new List<WebApplicationSampleTest2.Models.RadiologyReportModel>();
+        }
+        @if (_procedures.Any() || _labResults.Any() || _radiologyReports.Any())
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light py-2">
+                    <button class="btn btn-sm btn-link text-decoration-none p-0" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#clinicalRefPanel">
+                        <i class="fas fa-chevron-down me-1"></i><strong>Clinical Reference</strong>
+                        <span class="text-muted small ms-1">(procedures, labs &amp; radiology from this stay, for reference)</span>
+                    </button>
+                </div>
+                <div class="collapse" id="clinicalRefPanel">
+                    <div class="card-body">
+                        @if (_procedures.Any())
+                        {
+                            <h6 class="text-muted">Procedures Performed</h6>
+                            <table class="table table-sm table-bordered mb-3">
+                                <thead class="table-light"><tr><th>Procedure</th><th>Date</th><th>Surgeon</th></tr></thead>
+                                <tbody>
+                                    @foreach (var proc in _procedures)
+                                    {
+                                        <tr>
+                                            <td>@proc.OperationName</td>
+                                            <td>@proc.OperationDate.ToString("dd MMM yyyy")</td>
+                                            <td>@(proc.SurgeonName ?? "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        @if (_labResults.Any())
+                        {
+                            <h6 class="text-muted">Lab Results</h6>
+                            <table class="table table-sm table-bordered mb-3">
+                                <thead class="table-light"><tr><th>Test</th><th>Result</th><th>Normal Range</th><th>Date</th></tr></thead>
+                                <tbody>
+                                    @foreach (var lab in _labResults)
+                                    {
+                                        <tr>
+                                            <td>@lab.ParameterName</td>
+                                            <td>@lab.ResultValue @lab.Unit</td>
+                                            <td>@(lab.NormalRangeText ?? "-")</td>
+                                            <td>@lab.ReportDate.ToString("dd MMM yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        @if (_radiologyReports.Any())
+                        {
+                            <h6 class="text-muted">Radiology Reports</h6>
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-light"><tr><th>Title</th><th>Radiologist</th><th>Date</th></tr></thead>
+                                <tbody>
+                                    @foreach (var rad in _radiologyReports)
+                                    {
+                                        <tr>
+                                            <td>@rad.Title</td>
+                                            <td>@(rad.RadiologistName ?? "-")</td>
+                                            <td>@rad.ReportDateTime.ToString("dd MMM yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* ── FOLLOW UP ── *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-calendar-check me-2"></i><strong>Follow-up</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Follow-up Date</strong></label>
+                        <input asp-for="FollowUpDate" type="date" class="form-control"
+                               min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Follow-up Doctor</strong></label>
+                        <select asp-for="FollowUpDoctorId" class="form-control">
+                            <option value="">-- Select Doctor --</option>
+                            @foreach (var d in ViewBag.Doctors as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                            {
+                                <option value="@d.Value">@d.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── DISCHARGE INSTRUCTIONS ── *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-clipboard-list me-2"></i><strong>Discharge Instructions</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Discharge Instructions</strong></label>
+                        <textarea asp-for="DischargeInstructions" class="form-control" rows="3"
+                                  placeholder="e.g. Take rest for 1 week..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Diet Instructions</strong></label>
+                        <textarea asp-for="DietInstructions" class="form-control" rows="3"
+                                  placeholder="e.g. Avoid spicy food, take soft diet..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Activity Restrictions</strong></label>
+                        <textarea asp-for="ActivityRestrictions" class="form-control" rows="3"
+                                  placeholder="e.g. No heavy lifting for 4 weeks..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Special Notes</strong></label>
+                        <textarea asp-for="SpecialNotes" class="form-control" rows="3"
+                                  placeholder="Any special notes for patient..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── DISCHARGE MEDICINES ── *@
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white py-2">
+                <i class="fas fa-pills me-2"></i>
+                <strong>Discharge Medicines</strong>
+                <small class="ms-2 fw-normal opacity-75">(Medicines patient will take after discharge)</small>
+            </div>
+            <div class="card-body">
+
+                @* Add row *@
+                <div class="card border mb-3">
+                    <div class="card-body py-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label"><strong>Medicine</strong></label>
+                                <select id="ddlMedicine" class="form-control">
+                                    <option value="">-- Select Medicine --</option>
+                                    @foreach (var m in ViewBag.Medicines as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                    {
+                                        <option value="@m.Value" data-name="@m.Text">@m.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label"><strong>Dosage</strong></label>
+                                <input type="text" id="txtDosage" class="form-control" placeholder="500mg" />
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label"><strong>Route</strong></label>
+                                <select id="ddlRoute" class="form-control">
+                                    <option value="Oral">Oral</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IM">IM</option>
+                                    <option value="Topical">Topical</option>
+                                    <option value="Sublingual">Sublingual</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block form-label"><strong>M</strong></label>
+                                <input type="checkbox" id="chkMorning" class="form-check-input" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block form-label"><strong>A</strong></label>
+                                <input type="checkbox" id="chkAfternoon" class="form-check-input" />
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <label class="d-block form-label"><strong>E</strong></label>
+                                <input type="checkbox" id="chkEvening" class="form-check-input" />
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label"><strong>Days</strong></label>
+                                <input type="number" id="txtDays" class="form-control" min="1" placeholder="7" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label"><strong>Instructions</strong></label>
+                                <input type="text" id="txtMedInstructions" class="form-control" placeholder="After food" />
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-primary w-100" onclick="addMedicineRow()">
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-sm" id="medicineTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Medicine</th>
+                            <th>Dosage</th>
+                            <th class="text-center">M</th>
+                            <th class="text-center">A</th>
+                            <th class="text-center">E</th>
+                            <th>Days</th>
+                            <th>Route</th>
+                            <th>Instructions</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicineTableBody">
+                        @if (Model.DischargeMedicines != null && Model.DischargeMedicines.Any())
+                        {
+                            int mi = 0;
+                            foreach (var med in Model.DischargeMedicines)
+                            {
+                                <tr id="medRow_@mi">
+                                    <td>@(mi + 1)</td>
+                                    <td>
+                                        <strong>@med.MedicineName</strong>
+                                        <input type="hidden" name="DischargeMedicines[@mi].MedicineId" value="@med.MedicineId" />
+                                        <input type="hidden" name="DischargeMedicines[@mi].MedicineName" value="@med.MedicineName" />
+                                    </td>
+                                    <td>
+                                        @(med.Dosage ?? "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Dosage" value="@med.Dosage" />
+                                    </td>
+                                    <td class="text-center">
+                                        @(med.Morning ? "✔" : "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Morning" value="@med.Morning.ToString().ToLower()" />
+                                    </td>
+                                    <td class="text-center">
+                                        @(med.Afternoon ? "✔" : "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Afternoon" value="@med.Afternoon.ToString().ToLower()" />
+                                    </td>
+                                    <td class="text-center">
+                                        @(med.Evening ? "✔" : "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Evening" value="@med.Evening.ToString().ToLower()" />
+                                    </td>
+                                    <td>
+                                        @(med.Days.HasValue? med.Days + "d" : "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Days" value="@med.Days" />
+                                    </td>
+                                    <td>
+                                        @(med.Route ?? "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Route" value="@med.Route" />
+                                    </td>
+                                    <td>
+                                        @(med.Instructions ?? "-")
+                                        <input type="hidden" name="DischargeMedicines[@mi].Instructions" value="@med.Instructions" />
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="removeMedicineRow('medRow_@mi')">
+                                            Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                mi++;
+                            }
+                        }
+                        else
+                        {
+                            <tr id="noMedRow">
+                                <td colspan="10" class="text-center text-muted py-3">
+                                    <i class="fas fa-pills me-1"></i> No medicines added yet
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* ── ACTION BUTTONS ── *@
+        <div class="d-flex justify-content-end gap-2 mt-2 mb-4">
+            <a asp-controller="IPDAdmission"
+               asp-action="Details"
+               asp-route-id="@Model.IPDId"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Are you sure you want to discharge this patient? This action cannot be undone.')">
+                <i class="fas fa-sign-out-alt me-1"></i> Discharge Patient
+            </button>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        var medRowIndex = @(Model.DischargeMedicines?.Count ?? 0);
+
+        document.getElementById('dischargeTypeSelect').addEventListener('change', function () {
+            var type = this.value;
+            document.getElementById('lamaWarning').classList.add('d-none');
+            document.getElementById('deathWarning').classList.add('d-none');
+            if (type === 'LAMA') {
+                document.getElementById('lamaWarning').classList.remove('d-none');
+            } else if (type === 'Death') {
+                document.getElementById('deathWarning').classList.remove('d-none');
+                document.getElementById('conditionSelect').value = 'Expired';
+            }
+        });
+
+        @if (TempData["Error"] != null)
+        {
+                    <text>toastr.error("@TempData["Error"]");</text>
+        }
+
+        function addMedicineRow() {
+            var ddl = document.getElementById('ddlMedicine');
+            var medicineId = ddl.value;
+            var medicineName = ddl.options[ddl.selectedIndex]?.text ?? '';
+            var dosage = document.getElementById('txtDosage').value.trim();
+            var route = document.getElementById('ddlRoute').value;
+            var morning = document.getElementById('chkMorning').checked;
+            var afternoon = document.getElementById('chkAfternoon').checked;
+            var evening = document.getElementById('chkEvening').checked;
+            var days = document.getElementById('txtDays').value.trim();
+            var instructions = document.getElementById('txtMedInstructions').value.trim();
+
+            if (!medicineId) { alert('Please select a medicine'); return; }
+            if (!morning && !afternoon && !evening) {
+                alert('Please select at least Morning, Afternoon or Evening');
+                return;
+            }
+
+            var noRow = document.getElementById('noMedRow');
+            if (noRow) noRow.remove();
+
+            var idx = medRowIndex;
+            var rowId = 'medRow_' + idx;
+            var currentCount = document.getElementById('medicineTableBody').rows.length + 1;
+
+            var tr = document.createElement('tr');
+            tr.id = rowId;
+            tr.innerHTML =
+                '<td>' + currentCount + '</td>' +
+                '<td><strong>' + medicineName + '</strong>' +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].MedicineId" value="' + medicineId + '" />' +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].MedicineName" value="' + medicineName + '" />' +
+                '</td>' +
+                '<td>' + (dosage || '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Dosage" value="' + dosage + '" />' +
+                '</td>' +
+                '<td class="text-center">' + (morning ? '✔' : '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Morning" value="' + morning + '" />' +
+                '</td>' +
+                '<td class="text-center">' + (afternoon ? '✔' : '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Afternoon" value="' + afternoon + '" />' +
+                '</td>' +
+                '<td class="text-center">' + (evening ? '✔' : '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Evening" value="' + evening + '" />' +
+                '</td>' +
+                '<td>' + (days ? days + 'd' : '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Days" value="' + days + '" />' +
+                '</td>' +
+                '<td>' + route +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Route" value="' + route + '" />' +
+                '</td>' +
+                '<td>' + (instructions || '-') +
+                    '<input type="hidden" name="DischargeMedicines[' + idx + '].Instructions" value="' + instructions + '" />' +
+                '</td>' +
+                '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeMedicineRow(\'' + rowId + '\')">Remove</button></td>';
+
+            document.getElementById('medicineTableBody').appendChild(tr);
+            medRowIndex++;
+
+            document.getElementById('ddlMedicine').value = '';
+            document.getElementById('txtDosage').value = '';
+            document.getElementById('ddlRoute').value = 'Oral';
+            document.getElementById('chkMorning').checked = false;
+            document.getElementById('chkAfternoon').checked = false;
+            document.getElementById('chkEvening').checked = false;
+            document.getElementById('txtDays').value = '';
+            document.getElementById('txtMedInstructions').value = '';
+        }
+
+        function removeMedicineRow(rowId) {
+            var row = document.getElementById(rowId);
+            if (row) row.remove();
+            var tbody = document.getElementById('medicineTableBody');
+            if (tbody.rows.length === 0) {
+                tbody.innerHTML = '<tr id="noMedRow"><td colspan="10" class="text-center text-muted py-3"><i class="fas fa-pills me-1"></i> No medicines added yet</td></tr>';
+            }
+        }
+    </script>
+}

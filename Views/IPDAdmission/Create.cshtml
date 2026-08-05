@@ -1,0 +1,533 @@
+﻿@model WebApplicationSampleTest2.Models.IPDAdmissionModel
+
+@{
+    ViewData["Title"] = ViewBag.IsUpdate ? "Edit IPD Admission" : "Create IPD Admission";
+
+    bool isUpdate = ViewBag.IsUpdate == true;
+    bool isFromAppointment = Model.IsFromAppointment;
+
+    int currentDoctorId = (int)(ViewBag.CurrentDoctorId ?? 0);
+    int currentRefDoctorId = (int)(ViewBag.CurrentReferringDoctorId ?? 0);
+
+    string admDateMin = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<h4 class="mb-4">
+    @(isUpdate ? "Edit IPD Admission" : "Create IPD Admission")
+</h4>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+<div class="card">
+    <div class="card-body">
+
+        <form asp-action="Create" asp-controller="IPDAdmission" method="post">
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(x => x.IPDId)
+            @Html.HiddenFor(x => x.PatientId)
+            @Html.HiddenFor(x => x.IsFromAppointment)
+            <input type="hidden" asp-for="OPDVisitId" />
+
+            @* Patient search — only in create mode *@
+            @if (!isUpdate && !isFromAppointment)
+            {
+                <div class="row mb-3 justify-content-end">
+                    <div class="col-md-4 position-relative">
+                        <label class="form-label">Search Patient (Mobile)</label>
+                        <input type="text" id="SearchPatient" class="form-control"
+                               placeholder="Enter mobile number" autocomplete="off" />
+                        <ul id="patientResult" class="list-group position-absolute w-100"
+                            style="z-index:1000; display:none;"></ul>
+                    </div>
+                </div>
+            }
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Patient Name
+                        @if (isUpdate)
+                        {
+                            <span class="badge bg-secondary ms-1">Locked</span>
+                        }
+                    </label>
+                    <input asp-for="PatientName" id="PatientNameInput" class="form-control" readonly />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Primary Doctor</label>
+                    @if (isFromAppointment)
+                    {
+                        <input asp-for="DoctorName" class="form-control" readonly />
+                    }
+                    else
+                    {
+                        <select asp-for="PrimaryDoctorId" class="form-control" id="Doctor_Id">
+                            <option value="">-- Select Doctor --</option>
+                        </select>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label" readonly>
+                        Admission Number
+                        @if (isUpdate)
+                        {
+                            <span class="badge bg-secondary ms-1">Locked</span>
+                        }
+                    </label>
+                    <input asp-for="AdmissionNumber" class="form-control"/>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Admission Type</label>
+                  
+                    <select asp-for="AdmissionType" class="form-control">
+                        <option value="Regular">Regular</option>
+                        <option value="Emergency">Emergency</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                @* <div class="col-md-6">
+                    <label class="form-label">Admission Source</label>
+                    <input asp-for="AdmissionSource" class="form-control" />
+                </div> *@
+
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Admission Date
+                        @if (isUpdate)
+                        {
+                            <span class="badge bg-secondary ms-1">Locked</span>
+                        }
+                    </label>
+                    @if (isUpdate)
+                    {
+                        <input asp-for="AdmissionDateTime" type="date" class="form-control" readonly />
+                    }
+                    else
+                    {
+                        <input asp-for="AdmissionDateTime" type="date" class="form-control" min="@admDateMin" />
+                    }
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Expected Discharge Date</label>
+                    <input asp-for="ExpectedDischargeDateTime" type="date"
+                           min="@admDateMin" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-control" id="StatusSelect">
+                        <option value="Admitted">Admitted</option>
+                        @if (isUpdate)
+                        {
+                            <option value="Cancelled">Cancelled</option>
+                        }
+                        else
+                        {
+                            <option value="Discharged">Discharged</option>
+                            <option value="Cancelled">Cancelled</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Active Admission</label>
+                    <select asp-for="IsActiveAdmission" id="IsActive" class="form-select">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Reference Doctor</label>
+                    <select id="ReferenceDoctorId" name="ReferringDoctorId" class="form-control">
+                        <option value="">-- Select Reference Doctor --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Reason For Admission</label>
+                    <textarea asp-for="ReasonForAdmission" class="form-control" rows="3"></textarea>
+                </div>
+              
+            </div>
+
+            @* <div class="row mb-3">
+               
+
+                <div class="col-md-6" id="CancellationReasonDiv" style="display:none;">
+                    <label class="form-label">Cancellation Reason</label>
+                    <textarea asp-for="CancellationReason" class="form-control" rows="3"></textarea>
+                </div>
+            </div> *@
+
+            <button type="submit" class="btn btn-primary">
+                @(isUpdate ? "Update" : "Submit")
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+    <script>
+      
+        var currentDoctorId = @currentDoctorId;
+        var currentRefDoctorId = @currentRefDoctorId;
+        var isUpdateMode       = @(isUpdate ? "true" : "false");
+        var isFromAppt         = @(isFromAppointment ? "true" : "false");
+
+        $(document).ready(function () {
+
+            // 1. Reference Doctor dropdown — load then pre-select if editing
+            $.ajax({
+                url: '@Url.Action("GetReferenceDoctors", "IPDAdmission")',
+                type: 'GET',
+                success: function (data) {
+                    var $sel = $("#ReferenceDoctorId");
+                    $sel.empty().append('<option value="">-- Select Reference Doctor --</option>');
+                    $.each(data, function (i, item) {
+                        var $opt = $('<option></option>').val(item.id).text(item.name);
+                        if (currentRefDoctorId > 0 && item.id == currentRefDoctorId) {
+                            $opt.prop('selected', true);
+                        }
+                        $sel.append($opt);
+                    });
+                },
+                error: function () { console.error("Failed to load Reference Doctors"); }
+            });
+
+            // 2. Primary Doctor dropdown — load then pre-select if editing
+            if (!isFromAppt) {
+                $.get('@Url.Action("GetDoctors", "IPDAdmission")', function (data) {
+                    var $dd = $('#Doctor_Id');
+                    $.each(data, function (i, d) {
+                        var $opt = $('<option></option>').val(d.id).text('Dr. ' + d.name);
+                        if (currentDoctorId > 0 && d.id == currentDoctorId) {
+                            $opt.prop('selected', true);
+                        }
+                        $dd.append($opt);
+                    });
+                });
+            }
+
+            // 3. Patient search — only active in create mode
+            if (!isUpdateMode && !isFromAppt) {
+                $("#SearchPatient").on("keyup", function () {
+                    var search = $(this).val();
+                    if (search.length < 3) { $("#patientResult").hide(); return; }
+
+                    $.get('/IPDAdmission/SearchPatientByMobile', { search: search }, function (res) {
+                        var $ul = $("#patientResult").empty();
+                        if (!res || res.length === 0) {
+                            $ul.append($('<li class="list-group-item text-danger"></li>').text('Patient not found'));
+                        } else {
+                            $.each(res, function (i, item) {
+                                $ul.append(
+                                    $('<li class="list-group-item patient-item"></li>')
+                                        .text(item.mobile + ' - ' + item.name)
+                                        .data('id', item.id)
+                                        .data('name', item.name)
+                                );
+                            });
+                        }
+                        $ul.show();
+                    });
+                });
+
+                $(document).on("click", ".patient-item", function () {
+                    $("input[name='PatientId']").val($(this).data("id"));
+                    $("#PatientNameInput").val($(this).data("name"));
+                    $("#patientResult").hide();
+                });
+            }
+
+            // 4. Show/hide Cancellation Reason based on Status
+            function toggleCancellation() {
+                if ($("#StatusSelect").val() === "Cancelled") {
+                    $("#CancellationReasonDiv").show();
+                } else {
+                    $("#CancellationReasonDiv").hide();
+                }
+            }
+            toggleCancellation();
+            $("#StatusSelect").on("change", toggleCancellation);
+        });
+    </script>
+}
+
+
+
+
+
+
+
+
+
+
+
+@* @model WebApplicationSampleTest2.Models.IPDAdmissionModel
+
+@{
+    ViewData["Title"] = ViewBag.IsUpdate ? "Edit IPD Admission" : "Create IPD Admission";
+}
+
+<h4 class="mb-4">
+    @(ViewBag.IsUpdate ? "Edit IPD Admission" : "Create IPD Admission")
+</h4>
+
+<div class="card">
+    <div class="card-body">
+
+        <form asp-action="Create" asp-controller="IPDAdmission" method="post">
+            @Html.AntiForgeryToken()
+
+            @Html.HiddenFor(x => x.IPDId)
+            @Html.HiddenFor(x => x.PatientId)
+            @* @Html.HiddenFor(x => x.PrimaryDoctorId) *
+            @Html.HiddenFor(x => x.IsFromAppointment)
+            <input type="hidden" asp-for="OPDVisitId" />
+            <!-- ================= PATIENT SECTION ================= -->
+            <div class="row mb-3">
+                @if (!Model.IsFromAppointment)
+                {
+                    <!-- 🔍 DIRECT IPD MODE -->
+                    @* <div class="col-md-6 position-relative">
+                        <label class="form-label">Search Patient (Mobile)</label>
+                        <input type="text"
+                               id="SearchPatient"
+                               class="form-control"
+                               placeholder="Enter mobile number"
+                               autocomplete="off" />
+                        <ul id="patientResult"
+                            class="list-group position-absolute w-100"
+                            style="z-index:1000; display:none;">
+                        </ul>
+                    </div> *
+                     <div class="row mb-3 justify-content-end">
+                            <div class="col-md-4 position-relative">
+                                <label class="form-label">Search Patient (Mobile)</label>
+                              <input type="text"
+                               id="SearchPatient"
+                               class="form-control"
+                               placeholder="Enter mobile number"
+                               autocomplete="off" />
+                             <ul id="patientResult"
+                                class="list-group position-absolute w-100"
+                                style="z-index:1000; display:none;">
+                             </ul>
+                            </div>
+                     </div>
+                     <div class="row mb-3">
+                          <div class="col-md-6">
+                           <label class="form-label">Patient Id</label>
+                           <input asp-for="PatientName" id="PatientNameInput" class="form-control" readonly />
+                         </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Doctor</label>
+                          <select asp-for="PrimaryDoctorId" class="form-control" id="Doctor_Id">
+                            <option value="">-- Select Doctor --</option>
+                          </select>
+                         </div>
+
+                
+                     </div>
+                  
+                }
+                else
+                {
+                    <!-- 📅 APPOINTMENT MODE -->
+                    <div class="col-md-6">
+                        <label class="form-label">Patient Name</label>
+                        <input asp-for="PatientName" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label"> Doctor</label>
+                        <input asp-for="DoctorName" class="form-control" readonly />
+                    </div>
+                }
+            </div>
+
+            <!-- ================= ADMISSION DETAILS ================= -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Admission Number</label>
+                    <input asp-for="AdmissionNumber" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Admission Type</label>
+                    <input asp-for="AdmissionType" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Admission Source</label>
+                    <input asp-for="AdmissionSource" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Admission Date</label>
+                    <input asp-for="AdmissionDateTime" type="date"  min="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                   <label class="form-label">Status</label>
+                <select asp-for="Status" class="form-control">
+                    <option value="Admitted">Admitted</option>
+                    <option value="Discharged">Discharged</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Expected Discharge </label>
+                    <input asp-for="ExpectedDischargeDateTime" type="date"  min="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+            </div>
+
+             <div class="row mb-3">
+                <div class="col-md-6">
+                     <label>Reference Doctor</label>
+                     <select id="ReferenceDoctorId" name="ReferenceDoctorId" class="form-control">
+                       <option value="">-- Select Reference Doctor --</option>
+                     </select>          
+                </div>                
+               <div class="col-md-6 mb-3">
+                    <label class="form-label">Active Admission</label>
+                     <select asp-for="IsActiveAdmission" id="IsActive" class="form-select">
+                         <option value="true">Active</option>
+                         <option value="false">Inactive</option>
+                     </select>
+               </div>
+
+            </div>
+           <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Reason For Admission</label>
+                    <textarea asp-for="ReasonForAdmission" class="form-control" rows="3"></textarea>                
+                </div>                
+              
+            </div>
+          
+            <!-- ================= BUTTONS ================= -->
+            <button type="submit" class="btn btn-primary">
+                @(ViewBag.IsUpdate ? "Update" : "Submit")
+            </button>
+
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/assets/libs/jquery/jquery.min.js"></script>
+     <script>
+
+    $(document).ready(function () {
+
+    $.ajax({
+        url: '@Url.Action("GetReferenceDoctors","IPDAdmission")',
+        type: 'GET',
+        success: function (data) {
+
+            $("#ReferenceDoctorId").empty();
+            $("#ReferenceDoctorId").append('<option value="">-- Select Reference Doctor --</option>');
+
+            $.each(data, function (i, item) {
+                $("#ReferenceDoctorId").append(
+                    '<option value="' + item.id + '">' + item.name + '</option>'
+                );
+            });
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            alert("Failed to load Reference Doctors");
+        }
+    });
+
+});
+</script>
+
+    @if (!Model.IsFromAppointment)
+    {
+        <script>
+            $(document).ready(function () {
+
+                // ================= PATIENT SEARCH =================
+                $("#SearchPatient").keyup(function () {
+                    let search = $(this).val();
+
+                    if (search.length < 3) {
+                        $("#patientResult").hide();
+                        return;
+                    }
+
+                    $.get('/IPDAdmission/SearchPatientByMobile', { search: search }, function (res) {
+                        $("#patientResult").empty();
+
+                        if (!res || res.length === 0) {
+                            $("#patientResult").append(
+                                '<li class="list-group-item text-danger">Patient not found</li>');
+                        } else {
+                           $.each(res, function (i, item) {
+                            $("#patientResult").append(`
+                              <li class="list-group-item patient-item" 
+                                data-id="${item.id}" 
+                                data-name="${item.name}">
+                                ${item.mobile} - ${item.name}
+                              </li>
+                            `);
+                           });
+                        }
+
+                        $("#patientResult").show();
+                    });
+                });
+
+                $(document).on("click", ".patient-item", function () {
+                    var id = $(this).data("id");
+                     var name = $(this).data("name");
+                     $("input[name='PatientId']").val(id);
+                      $("#PatientNameInput").val(name);
+                    $("#patientResult").hide();
+                });
+
+                // ================= DOCTOR DROPDOWN =================
+                $.get('/IPDAdmission/GetDoctors', function (data) {
+                    var doctorDropdown = $('#Doctor_Id');
+
+                    $.each(data, function (i, d) {
+                        doctorDropdown.append('<option value="' + d.id + '">Dr. ' + d.name + '</option>');
+                    });
+                });
+            });
+        </script>
+       
+    }
+} *@

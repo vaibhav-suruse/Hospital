@@ -1,0 +1,1379 @@
+﻿@model WebApplicationSampleTest2.Models.OPDBillVM
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "OPD Billing";
+    bool isCancelled = Model.BillStatus == "Cancelled";
+    bool isFullyPaid = Model.BillId.HasValue && Model.PaymentStatus == "Paid";
+    bool hasPayments = Model.Payments != null && Model.Payments.Count > 0;
+    var backUrl = ViewBag.IsWalkIn == true
+        ? Url.Action("Index", "WalkInConsultation")
+        : Url.Action("Index", "OPDAppointment");
+}
+<style>
+    :root {
+        --clr-primary: #4F46E5;
+        --clr-primary-dark: #4338CA;
+        --clr-primary-bg: #EEF2FF;
+        --clr-secondary: #2563EB;
+        --clr-success: #16A34A;
+        --clr-success-bg: #F0FDF4;
+        --clr-danger: #DC2626;
+        --clr-danger-bg: #FEF2F2;
+        --clr-warning: #D97706;
+        --clr-warning-bg: #FFFBEB;
+        --clr-border: #E5E7EB;
+        --clr-muted: #6B7280;
+        --clr-bg: #F9FAFB;
+        --clr-card: #FFFFFF;
+        --clr-text: #111827;
+    }
+
+    .opb-wrap {
+        background: var(--clr-bg);
+        min-height: 100vh;
+        padding-bottom: 90px;
+    }
+
+    .opb-card {
+        background: var(--clr-card);
+        border: 1px solid var(--clr-border);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(16,24,40,.04);
+    }
+
+    .opb-header {
+        padding: 16px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-bottom: 16px;
+    }
+
+    .opb-header-field {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 140px;
+    }
+
+    .opb-header-label {
+        font-size: 11px;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .opb-header-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--clr-text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .opb-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .opb-badge-draft {
+        background: #F3F4F6;
+        color: #374151;
+    }
+
+    .opb-badge-finalized {
+        background: var(--clr-primary-bg);
+        color: var(--clr-primary);
+    }
+
+    .opb-badge-unpaid {
+        background: var(--clr-warning-bg);
+        color: var(--clr-warning);
+    }
+
+    .opb-badge-partial {
+        background: #FEF3C7;
+        color: #B45309;
+    }
+
+    .opb-badge-paid {
+        background: var(--clr-success-bg);
+        color: var(--clr-success);
+    }
+
+    .opb-badge-cancelled {
+        background: var(--clr-danger-bg);
+        color: var(--clr-danger);
+    }
+
+    .opb-main {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        padding: 0 20px;
+    }
+
+    .opb-left {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .opb-right {
+        width: 380px;
+        flex: 0 0 380px;
+        position: sticky;
+        top: 16px;
+    }
+
+    .opb-section-title {
+        font-size: 15px;
+        font-weight: 700;
+        padding: 16px 20px 0;
+    }
+
+    /* Add Item panel */
+    .opb-additem {
+        margin: 14px 20px;
+        background: #FAFAFB;
+        border: 1px solid var(--clr-border);
+        border-radius: 10px;
+    }
+
+    .opb-additem-head {
+        font-size: 13px;
+        font-weight: 700;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--clr-border);
+    }
+
+    .opb-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 10px 16px 0;
+    }
+
+    .opb-tab {
+        border: none;
+        background: none;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--clr-muted);
+        border-radius: 8px 8px 0 0;
+        cursor: pointer;
+    }
+
+        .opb-tab.active {
+            color: var(--clr-primary);
+            background: #fff;
+            border: 1px solid var(--clr-border);
+            border-bottom-color: #fff;
+        }
+
+    .opb-tab-body {
+        padding: 14px 16px 16px;
+    }
+
+    .opb-form-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .opb-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .opb-field label {
+            font-size: 11px;
+            color: var(--clr-muted);
+            font-weight: 600;
+        }
+
+        .opb-field input, .opb-field select {
+            border: 1px solid var(--clr-border);
+            border-radius: 7px;
+            padding: 8px 10px;
+            font-size: 13px;
+            min-width: 90px;
+        }
+
+    .opb-field-grow {
+        flex: 1 1 220px;
+        min-width: 220px;
+        position: relative;
+    }
+
+        .opb-field-grow input {
+            width: 100%;
+        }
+
+    .opb-disc-group {
+        display: flex;
+    }
+
+        .opb-disc-group input {
+            border-radius: 7px 0 0 7px;
+            width: 80px;
+        }
+
+    .opb-disc-mode {
+        display: flex;
+        border: 1px solid var(--clr-border);
+        border-left: none;
+        border-radius: 0 7px 7px 0;
+        overflow: hidden;
+    }
+
+        .opb-disc-mode button {
+            border: none;
+            background: #fff;
+            width: 30px;
+            font-size: 12px;
+            color: var(--clr-muted);
+            cursor: pointer;
+        }
+
+            .opb-disc-mode button.active {
+                background: var(--clr-primary);
+                color: #fff;
+            }
+
+    .btn-opb-primary {
+        background: var(--clr-primary);
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 9px 18px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        .btn-opb-primary:hover {
+            background: var(--clr-primary-dark);
+        }
+
+        .btn-opb-primary:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .opb-search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid var(--clr-border);
+        border-radius: 8px;
+        margin-top: 4px;
+        max-height: 260px;
+        overflow-y: auto;
+        box-shadow: 0 8px 20px rgba(16,24,40,.10);
+        z-index: 40;
+        display: none;
+    }
+
+    .opb-search-item {
+        padding: 9px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+    }
+
+        .opb-search-item:hover {
+            background: var(--clr-primary-bg);
+        }
+
+        .opb-search-item .nm {
+            font-weight: 600;
+        }
+
+        .opb-search-item .cat {
+            font-size: 11px;
+            color: var(--clr-muted);
+        }
+
+        .opb-search-item .pr {
+            color: var(--clr-primary);
+            font-weight: 600;
+        }
+
+    .opb-search-empty {
+        padding: 12px;
+        font-size: 12px;
+        color: var(--clr-muted);
+        text-align: center;
+    }
+
+    /* Grid */
+    .opb-grid-wrap {
+        margin: 0 20px 16px;
+    }
+
+    table.opb-grid {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+        table.opb-grid th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: var(--clr-muted);
+            border-bottom: 1px solid var(--clr-border);
+            padding: 10px 8px;
+        }
+
+        table.opb-grid td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #F3F4F6;
+            vertical-align: middle;
+        }
+
+        table.opb-grid tr:last-child td {
+            border-bottom: none;
+        }
+
+    .opb-cell-right {
+        text-align: right;
+    }
+
+    .opb-cell-center {
+        text-align: center;
+    }
+
+    .opb-row-edit-input {
+        border: 1px solid var(--clr-border);
+        border-radius: 6px;
+        padding: 5px 7px;
+        font-size: 12px;
+        width: 100%;
+    }
+
+    .opb-icon-btn {
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        color: var(--clr-muted);
+    }
+
+        .opb-icon-btn:hover {
+            background: #F3F4F6;
+        }
+
+        .opb-icon-btn.danger:hover {
+            background: var(--clr-danger-bg);
+            color: var(--clr-danger);
+        }
+
+        .opb-icon-btn.success:hover {
+            background: var(--clr-success-bg);
+            color: var(--clr-success);
+        }
+
+    .opb-empty-row td {
+        text-align: center;
+        color: var(--clr-muted);
+        padding: 24px 8px;
+        font-size: 13px;
+    }
+
+    .opb-grid-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px 16px;
+        font-size: 13px;
+    }
+
+        .opb-grid-footer input {
+            border: 1px solid var(--clr-border);
+            border-radius: 7px;
+            padding: 7px 10px;
+            font-size: 13px;
+            width: 220px;
+        }
+
+    /* Right: Collect Payment */
+    .opb-pay-title {
+        font-size: 15px;
+        font-weight: 700;
+        padding: 16px 18px 4px;
+    }
+
+    .opb-sum-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 18px;
+        font-size: 13px;
+    }
+
+        .opb-sum-row .lbl {
+            color: var(--clr-muted);
+        }
+
+        .opb-sum-row.grand {
+            padding: 12px 18px;
+            margin: 8px 0;
+            border-top: 1px dashed var(--clr-border);
+            border-bottom: 1px dashed var(--clr-border);
+        }
+
+            .opb-sum-row.grand .lbl {
+                font-weight: 700;
+                color: var(--clr-text);
+                font-size: 14px;
+            }
+
+            .opb-sum-row.grand .val {
+                font-weight: 800;
+                font-size: 18px;
+                color: var(--clr-primary);
+            }
+
+    .opb-pay-body {
+        padding: 4px 18px 18px;
+    }
+
+        .opb-pay-body label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--clr-muted);
+            display: block;
+            margin: 10px 0 4px;
+        }
+
+        .opb-pay-body select, .opb-pay-body input[type=number] {
+            width: 100%;
+            border: 1px solid var(--clr-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+    .btn-pay-amount {
+        width: 100%;
+        background: var(--clr-primary);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        padding: 13px;
+        font-size: 15px;
+        font-weight: 700;
+        margin-top: 14px;
+        cursor: pointer;
+    }
+
+        .btn-pay-amount:hover {
+            background: var(--clr-primary-dark);
+        }
+
+        .btn-pay-amount:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .opb-paid-summary {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 18px;
+        font-size: 13px;
+    }
+
+        .opb-paid-summary .paid {
+            color: var(--clr-success);
+            font-weight: 700;
+        }
+
+        .opb-paid-summary .due {
+            color: var(--clr-warning);
+            font-weight: 700;
+        }
+
+    .opb-fully-paid-banner {
+        margin: 14px 18px;
+        background: var(--clr-success-bg);
+        border: 1px solid #BBF7D0;
+        color: var(--clr-success);
+        border-radius: 9px;
+        padding: 12px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .opb-cancelled-banner {
+        margin: 14px 18px;
+        background: var(--clr-danger-bg);
+        border: 1px solid #FECACA;
+        color: var(--clr-danger);
+        border-radius: 9px;
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .opb-history {
+        padding: 4px 18px 14px;
+    }
+
+    .opb-history-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--clr-muted);
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        margin: 6px 0 8px;
+    }
+
+    .opb-history-item {
+        border: 1px solid var(--clr-border);
+        border-radius: 8px;
+        padding: 9px 11px;
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+
+        .opb-history-item .row1 {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+        }
+
+        .opb-history-item .row2 {
+            display: flex;
+            justify-content: space-between;
+            color: var(--clr-muted);
+            margin-top: 2px;
+        }
+
+    .btn-print-bill {
+        width: 100%;
+        border: 1px solid var(--clr-border);
+        background: #fff;
+        border-radius: 8px;
+        padding: 11px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 4px 18px 18px;
+        width: calc(100% - 36px);
+    }
+
+        .btn-print-bill:hover {
+            background: #F9FAFB;
+        }
+
+    /* Bottom action bar */
+    .opb-actionbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid var(--clr-border);
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 50;
+    }
+
+    .btn-opb-outline {
+        border: 1px solid var(--clr-border);
+        background: #fff;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .btn-opb-outline:hover {
+            background: #F9FAFB;
+        }
+
+    .btn-opb-danger-outline {
+        border: 1px solid #FCA5A5;
+        color: var(--clr-danger);
+        background: #fff;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .btn-opb-danger-outline:hover {
+            background: var(--clr-danger-bg);
+        }
+
+    .btn-opb-finalize {
+        background: var(--clr-primary);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .btn-opb-finalize:hover {
+            background: var(--clr-primary-dark);
+        }
+
+    .opb-toast-host {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .opb-toast {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        box-shadow: 0 8px 20px rgba(16,24,40,.15);
+        animation: opbFadeIn .15s ease-out;
+    }
+
+        .opb-toast.ok {
+            background: var(--clr-success);
+        }
+
+        .opb-toast.err {
+            background: var(--clr-danger);
+        }
+
+    @@keyframes opbFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .opb-main {
+            flex-direction: column;
+        }
+
+        .opb-right {
+            width: 100%;
+            flex-basis: auto;
+            position: static;
+        }
+    }
+</style>
+
+<div class="opb-wrap">
+    <div class="opb-toast-host" id="opbToastHost"></div>
+
+    <!-- ── Patient / Bill header ───────────────────────────────────────── -->
+    <div class="opb-card opb-header" style="margin:16px 20px 16px;">
+        <div class="opb-header-field">
+            <span class="opb-header-label">Patient Name &amp; ID</span>
+            <span class="opb-header-value">@Model.PatientName <span style="color:var(--clr-muted);font-weight:400;">#@Model.PatientId</span></span>
+        </div>
+        <div class="opb-header-field">
+            <span class="opb-header-label">Mobile No.</span>
+            <span class="opb-header-value">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "—" : Model.PhoneNumber)</span>
+        </div>
+        <div class="opb-header-field">
+            <span class="opb-header-label">Bill Date</span>
+            <span class="opb-header-value">
+                <input type="date" id="billDate" style="border:1px solid var(--clr-border);border-radius:6px;padding:4px 8px;font-size:13px;font-weight:600;"
+                       value="@((Model.BillDate ?? Model.AppointmentDate).ToString("yyyy-MM-dd"))" @(isCancelled ? "disabled" : "") />
+            </span>
+        </div>
+        <div class="opb-header-field">
+            <span class="opb-header-label">Doctor Name</span>
+            <span class="opb-header-value">@Model.DoctorName</span>
+        </div>
+        @if (Model.BillId.HasValue)
+        {
+            <div class="opb-header-field">
+                <span class="opb-header-label">Bill No</span>
+                <span class="opb-header-value">@Model.BillNumber</span>
+            </div>
+        }
+        <div class="opb-header-field" style="margin-left:auto;align-items:flex-end;">
+            <span class="opb-header-label">Status</span>
+            <span class="opb-header-value">
+                @{
+                    string badgeClass = isCancelled ? "opb-badge-cancelled"
+                    : Model.BillStatus == "Draft" ? "opb-badge-draft"
+                    : Model.PaymentStatus == "Paid" ? "opb-badge-paid"
+                    : Model.PaymentStatus == "Partial" ? "opb-badge-partial"
+                    : "opb-badge-unpaid";
+                    string badgeText = isCancelled ? "Cancelled"
+                    : Model.BillStatus == "Draft" ? "Draft"
+                    : Model.PaymentStatus == "Paid" ? "Fully Paid"
+                    : Model.PaymentStatus == "Partial" ? "Partially Paid"
+                    : "Pending Payment";
+                }
+                <span class="opb-badge @badgeClass" id="statusBadge">@badgeText</span>
+            </span>
+        </div>
+    </div>
+
+    @if (isCancelled)
+    {
+        <div class="opb-card" style="margin:0 20px 16px;padding:12px 18px;background:var(--clr-danger-bg);border-color:#FECACA;color:var(--clr-danger);font-size:13px;">
+            <strong>This bill was cancelled</strong>@(Model.CancelledDate.HasValue ? " on " + Model.CancelledDate.Value.ToString("dd-MMM-yyyy HH:mm") : "").
+            @if (!string.IsNullOrEmpty(Model.CancelledReason))
+            {
+                <text> Reason: @Model.CancelledReason</text>
+            }
+        </div>
+    }
+
+    <div class="opb-main">
+        <!-- ── LEFT: Billing Items ─────────────────────────────────────── -->
+        <div class="opb-left">
+            <div class="opb-card">
+                <div class="opb-section-title">Billing Items</div>
+
+                <div class="opb-additem">
+                    <div class="opb-additem-head">Add Item</div>
+                    <div class="opb-tabs">
+                        <button type="button" class="opb-tab active" id="tabMaster" onclick="switchTab('master')">From Master</button>
+                        <button type="button" class="opb-tab" id="tabManual" onclick="switchTab('manual')">Add Manual Item</button>
+                    </div>
+                    <div class="opb-tab-body">
+                        <!-- FROM MASTER -->
+                        <div id="panelMaster">
+                            <div class="opb-form-row">
+                                <div class="opb-field opb-field-grow">
+                                    <label>Search Billing Item</label>
+                                    <input type="text" id="masterSearchInput" placeholder="Search billing item (e.g. Con, Med, X-Ray)..." autocomplete="off"
+                                           oninput="onMasterSearch()" onfocus="onMasterSearch()" />
+                                    <div class="opb-search-dropdown" id="masterDropdown"></div>
+                                </div>
+                            </div>
+                            <div class="opb-form-row" style="margin-top:12px;">
+                                <div class="opb-field"><label>Quantity</label><input type="number" id="mQty" value="1" min="1" /></div>
+                                <div class="opb-field"><label>Price (₹)</label><input type="number" id="mPrice" value="0.00" min="0" step="0.01" /></div>
+                                <div class="opb-field">
+                                    <label>Discount</label>
+                                    <div class="opb-disc-group">
+                                        <input type="number" id="mDisc" value="0" min="0" />
+                                        <div class="opb-disc-mode">
+                                            <button type="button" id="mDiscPct" class="active" onclick="setMode('m','pct')">%</button>
+                                            <button type="button" id="mDiscFlat" onclick="setMode('m','flat')">₹</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="opb-field"><label>GST (%)</label><input type="number" id="mGst" value="0" min="0" max="100" /></div>
+                                <button type="button" class="btn-opb-primary" onclick="addFromMaster()">Add Item</button>
+                            </div>
+                            <input type="hidden" id="mSelectedId" value="" />
+                            <input type="hidden" id="mSelectedName" value="" />
+                            <input type="hidden" id="mSelectedCategory" value="" />
+                        </div>
+
+                        <!-- MANUAL -->
+                        <div id="panelManual" style="display:none;">
+                            <div class="opb-form-row">
+                                <div class="opb-field opb-field-grow">
+                                    <label>Item Name</label>
+                                    <input type="text" id="uName" placeholder="e.g. Dressing Charges" />
+                                </div>
+                                <div class="opb-field"><label>Quantity</label><input type="number" id="uQty" value="1" min="1" /></div>
+                                <div class="opb-field"><label>Price (₹)</label><input type="number" id="uPrice" value="0.00" min="0" step="0.01" /></div>
+                                <div class="opb-field">
+                                    <label>Discount</label>
+                                    <div class="opb-disc-group">
+                                        <input type="number" id="uDisc" value="0" min="0" />
+                                        <div class="opb-disc-mode">
+                                            <button type="button" id="uDiscPct" class="active" onclick="setMode('u','pct')">%</button>
+                                            <button type="button" id="uDiscFlat" onclick="setMode('u','flat')">₹</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="opb-field"><label>GST (%)</label><input type="number" id="uGst" value="0" min="0" max="100" /></div>
+                                <button type="button" class="btn-opb-primary" onclick="addManualItem()">Add Item</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRID -->
+                <div class="opb-grid-wrap">
+                    <table class="opb-grid">
+                        <thead>
+                            <tr>
+                                <th style="width:36px;">#</th>
+                                <th>Item Name</th>
+                                <th class="opb-cell-center" style="width:70px;">Qty</th>
+                                <th class="opb-cell-right" style="width:100px;">Price</th>
+                                <th class="opb-cell-right" style="width:90px;">Discount</th>
+                                <th class="opb-cell-center" style="width:70px;">GST</th>
+                                <th class="opb-cell-right" style="width:100px;">Amount</th>
+                                <th style="width:70px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gridBody">
+                            <tr class="opb-empty-row" id="emptyRow"><td colspan="8">No items added yet — use "Add Item" above.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="opb-grid-footer">
+                    <input type="text" id="gridFilter" placeholder="Search item..." oninput="renderGrid()" />
+                    <span>Total Items: <strong id="totalItemsCount">0</strong> &nbsp;|&nbsp; Total Amount: <strong id="totalItemsAmount" style="color:var(--clr-primary);">₹0.00</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Collect Payment ──────────────────────────────────── -->
+        <div class="opb-right">
+            <div class="opb-card">
+                <div class="opb-pay-title">Collect Payment</div>
+                <div class="opb-sum-row"><span class="lbl">Subtotal</span><span class="val" id="sumSubtotal">₹0.00</span></div>
+                <div class="opb-sum-row"><span class="lbl">Discount</span><span class="val" style="color:var(--clr-success);" id="sumDiscount">- ₹0.00</span></div>
+                <div class="opb-sum-row"><span class="lbl">GST</span><span class="val" style="color:var(--clr-warning);" id="sumGst">₹0.00</span></div>
+                <div class="opb-sum-row grand"><span class="lbl">Total Payable Amount</span><span class="val" id="sumGrand">₹0.00</span></div>
+
+                @if (isCancelled)
+                {
+                    <div class="opb-cancelled-banner">Payment collection is disabled — this bill is cancelled.</div>
+                }
+                else if (isFullyPaid)
+                {
+                    <div class="opb-fully-paid-banner">✅ Fully Paid</div>
+                }
+                else
+                {
+                    <div class="opb-pay-body">
+                        <label>Payment Mode</label>
+                        <select id="payMode">
+                            <option>Cash</option>
+                            <option>Card</option>
+                            <option>UPI</option>
+                            <option>Cheque</option>
+                            <option>Wallet</option>
+                            <option>Net Banking</option>
+                            <option>Insurance</option>
+                            <option>Mixed Payment</option>
+                        </select>
+                        <label>Pay Amount (₹)</label>
+                        <input type="number" id="payAmountInput" min="0" step="0.01" placeholder="0.00" />
+                        <button type="button" class="btn-pay-amount" id="btnPayAmount" onclick="payAmount()">Pay Amount</button>
+                    </div>
+                }
+
+                <div class="opb-paid-summary">
+                    <span>Paid Amount <strong class="paid" id="paidAmountLbl">₹@Model.PaidAmount.ToString("0.00")</strong></span>
+                    <span>Remaining <strong class="due" id="remainingLbl">₹@Model.DueAmount.ToString("0.00")</strong></span>
+                </div>
+
+                @if (hasPayments)
+                {
+                    <div class="opb-history">
+                        <div class="opb-history-title">Payment History</div>
+                        @foreach (var p in Model.Payments)
+                        {
+                            <div class="opb-history-item">
+                                <div class="row1"><span>@p.PaymentMode</span><span>₹@p.Amount.ToString("0.00")</span></div>
+                                <div class="row2">
+                                    <span>@p.PaymentDate.ToString("dd-MMM-yyyy hh:mm tt") &middot; @p.ReceiptNumber</span>
+                                    @* <span>@p.CollectedByName</span> *@
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Model.BillId.HasValue)
+                {
+                    <a class="btn-print-bill" style="text-decoration:none;display:inline-block;text-align:center;"
+                       href="@Url.Action("PrintBill", "OPDBilling", new { appointmentId = Model.AppointmentId })"
+                       target="_blank" title="Open a professional printable bill">
+                        🖨 Print Bill
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Bottom action bar ────────────────────────────────────────────────── -->
+<div class="opb-actionbar">
+    @* <button type="button" class="btn-opb-danger-outline" id="btnCancelBill" onclick="cancelBill()" @(isCancelled ? "disabled" : "")>
+        Cancel Bill
+    </button> *@
+    <a href="@backUrl" class="btn-opb-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
+        Back
+    </a>
+    <div style="display:flex;gap:10px;">
+        <button type="button" class="btn-opb-outline" onclick="saveBill(true)" id="btnSaveDraft" @(isCancelled ? "disabled" : "")>Save Draft</button>
+        <button type="button" class="btn-opb-finalize" onclick="saveBill(false)" id="btnFinalize" @(isCancelled ? "disabled" : "")>Save &amp; Finalize</button>
+    </div>
+</div>
+
+<script>
+    // ── Initial state from server ──────────────────────────────────────────
+    var appointmentId = @Model.AppointmentId;
+    var opdId = @(Model.OPDId.HasValue? Model.OPDId.Value.ToString() : "null");
+    var patientId = @Model.PatientId;
+    var billId = @(Model.BillId.HasValue? Model.BillId.Value.ToString() : "null");
+    var billStatus = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BillStatus));
+    var isCancelledBill = @(isCancelled ? "true" : "false");
+    var remainingAmount = @Model.DueAmount;
+    var masterCatalog = @Html.Raw(ViewBag.BillingMasterItemsJson ?? "[]");
+    var backUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(backUrl));
+
+    var billItems = []; // { uid, itemType, billingMasterId, itemName, qty, price, discVal, discIsPct, gstPct, amount }
+    var uidCounter = 1;
+    var dirty = false; // unsaved-changes flag
+
+    @if (Model.BillId.HasValue && Model.OtherItems != null && Model.OtherItems.Count > 0)
+    {
+                <text>
+                // Reopening an existing bill — hydrate EXACTLY what was saved, so
+                // nothing has to be re-entered (this is what prevents duplicate bills).
+                var savedItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OtherItems, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+                savedItems.forEach(function (it) {
+                    billItems.push({
+                        uid: uidCounter++,
+                        itemType: it.itemType,
+                        billingMasterId: it.billingMasterId,
+                        itemName: it.itemName,
+                        qty: it.quantity,
+                        price: it.unitPrice,
+                        discVal: it.discountValue,
+                        discIsPct: it.discountIsPercent,
+                        gstPct: it.gstPercent
+                    });
+                });
+                </text>
+    }
+    else if (!isCancelled)
+    {
+                <text>
+                // Fresh bill — seed with Consultation (suggested fee) + any medicines
+                // prescribed during the OPD visit, so nothing has to be typed from scratch.
+                var suggestedFee = @Model.SuggestedConsultationFee;
+                billItems.push({ uid: uidCounter++, itemType: 'Consultation', billingMasterId: null, itemName: 'Consultation', qty: 1, price: suggestedFee, discVal: 0, discIsPct: true, gstPct: 0 });
+                var rxMedicines = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Medicines, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+                rxMedicines.forEach(function (m) {
+                    // Use the real dispensed quantity from the prescription, not
+                    // the number of days it was prescribed for.
+                    var qty = (m.dispensedQuantity && m.dispensedQuantity > 0) ? m.dispensedQuantity : (m.days || 1);
+                    billItems.push({ uid: uidCounter++, itemType: 'Medicine', billingMasterId: null, itemName: m.medicineName, qty: qty, price: m.unitPrice, discVal: 0, discIsPct: true, gstPct: 0 });
+                });
+                </text>
+    }
+
+    var discMode = { m: 'pct', u: 'pct' };
+
+    function setMode(prefix, mode) {
+        discMode[prefix] = mode;
+        document.getElementById(prefix + 'DiscPct').classList.toggle('active', mode === 'pct');
+        document.getElementById(prefix + 'DiscFlat').classList.toggle('active', mode === 'flat');
+    }
+
+    // ── Tabs ────────────────────────────────────────────────────────────
+    function switchTab(tab) {
+        document.getElementById('tabMaster').classList.toggle('active', tab === 'master');
+        document.getElementById('tabManual').classList.toggle('active', tab === 'manual');
+        document.getElementById('panelMaster').style.display = tab === 'master' ? 'block' : 'none';
+        document.getElementById('panelManual').style.display = tab === 'manual' ? 'block' : 'none';
+    }
+
+    // ── Billing master instant search ──────────────────────────────────
+    function onMasterSearch() {
+        var q = document.getElementById('masterSearchInput').value.trim().toLowerCase();
+        var dd = document.getElementById('masterDropdown');
+        var matches = !q ? masterCatalog.slice(0, 20)
+            : masterCatalog.filter(function (i) {
+                return i.name.toLowerCase().indexOf(q) > -1 || (i.category || '').toLowerCase().indexOf(q) > -1;
+            });
+        if (matches.length === 0) {
+            dd.innerHTML = '<div class="opb-search-empty">No matching billing items. Try "Add Manual Item" instead.</div>';
+        } else {
+            dd.innerHTML = matches.map(function (i, idx) {
+                return '<div class="opb-search-item" onclick="pickMasterItem(' + i.id + ')">' +
+                    '<span><span class="nm">' + escapeHtml(i.name) + '</span> <span class="cat">' + escapeHtml(i.category || '') + '</span></span>' +
+                    '<span class="pr">₹' + Number(i.amount).toFixed(2) + '</span></div>';
+            }).join('');
+        }
+        dd.style.display = 'block';
+    }
+
+    function pickMasterItem(id) {
+        var item = masterCatalog.find(function (i) { return i.id === id; });
+        if (!item) return;
+        document.getElementById('masterSearchInput').value = item.name;
+        document.getElementById('mSelectedId').value = item.id;
+        document.getElementById('mSelectedName').value = item.name;
+        document.getElementById('mSelectedCategory').value = item.category || '';
+        document.getElementById('mPrice').value = Number(item.amount).toFixed(2);
+        document.getElementById('mGst').value = item.gstPercent || 0;
+        document.getElementById('mDisc').value = item.discountPercent || 0;
+        setMode('m', 'pct');
+        document.getElementById('masterDropdown').style.display = 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#masterSearchInput') && !e.target.closest('#masterDropdown')) {
+            document.getElementById('masterDropdown').style.display = 'none';
+        }
+    });
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    }
+
+    // ── Add item (from master) ─────────────────────────────────────────
+    function addFromMaster() {
+        var name = document.getElementById('mSelectedName').value || document.getElementById('masterSearchInput').value.trim();
+        if (!name) { toast('Search and select a billing item first.', false); return; }
+        var masterId = document.getElementById('mSelectedId').value ? parseInt(document.getElementById('mSelectedId').value, 10) : null;
+        var category = document.getElementById('mSelectedCategory').value;
+        var itemType = classifyItemType(name, category);
+        billItems.push({
+            uid: uidCounter++,
+            itemType: itemType,
+            billingMasterId: masterId,
+            itemName: name,
+            qty: parseInt(document.getElementById('mQty').value, 10) || 1,
+            price: parseFloat(document.getElementById('mPrice').value) || 0,
+            discVal: parseFloat(document.getElementById('mDisc').value) || 0,
+            discIsPct: discMode.m === 'pct',
+            gstPct: parseFloat(document.getElementById('mGst').value) || 0
+        });
+        document.getElementById('masterSearchInput').value = '';
+        document.getElementById('mSelectedId').value = '';
+        document.getElementById('mSelectedName').value = '';
+        document.getElementById('mQty').value = 1;
+        document.getElementById('mPrice').value = '0.00';
+        document.getElementById('mDisc').value = 0;
+        document.getElementById('mGst').value = 0;
+        dirty = true;
+        renderGrid();
+        toast('Item added.', true);
+    }
+
+    function addManualItem() {
+        var name = document.getElementById('uName').value.trim();
+        if (!name) { toast('Enter an item name.', false); return; }
+        billItems.push({
+            uid: uidCounter++,
+            itemType: 'Procedure',
+            billingMasterId: null,
+            itemName: name,
+            qty: parseInt(document.getElementById('uQty').value, 10) || 1,
+            price: parseFloat(document.getElementById('uPrice').value) || 0,
+            discVal: parseFloat(document.getElementById('uDisc').value) || 0,
+            discIsPct: discMode.u === 'pct',
+            gstPct: parseFloat(document.getElementById('uGst').value) || 0
+        });
+        document.getElementById('uName').value = '';
+        document.getElementById('uQty').value = 1;
+        document.getElementById('uPrice').value = '0.00';
+        document.getElementById('uDisc').value = 0;
+        document.getElementById('uGst').value = 0;
+        dirty = true;
+        renderGrid();
+        toast('Item added.', true);
+    }
+
+    function classifyItemType(name, category) {
+        var n = (name + ' ' + (category || '')).toLowerCase();
+        if (n.indexOf('consult') > -1) return 'Consultation';
+        if (n.indexOf('medic') > -1 || n.indexOf('pharma') > -1) return 'Medicine';
+        return 'Procedure';
+    }
+
+    // ── Row math ────────────────────────────────────────────────────────
+    function rowAmount(it) {
+        var base = it.qty * it.price;
+        var disc = it.discIsPct ? (base * (it.discVal || 0) / 100) : (it.discVal || 0);
+        disc = Math.min(disc, base);
+        var afterDisc = base - disc;
+        var gst = afterDisc * (it.gstPct || 0) / 100;
+        return { base: base, disc: disc, afterDisc: afterDisc, gst: gst, total: afterDisc + gst };
+    }
+
+    // ── Render grid ─────────────────────────────────────────────────────
+    function renderGrid() {
+        var tbody = document.getElementById('gridBody');
+        var filter = (document.getElementById('gridFilter').value || '').toLowerCase();
+        var visible = billItems.filter(function (it) { return !filter || it.itemName.toLowerCase().indexOf(filter) > -1; });
+
+        if (billItems.length === 0) {
+            tbody.innerHTML = '<tr class="opb-empty-row"><td colspan="8">No items added yet — use "Add Item" above.</td></tr>';
+        } else if (visible.length === 0) {
+            tbody.innerHTML = '<tr class="opb-empty-row"><td colspan="8">No items match your search.</td></tr>';
+        } else {
+            tbody.innerHTML = visible.map(function (it, idx) {
+                var m = rowAmount(it);
+                if (it._editing) {
+                    return '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td>' + escapeHtml(it.itemName) + '</td>' +
+                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="1" id="e_qty_' + it.uid + '" value="' + it.qty + '" /></td>' +
+                        '<td><input class="opb-row-edit-input" type="number" min="0" step="0.01" id="e_price_' + it.uid + '" value="' + it.price + '" /></td>' +
+                        '<td><input class="opb-row-edit-input" type="number" min="0" id="e_disc_' + it.uid + '" value="' + it.discVal + '" /></td>' +
+                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="0" max="100" id="e_gst_' + it.uid + '" value="' + it.gstPct + '" /></td>' +
+                        '<td class="opb-cell-right">₹' + m.total.toFixed(2) + '</td>' +
+                        '<td>' +
+                        '<button class="opb-icon-btn success" title="Save" onclick="saveRowEdit(' + it.uid + ')">✔</button>' +
+                        '<button class="opb-icon-btn" title="Cancel" onclick="cancelRowEdit(' + it.uid + ')">✕</button>' +
+                        '</td></tr>';
+                }
+                return '<tr>' +
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + escapeHtml(it.itemName) + '<div style="font-size:11px;color:var(--clr-muted);">' + it.itemType + '</div></td>' +
+                    '<td class="opb-cell-center">' + it.qty + '</td>' +
+                    '<td class="opb-cell-right">₹' + Number(it.price).toFixed(2) + '</td>' +
+                    '<td class="opb-cell-right">' + (it.discVal > 0 ? (it.discIsPct ? it.discVal + '%' : '₹' + Number(it.discVal).toFixed(2)) : '—') + '</td>' +
+                    '<td class="opb-cell-center">' + (it.gstPct > 0 ? it.gstPct + '%' : '—') + '</td>' +
+                    '<td class="opb-cell-right"><strong>₹' + m.total.toFixed(2) + '</strong></td>' +
+                    '<td>' +
+                    '<button class="opb-icon-btn" title="Edit" onclick="startRowEdit(' + it.uid + ')">✎</button>' +
+                    '<button class="opb-icon-btn danger" title="Delete" onclick="deleteRow(' + it.uid + ')">🗑</button>' +
+                    '</td></tr>';
+            }).join('');
+        }
+
+        document.getElementById('totalItemsCount').textContent = billItems.length;
+        recalcTotals();
+    }
+
+    function startRowEdit(uid) {
+        billItems.forEach(function (it) { it._editing = (it.uid === uid); });
+        renderGrid();
+    }
+    function cancelRowEdit(uid) {
+        billItems.forEach(function (it) { it._editing = false; });
+        renderGrid();
+    }
+    function saveRowEdit(uid) {
+        var it = billItems.find(function (x) { return x.uid === uid; });
+        if (!it) return;
+        it.qty = parseInt(document.getElementById('e_qty_' + uid).value, 10) || 1;
+        it.price = parseFloat(document.getElementById('e_price_' + uid).value) || 0;
+        it.discVal = parseFloat(document.getElementById('e_disc_' + uid).value) || 0;
+        it.gstPct = parseFloat(document.getElementById('e_gst_' + uid).value) || 0;
+        it._editing = false;
+        dirty = true;
+        renderGrid();
+    }
+    function deleteRow(uid) {
+        if (!confirm('Remove this item from the bill?')) return;
+        billItems = billItems.filter(function (it) { return it.uid !== uid; });
+        dirty = true;
+        renderGrid();
+    }
+
+    // ── Totals ──────────────────────────────────────────────────────────
+    function recalcTotals() {
+        var subtotal = 0, discountTotal = 0, gstTotal = 0, grand = 0;
+        billItems.forEach(function (it) {
+            var m = rowAmount(it);
+            subtotal += m.base;
+            discountTotal += m.disc;
+            gstTotal += m.gst;
+            grand += m.total;
+        });
+        document.getElementById('totalItemsAmount').textContent = '₹' + grand.toFixed(2);
+        document.getElementById('sumSubtotal').textContent = '₹' + subtotal.toFixed(2);
+        document.getElementById('sumDiscount').textContent = '- ₹' + discountTotal.toFixed(2);
+        document.getElementById('sumGst').textContent = '₹' + gstTotal.toFixed(2);
+        document.getElementById('sumGrand').textContent = '₹' + grand.toFixed(2);
+
+        var payInput = document.getElementById('payAmountInput');
+        if (payInput) {
+            var due = Math.max(grand - parseFloat(document.getElementById('paidAmountLbl') ? document.getElementById('paidAmountLbl').textContent.replace(/[₹,]/g, '') : 0), 0);
+            payInput.setAttribute('max', due.toFixed(2));
+        }
+        return grand;
+    }
+
+    function collectPayload() {
+        var subtotal = 0, discountTotal = 0, gstTotal = 0, grand = 0;
+        var items = billItems.map(function (it) {
+            var m = rowAmount(it);
+            subtotal += m.base; discountTotal += m.disc; gstTotal += m.gst; grand += m.total;
+            return {
+                itemType: it.itemType, billingMasterId: it.billingMasterId, itemName: it.itemName,
+                quantity: it.qty, unitPrice: it.price, discountValue: it.discVal, discountIsPercent: it.discIsPct,
+                gstPercent: it.gstPct, totalPrice: m.total
+            };
+        });
+        return {
+            appointmentId: appointmentId, opdId: opdId, patientId: patientId,
+            billDate: document.getElementById('billDate').value,
+            subTotal: subtotal, lineDiscountAmt: discountTotal, gstAmount: gstTotal,
+            extraDiscountValue: 0, extraDiscountIsPercent: true, extraDiscountAmount: 0,
+            totalAmount: grand, paidAmount: 0, paymentMode: null, paymentEntries: [],
+            notes: null, items: items
+        };
+    }
+
+    // ── Save Draft / Save & Finalize ───────────────────────────────────
+    var saveInFlight = false;
+    function saveBill(isDraft) {
+        if (saveInFlight) return;
+        if (billItems.length === 0) { toast('Add at least one item before saving.', false); return; }
+        saveInFlight = true;
+        setActionButtonsDisabled(true);
+        var payload = collectPayload();
+        payload.isDraft = isDraft;
+        fetch('/OPDBilling/SaveBill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function (r) { return r.json(); })
+          .then(function (data) {
+              saveInFlight = false;
+              setActionButtonsDisabled(false);
+              if (data.success) {
+                  dirty = false;
+                  toast(isDraft ? 'Saved as draft.' : 'Bill finalized.', true);
+                  window.location.href = '/OPDBilling/GenerateBill?appointmentId=' + appointmentId;
+              } else {
+                  toast('Error: ' + data.message, false);
+              }
+          })
+          .catch(function (err) {
+              saveInFlight = false;
+              setActionButtonsDisabled(false);
+              toast('Error: ' + err, false);
+          });
+    }
+
+    function setActionButtonsDisabled(disabled) {
+        ['btnSaveDraft', 'btnFinalize', 'btnPayAmount'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) { el.disabled = disabled; }
+        });
+    }
+
+    // ── Pay Amount ──────────────────────────────────────────────────────
+    // Saves/finalizes the bill first (so totals are always current), then
+    // collects the payment against it — one click does both.
+    var payInFlight = false;
+    function payAmount() {
+        if (payInFlight) return;
+        if (billItems.length === 0) { toast('Add at least one item before collecting payment.', false); return; }
+        var amount = parseFloat(document.getElementById('payAmountInput').value);
+        var mode = document.getElementById('payMode').value;
+        if (isNaN(amount) || amount <= 0) { toast('Enter a payment amount greater than zero.', false); return; }
+
+        var grand = recalcTotals();
+        var alreadyPaid = parseFloat(document.getElementById('paidAmountLbl').textContent.replace(/[₹,]/g, '')) || 0;
+        var remaining = Math.max(grand - alreadyPaid, 0);
+        if (amount > remaining + 0.01) { toast('Payment cannot exceed the remaining amount (₹' + remaining.toFixed(2) + ').', false); return; }
+
+        payInFlight = true;
+        setActionButtonsDisabled(true);
+        var payload = collectPayload();
+        payload.isDraft = false;
+
+        fetch('/OPDBilling/SaveBill', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        }).then(function (r) { return r.json(); })
+          .then(function (saveData) {
+              if (!saveData.success) { throw new Error(saveData.message); }
+              return fetch('/OPDBilling/PayBill', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ billId: saveData.billId, appointmentId: appointmentId, amount: amount, paymentMode: mode, transactionRef: null, notes: null })
+              });
+          })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+              payInFlight = false;
+              setActionButtonsDisabled(false);
+              if (data.success) {
+                  dirty = false;
+                  toast('Payment of ₹' + amount.toFixed(2) + ' collected.', true);
+                  window.location.href = '/OPDBilling/GenerateBill?appointmentId=' + appointmentId;
+              } else {
+                  toast('Error: ' + data.message, false);
+              }
+          })
+          .catch(function (err) {
+              payInFlight = false;
+              setActionButtonsDisabled(false);
+              toast('Error: ' + err.message, false);
+          });
+    }
+
+    // ── Cancel Bill ─────────────────────────────────────────────────────
+    function cancelBill() {
+        if (!billId) {
+            // Nothing saved yet — just leave.
+            if (dirty && !confirm('You have unsaved items. Leave without saving?')) return;
+            window.location.href = backUrl;
+            return;
+        }
+        var reason = prompt('Reason for cancelling this bill:');
+        if (reason === null) return;
+        if (!confirm('Cancel this bill? This cannot be undone.')) return;
+        fetch('/OPDBilling/CancelBill', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ billId: billId, reason: reason })
+        }).then(function (r) { return r.json(); })
+          .then(function (data) {
+              if (data.success) {
+                  toast('Bill cancelled.', true);
+                  window.location.href = backUrl;
+              } else {
+                  toast('Error: ' + data.message, false);
+              }
+          })
+          .catch(function (err) { toast('Error: ' + err, false); });
+    }
+
+    // ── Toasts ──────────────────────────────────────────────────────────
+    function toast(msg, ok) {
+        var host = document.getElementById('opbToastHost');
+        var el = document.createElement('div');
+        el.className = 'opb-toast ' + (ok ? 'ok' : 'err');
+        el.textContent = msg;
+        host.appendChild(el);
+        setTimeout(function () { el.remove(); }, 3500);
+    }
+
+    // ── Unsaved changes warning ─────────────────────────────────────────
+    window.addEventListener('beforeunload', function (e) {
+        if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // ── Init ────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        renderGrid();
+    });
+</script>

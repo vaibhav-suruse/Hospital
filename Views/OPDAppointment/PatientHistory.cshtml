@@ -1,0 +1,160 @@
+﻿
+@model List<WebApplicationSampleTest2.Models.OPD>
+@{
+    var backUrl = ViewBag.IsWalkIn == true
+        ? Url.Action("Index", "WalkInConsultation")
+        : Url.Action("Index", "OPDAppointment");
+}
+
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex align-items-center mb-4">
+        <a href="@backUrl" class="me-3 text-muted">
+            <i class="mdi mdi-arrow-left font-size-20"></i>
+        </a>
+        <h4 class="mb-0 fw-bold">Patient Full History</h4>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var visit in Model)
+        {
+            <div class="row">
+                <div class="col-12">
+
+                    <div class="card shadow-sm mb-4">
+
+                        <!-- Header -->
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Visit ID:</strong> @visit.Id</span>
+                                <span>
+                                    <strong>Appointment Date:</strong>
+                                    @visit.AppointmentDate.ToString("dd MMM yyyy")
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <!-- Vitals -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>BP:</strong> @visit.BP
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Pulse:</strong> @visit.Pulse
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Investigation:</strong> @visit.Investigation
+                                </div>
+                            </div>
+
+                            <!-- Report -->
+                            <div class="mb-3">
+                                <strong>Report:</strong>
+                                @if (!string.IsNullOrEmpty(visit.ReportFilePath))
+                                {
+                                    <a href="@visit.ReportFilePath"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary ms-2">
+                                        View Report
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted ms-2">No Report</span>
+                                }
+                            </div>
+
+                            <!-- Next Appointment -->
+                            <div class="mb-3">
+                                <strong>Next Appointment:</strong>
+                                <span class="badge bg-info text-dark ms-2">
+                                    @(visit.NextAppointmentDate?.ToString("dd-MM-yyyy") ?? "N/A")
+                                </span>
+                            </div>
+
+                            <hr />
+
+                            <div class="row">
+
+                                <!-- Symptoms -->
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold">Symptoms</h6>
+
+                                    @if (visit.Symptom != null && visit.Symptom.Any())
+                                    {
+                                        <ul class="list-group list-group-flush">
+                                            @foreach (var symptomId in visit.Symptom)
+                                            {
+                                                <li class="list-group-item">
+                                                   @symptomId
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No Symptoms</p>
+                                    }
+                                </div>
+
+                                <!-- Medicines -->
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold">Medicines</h6>
+
+                                    @if (visit.Medicines != null && visit.Medicines.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Medicine</th>
+                                                        <th>M</th>
+                                                        <th>A</th>
+                                                        <th>E</th>
+                                                        <th>Days</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var med in visit.Medicines)
+                                                    {
+                                                        <tr>
+                                                            <td>@med.MedicineName</td>
+                                                            <td>@med.Morning</td>
+                                                            <td>@med.Afternoon</td>
+                                                            <td>@med.Evening</td>
+                                                            <td>@med.Days</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No Medicines</p>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No history records found.
+        </div>
+    }
+
+</div>
+
+

@@ -1,0 +1,40 @@
+﻿@model List<WebApplicationSampleTest2.Models.ExtraMedicationModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Medicine</th><th>Time</th><th>Reason</th><th>Remark</th><th>Entered By</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted py-3">No extra medicine added</td></tr>
+            }
+            else
+            {
+                foreach (var em in Model)
+                {
+                    <tr>
+                        <td><strong>@em.MedicineName</strong></td>
+                        <td>@em.TimeGiven.ToString("hh:mm tt")</td>
+                        <td>@em.Reason</td>
+                        <td>@em.Remark</td>
+                        <td>@(string.IsNullOrWhiteSpace(em.EnteredByName) ? "-" : em.EnteredByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary em-edit-btn" title="Edit"
+                                    data-id="@em.Id" data-medicine-name="@em.MedicineName"
+                                    data-reason="@em.Reason" data-remark="@em.Remark">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger em-delete-btn" title="Delete" data-id="@em.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

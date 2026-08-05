@@ -1,0 +1,88 @@
+﻿@* Views/TreatmentSheet/_DayMARPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.MARRowModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+    int dayNumber = (int)ViewBag.DayNumber;
+    DateTime dayDate = (DateTime)ViewBag.DayDate;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div><strong>Day @dayNumber</strong> - @dayDate.ToString("dd MMM yyyy")</div>
+    <div class="d-flex align-items-center gap-2">
+        <label class="mb-0 small text-muted">Recorded by (Nurse):</label>
+        <select id="marNurseGlobal" class="form-select form-select-sm" style="width:200px;" asp-items="ViewBag.Nurses">
+            <option value="">-- Select Nurse --</option>
+        </select>
+        <a class="btn btn-sm btn-outline-secondary" target="_blank"
+           asp-controller="TreatmentSheet" asp-action="Print" asp-route-ipdId="@ipdId" asp-route-dayNumber="@dayNumber">
+            <i class="fas fa-print me-1"></i> Print Day
+        </a>
+    </div>
+</div>
+<div id="marNurseWarning" class="alert alert-warning py-2 px-3 mb-3 d-none">
+    <i class="fas fa-triangle-exclamation me-1"></i> Please select a nurse above before recording a dose.
+</div>
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-notes-medical fa-2x mb-2"></i>
+        <div>No active medicines to administer on Day @dayNumber.</div>
+    </div>
+}
+else
+{
+    var groups = Model.GroupBy(m => new { m.PrescriptionId, m.MedicineName, m.Dosage, m.Route }).ToList();
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Medicine</th>
+                    <th class="text-center">Morning</th>
+                    <th class="text-center">Afternoon</th>
+                    <th class="text-center">Evening</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in groups)
+                {
+                    <tr>
+                        <td>
+                            <strong>@g.Key.MedicineName</strong>
+                            <div class="small text-muted">@g.Key.Dosage @(!string.IsNullOrWhiteSpace(g.Key.Route) ? "• " + g.Key.Route : "")</div>
+                        </td>
+                        @foreach (var slot in new[] { "Morning", "Afternoon", "Evening" })
+                        {
+                            var row = g.FirstOrDefault(x => x.ScheduledSlot == slot);
+                            <td class="text-center">
+                                @if (row == null)
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                                else if (row.Status == "Pending")
+                                {
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-success mar-record-btn" data-mar-id="@row.MarId" data-status="Given" title="Given"><i class="fas fa-check"></i></button>
+                                        <button type="button" class="btn btn-outline-warning mar-record-btn" data-mar-id="@row.MarId" data-status="Refused" title="Refused"><i class="fas fa-hand"></i></button>
+                                        <button type="button" class="btn btn-outline-danger mar-record-btn" data-mar-id="@row.MarId" data-status="Missed" title="Missed"><i class="fas fa-xmark"></i></button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    string badge = row.Status == "Given" ? "bg-success" : row.Status == "Refused" ? "bg-warning text-dark" : "bg-danger";
+                                    <span class="badge @badge">@row.Status</span>
+                                    <div class="small text-muted">
+                                        @(row.GivenAt.HasValue? row.GivenAt.Value.ToString("hh:mm tt") : "")
+                                        @(!string.IsNullOrWhiteSpace(row.GivenByName) ? " - " + row.GivenByName : "")
+                                    </div>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

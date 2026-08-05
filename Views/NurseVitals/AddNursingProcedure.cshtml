@@ -1,0 +1,222 @@
+﻿@* Views/NurseVitals/AddNursingProcedure.cshtml *@
+@{
+    ViewData["Title"] = "Add Nursing Procedure";
+    int ipdId = ViewBag.IPDId;
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-primary">
+            <i class="fas fa-user-nurse me-1"></i>
+            <strong>Add Nursing Procedure</strong>
+        </div>
+        <div class="card-body">
+
+            <form asp-action="SaveNursingProcedures" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IPDId" value="@ipdId" />
+
+                @* ── ADD PROCEDURE ROW ── *@
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Nurse</label>
+                        <select id="ddlNurse" class="form-control">
+                            <option value="">-- Select Nurse --</option>
+                            @if (ViewBag.Nurses != null)
+                            {
+                                foreach (var n in ViewBag.Nurses as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                {
+                                    <option value="@n.Value">@n.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">From Procedure List</label>
+                        <select id="ddlNursingMaster" class="form-control" onchange="onMasterSelect()">
+                            <option value="">-- Select Procedure --</option>
+                            @if (ViewBag.NursingMaster != null)
+                            {
+                                foreach (var nm in ViewBag.NursingMaster as List<WebApplicationSampleTest2.Models.NursingChargesMaster>)
+                                {
+                                    <option value="@nm.NursingId"
+                                            data-charge="@nm.DefaultCharge"
+                                            data-type="@nm.ChargeType"
+                                            data-name="@nm.ChargeName">
+                                        @nm.ChargeName (@nm.ChargeType) — ₹@nm.DefaultCharge
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">OR Custom Procedure</label>
+                        <input type="text" id="txtCustomProcedure" class="form-control" placeholder="e.g. Catheter Care" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Qty</label>
+                        <input type="number" id="txtProcQty" class="form-control" value="1" min="1" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Charge (₹)</label>
+                        <input type="number" id="txtProcCharge" class="form-control" value="0" min="0" step="0.01" />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100" onclick="addProcedure()">
+                            + Add
+                        </button>
+                    </div>
+                </div>
+
+                @* ── PROCEDURES TABLE ── *@
+                <table class="table table-sm table-bordered">
+                    <thead class="table">
+                        <tr>
+                            <th>#</th>
+                            <th>Procedure</th>
+                            <th>Type</th>
+                            <th>Nurse</th>
+                            <th>Qty</th>
+                            <th class="text-end">Unit</th>
+                            <th class="text-end">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="proceduresBody">
+                        <tr id="noProcRow">
+                            <td colspan="8" class="text-center text-muted py-3">
+                                <i class="fas fa-user-nurse me-1"></i> No procedures added yet
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table">
+                            <td colspan="6" class="text-end fw-bold">Total Nursing Charges:</td>
+                            <td class="text-end fw-bold" id="totalNurseCharge">₹0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                @* Hidden inputs populated by JS *@
+                <div id="nursingHiddenInputs"></div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Procedures
+                    </button>
+                    <a asp-controller="IPDAdmission"
+                       asp-action="Details"
+                       asp-route-id="@ipdId"
+                       class="btn btn-secondary ms-2">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var procedures  = [];
+        var procCounter = 0;
+
+        function onMasterSelect() {
+            var sel = document.getElementById('ddlNursingMaster');
+            var opt = sel.options[sel.selectedIndex];
+            if (opt && opt.value) {
+                document.getElementById('txtProcCharge').value  = opt.dataset.charge || 0;
+                document.getElementById('txtCustomProcedure').value = '';
+            }
+        }
+
+        function addProcedure() {
+            var sel    = document.getElementById('ddlNursingMaster');
+            var custom = document.getElementById('txtCustomProcedure').value.trim();
+            var qty    = parseFloat(document.getElementById('txtProcQty').value) || 1;
+            var charge = parseFloat(document.getElementById('txtProcCharge').value) || 0;
+            var nurseSel = document.getElementById('ddlNurse');
+            var nurseId  = nurseSel.value || '';
+            var nurseName = nurseId ? nurseSel.options[nurseSel.selectedIndex].text : '-';
+
+            if (!sel.value && !custom) {
+                alert('Select from list or enter custom procedure name');
+                return;
+            }
+            if (charge <= 0) {
+                alert('Please enter charge amount');
+                return;
+            }
+
+            var opt      = sel.options[sel.selectedIndex];
+            var name     = sel.value ? opt.dataset.name : custom;
+            var type     = sel.value ? opt.dataset.type : 'PerProcedure';
+            var masterId = sel.value ? parseInt(sel.value) : null;
+            var total    = qty * charge;
+
+            procCounter++;
+            procedures.push({ id: procCounter, masterId, name, type, qty, charge, total, nurseId, nurseName });
+
+            var noRow = document.getElementById('noProcRow');
+            if (noRow) noRow.remove();
+
+            document.getElementById('proceduresBody').insertAdjacentHTML('beforeend', `
+                <tr id="procRow_${procCounter}">
+                    <td>${procCounter}</td>
+                    <td><strong>${name}</strong></td>
+                    <td><span class="badge ${type === 'PerDay' ? 'bg-info' : 'bg-warning text-dark'}">${type}</span></td>
+                    <td>${nurseName}</td>
+                    <td>${qty}</td>
+                    <td class="text-end">₹${charge.toFixed(2)}</td>
+                    <td class="text-end"><strong>₹${total.toFixed(2)}</strong></td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger"
+                                onclick="removeProcedure(${procCounter})">✕</button>
+                    </td>
+                </tr>`);
+
+            sel.value = '';
+            document.getElementById('txtCustomProcedure').value = '';
+            document.getElementById('txtProcQty').value    = '1';
+            document.getElementById('txtProcCharge').value = '0';
+
+            updateTotals();
+            updateHiddenInputs();
+        }
+
+        function removeProcedure(id) {
+            procedures = procedures.filter(x => x.id !== id);
+            document.getElementById('procRow_' + id)?.remove();
+            if (procedures.length === 0) {
+                document.getElementById('proceduresBody').innerHTML = `
+                    <tr id="noProcRow">
+                        <td colspan="8" class="text-center text-muted py-3">
+                            <i class="fas fa-user-nurse me-1"></i> No procedures added yet
+                        </td>
+                    </tr>`;
+            }
+            updateTotals();
+            updateHiddenInputs();
+        }
+
+        function updateTotals() {
+            var total = procedures.reduce((a, p) => a + p.total, 0);
+            document.getElementById('totalNurseCharge').innerText = '₹' + total.toFixed(2);
+        }
+
+        function updateHiddenInputs() {
+            document.getElementById('nursingHiddenInputs').innerHTML =
+                procedures.map((p, i) => `
+                    <input type="hidden" name="NursingProcedures[${i}].NursingMasterId"  value="${p.masterId ?? ''}" />
+                    <input type="hidden" name="NursingProcedures[${i}].ChargeName"       value="${p.name}" />
+                    <input type="hidden" name="NursingProcedures[${i}].ChargeType"       value="${p.type}" />
+                    <input type="hidden" name="NursingProcedures[${i}].Quantity"         value="${p.qty}" />
+                    <input type="hidden" name="NursingProcedures[${i}].UnitCharge"       value="${p.charge}" />
+                    <input type="hidden" name="NursingProcedures[${i}].TotalCharge"      value="${p.total}" />
+                    <input type="hidden" name="NursingProcedures[${i}].NurseId"          value="${p.nurseId}" />
+                `).join('');
+        }
+    </script>
+}

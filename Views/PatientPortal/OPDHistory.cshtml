@@ -1,0 +1,164 @@
+﻿@model List<WebApplicationSampleTest2.Models.PatientOPDHistoryVM>
+@{
+    ViewData["Title"] = "OPD History";
+    Layout = "~/Views/Shared/_PatientLayout.cshtml";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-0"><i class="bx bx-first-aid text-primary me-2"></i>My OPD History</h4>
+        <p class="text-muted small mt-1">All your outpatient visits and prescriptions</p>
+    </div>
+</div>
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bx bx-file font-size-48 text-muted d-block mb-2"></i>
+            <p class="text-muted">No OPD visits found yet.</p>
+        </div>
+    </div>
+}
+else
+{
+    @foreach (var opd in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <strong class="text-primary">
+                        @opd.AppointmentDate.ToString("dd MMM yyyy")
+                    </strong>
+                    <span class="text-muted ms-2">— Dr. @opd.DoctorName</span>
+                    @if (!string.IsNullOrEmpty(opd.DoctorSpecialization))
+                    {
+                        <span class="badge bg-light text-dark border ms-1">@opd.DoctorSpecialization</span>
+                    }
+                </div>
+                <div class="d-flex gap-2">
+                    @if (!string.IsNullOrEmpty(opd.ReportFilePath))
+                    {
+                        @* <a href="@opd.ReportFilePath" target="_blank"
+                           class="btn btn-sm btn-outline-info">
+                            <i class="bx bx-file me-1"></i> Report
+                        </a> *@
+                    }
+                    @* <a asp-action="PrintPriscription" asp-controller="Patient"
+                       asp-route-appointmentId="@opd.AppointmentId"
+                       class="btn btn-sm btn-outline-success" target="_blank">
+                        <i class="bx bx-printer me-1"></i> Prescription
+                    </a> *@
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+
+                    <!-- Vitals -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100">
+                            <p class="fw-semibold mb-2 text-muted small text-uppercase">Vitals</p>
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr>
+                                    <td class="text-muted">BP</td>
+                                    <td><strong>@(string.IsNullOrEmpty(opd.BP) ? "—" : opd.BP)</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Pulse</td>
+                                    <td><strong>@(string.IsNullOrEmpty(opd.Pulse) ? "—" : opd.Pulse)</strong></td>
+                                </tr>
+                                @if (!string.IsNullOrEmpty(opd.Investigation))
+                                {
+                                    <tr>
+                                        <td class="text-muted">Investigation</td>
+                                        <td>@opd.Investigation</td>
+                                    </tr>
+                                }
+                                @if (opd.NextAppointmentDate.HasValue)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Next Visit</td>
+                                        <td class="text-primary">
+                                            <strong>@opd.NextAppointmentDate.Value.ToString("dd MMM yyyy")</strong>
+                                        </td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Symptoms -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100">
+                            <p class="fw-semibold mb-2 text-muted small text-uppercase">Symptoms</p>
+                            @if (opd.Symptoms?.Count > 0)
+                            {
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var symptom in opd.Symptoms)
+                                    {
+                                        <span class="badge bg-warning text-dark">@symptom</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No symptoms recorded</span>
+                            }
+
+                            @if (!string.IsNullOrEmpty(opd.ReportDetail))
+                            {
+                                <hr class="my-2" />
+                                <p class="fw-semibold mb-1 text-muted small text-uppercase">Report</p>
+                                <p class="mb-0 small">@opd.ReportDetail</p>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Medicines -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100">
+                            <p class="fw-semibold mb-2 text-muted small text-uppercase">Medicines</p>
+                            @if (opd.Medicines?.Count > 0)
+                            {
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr class="text-muted" style="font-size:11px">
+                                            <th>Medicine</th>
+                                            <th class="text-center">M</th>
+                                            <th class="text-center">A</th>
+                                            <th class="text-center">E</th>
+                                            <th class="text-center">Days</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var med in opd.Medicines)
+                                        {
+                                            <tr style="font-size:12px">
+                                                <td>@med.MedicineName</td>
+                                                <td class="text-center">
+                                                    @(med.Morning == 1 ? "✓" : "—")
+                                                </td>
+                                                <td class="text-center">
+                                                    @(med.Afternoon == 1 ? "✓" : "—")
+                                                </td>
+                                                <td class="text-center">
+                                                    @(med.Evening == 1 ? "✓" : "—")
+                                                </td>
+                                                <td class="text-center">@med.Days</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No medicines prescribed</span>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+}

@@ -1,0 +1,115 @@
+﻿@* Views/IPDAdmission/Details.cshtml *@
+@model WebApplicationSampleTest2.Models.IPDDetailsViewModel
+@{
+    ViewData["Title"] = "IPD Admission Details";
+    var admission = Model.Admission;
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <i class="fas fa-hospital-user me-1"></i>
+                <strong>@admission.PatientName</strong>
+                <span class="ms-2 opacity-75">Adm# @admission.AdmissionNumber</span>
+            </div>
+            <a asp-controller="IPDAdmission" asp-action="Index" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left me-1"></i> Back to Admissions
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3"><strong>Admitting Doctor:</strong> @admission.DoctorName</div>
+                <div class="col-md-3"><strong>Admission Date:</strong> @admission.AdmissionDateTime.ToString("dd MMM yyyy hh:mm tt")</div>
+                <div class="col-md-3"><strong>Type:</strong> @admission.AdmissionType</div>
+                <div class="col-md-3"><strong>Status:</strong> <span class="badge bg-info">@admission.Status</span></div>
+            </div>
+
+            @* -- Clinical Details dropdown + Discharge action -------------
+               All 5 Clinical Details items are live. Discharge button label
+               switches based on admission status: not yet discharged shows
+               "Discharge Patient" (opens the discharge form); already
+               discharged shows "View Discharge Summary" (opens the signed
+               summary for viewing/reprinting). *@
+            <div class="mb-4 d-flex gap-2 flex-wrap">
+                @await Html.PartialAsync("_ClinicalDetailsDropdown", admission.IPDId)
+
+                @if (admission.Status == "Discharged")
+                {
+                    <a asp-controller="Discharge" asp-action="Summary" asp-route-ipdId="@admission.IPDId" class="btn btn-outline-success">
+                        <i class="fas fa-file-medical-alt me-1"></i> View Discharge Summary
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Discharge" asp-action="Discharge" asp-route-ipdId="@admission.IPDId" class="btn btn-warning">
+                        <i class="fas fa-calendar-check me-1"></i> Discharge Patient
+                    </a>
+                }
+
+                <a asp-controller="DischargePlanning" asp-action="Index" asp-route-ipdId="@admission.IPDId" class="btn btn-outline-primary">
+                    <i class="fas fa-clipboard-list me-1"></i> Discharge Planning
+                </a>
+            </div>
+
+            <ul class="nav nav-tabs" id="detailsTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#roundsTab" type="button">Doctor Rounds</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#nursingTab" type="button">Nursing Charges</button></li>
+            </ul>
+
+            <div class="tab-content border border-top-0 p-3 rounded-bottom">
+
+                <div class="tab-pane fade show active" id="roundsTab">
+                    @if (Model.RoundsList == null || Model.RoundsList.Count == 0)
+                    {
+                        <div class="text-muted text-center py-3">No doctor rounds recorded yet.</div>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead><tr><th>Date</th><th>Doctor</th><th>Notes</th></tr></thead>
+                            <tbody>
+                                @foreach (var r in Model.RoundsList)
+                                {
+                                    <tr>
+                                        <td>@r.RoundDateTime</td>
+                                        <td>@r.DoctorName</td>
+                                        <td>@r.Notes</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+
+                <div class="tab-pane fade" id="nursingTab">
+                    @if (Model.NursingCharges == null || Model.NursingCharges.Count == 0)
+                    {
+                        <div class="text-muted text-center py-3">No nursing charges recorded yet.</div>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead><tr><th>Date</th><th>Procedure</th><th>Qty</th><th>Total</th></tr></thead>
+                            <tbody>
+                                @foreach (var c in Model.NursingCharges)
+                                {
+                                    <tr>
+                                        <td>@c.ChargeDate.ToString("dd MMM yyyy")</td>
+                                        <td>@c.ChargeName</td>
+                                        <td>@c.Quantity</td>
+                                        <td>@c.TotalCharge</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+ 

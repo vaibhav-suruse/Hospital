@@ -1,0 +1,2483 @@
+﻿@model WebApplicationSampleTest2.Models.AdmissionNotesViewModel
+
+<input type="hidden" id="hdnIpdId" value="@Model.IpdId" />
+<input type="hidden" id="hdnPatientId" value="@Model.PatientId" />
+
+<script>
+    var __initialHpi = @Json.Serialize(Model.Hpi);
+    var __initialExam = @Json.Serialize(Model.ExaminationDetail);
+    var __deptTemplates = @Json.Serialize(Model.DepartmentTemplates);
+    var __hasPreviousAdmission = @Json.Serialize(Model.PreviousAdmission != null);
+    var __initialChiefComplaints = @Json.Serialize(Model.ChiefComplaints);
+    var __initialAllergies = @Json.Serialize(Model.Allergies);
+    var __initialMedicalHistory = @Json.Serialize(Model.MedicalHistory);
+</script>
+
+<style>
+    /* ─── Reset / Base ─────────────────────────────────────── */
+    .an-wrap {
+        padding: 12px;
+        background: #f4f6f8;
+        min-height: 100%;
+    }
+
+    .an-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    /* ─── Section header ────────────────────────────────────── */
+    .an-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .an-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .an-links a {
+        font-size: 12px;
+        color: #6c757d;
+        text-decoration: none;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+        .an-links a:hover {
+            color: #6f42c1;
+        }
+    /* ─── Textarea ──────────────────────────────────────────── */
+    .an-ta {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 9px 11px;
+        font-size: 13px;
+        resize: vertical;
+        min-height: 90px;
+        color: #333;
+        font-family: inherit;
+    }
+
+        .an-ta:focus {
+            outline: none;
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 3px rgba(111,66,193,.08);
+        }
+    /* ─── Template box ──────────────────────────────────────── */
+    .tpl-box {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    .tpl-box-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+        .tpl-box-head strong {
+            font-size: 12px;
+            color: #444;
+        }
+
+    .tpl-search {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 5px 10px 5px 30px;
+        font-size: 12px;
+        margin-bottom: 6px;
+        background: #f8f9fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 9px center;
+        color: #333;
+    }
+
+        .tpl-search:focus {
+            outline: none;
+            border-color: #6f42c1;
+        }
+
+    .tpl-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 170px;
+        overflow-y: auto;
+    }
+
+        .tpl-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 2px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+        }
+
+            .tpl-list li:last-child {
+                border-bottom: none;
+            }
+
+    .tpl-name {
+        cursor: pointer;
+        color: #333;
+        flex: 1;
+    }
+
+        .tpl-name:hover {
+            color: #6f42c1;
+        }
+
+    .tpl-actions i {
+        cursor: pointer;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
+    .tpl-icon {
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        margin-left: 8px;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+
+    .tpl-icon-edit {
+        color: #0d6efd;
+    }
+
+    .tpl-icon-view {
+        color: #6c757d;
+    }
+
+    .tpl-icon-del {
+        color: #dc3545;
+    }
+    /* ─── Table ─────────────────────────────────────────────── */
+    .an-tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+        .an-tbl th {
+            background: #f8f9fa;
+            padding: 7px 10px;
+            text-align: left;
+            font-size: 12px;
+            color: #666;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .an-tbl td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f4f4f4;
+            color: #333;
+            vertical-align: middle;
+        }
+
+        .an-tbl tr:last-child td {
+            border-bottom: none;
+        }
+
+    .an-empty {
+        text-align: center;
+        color: #aaa;
+        font-size: 13px;
+        padding: 18px 0;
+    }
+    /* ─── Remarks layout ────────────────────────────────────── */
+    .remarks-row {
+        display: flex;
+        gap: 14px;
+    }
+
+    .remarks-left {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .remarks-right {
+        width: 260px;
+        flex-shrink: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .remarks-row {
+            flex-direction: column;
+        }
+
+        .remarks-right {
+            width: 100%;
+        }
+    }
+    /* ─── Buttons ───────────────────────────────────────────── */
+    .btn-add-new {
+        font-size: 12px;
+        padding: 4px 14px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        color: #333;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        .btn-add-new:hover {
+            background: #f0f0f0;
+        }
+
+    .btn-save {
+        background: #6f42c1;
+        color: #fff;
+        border: none;
+        padding: 7px 28px;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+        .btn-save:hover {
+            background: #5a32a3;
+        }
+    /* ─── Badge ─────────────────────────────────────────────── */
+    .badge-mild {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-moderate {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-severe {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .an-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+
+    /* ─── Critical Allergy Banner ───────────────────────────── */
+    .an-critical-banner {
+        display: none;
+        align-items: flex-start;
+        gap: 10px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 4px solid #dc3545;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        color: #7f1d1d;
+        font-size: 13px;
+    }
+
+        .an-critical-banner.show {
+            display: flex;
+        }
+
+        .an-critical-banner svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #dc3545;
+            margin-top: 1px;
+        }
+
+        .an-critical-banner strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .an-critical-banner span.cb-list {
+            font-size: 12.5px;
+        }
+
+    /* ─── Sticky Summary Bar ────────────────────────────────── */
+    .an-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        padding: 10px 16px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+        .an-sticky .an-sticky-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .an-sticky .an-sticky-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: #2d3748;
+        }
+
+        .an-sticky .an-sticky-sub {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+    .an-progress-pill {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: #f3e8fd;
+        color: #6f42c1;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .an-save-status {
+        font-size: 11.5px;
+        color: #999;
+    }
+
+        .an-save-status.dirty {
+            color: #b45309;
+            font-weight: 600;
+        }
+
+    /* ─── Collapsible section header ────────────────────────── */
+    .an-head.collapsible {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .an-chevron {
+        width: 14px;
+        height: 14px;
+        transition: transform .15s ease;
+        color: #888;
+    }
+
+        .an-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+    .an-collapse-body.collapsed {
+        display: none;
+    }
+
+    /* ─── Structured Chief Complaint cards ──────────────────── */
+    .cc-empty {
+        text-align: center;
+        color: #aaa;
+        font-size: 13px;
+        padding: 16px 0;
+        border: 1px dashed #e2e8f0;
+        border-radius: 6px;
+    }
+
+    .cc-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        position: relative;
+    }
+
+        .cc-item .cc-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .cc-item .cc-name {
+            font-weight: 600;
+            font-size: 13.5px;
+            color: #2d3748;
+        }
+
+        .cc-item .cc-num {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            font-size: 10.5px;
+            background: #6f42c1;
+            color: #fff;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+    .cc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 11.5px;
+        color: #555;
+    }
+
+    .cc-chip {
+        background: #f4f6f8;
+        border-radius: 10px;
+        padding: 2px 8px;
+    }
+
+    .cc-remarks {
+        font-size: 12px;
+        color: #777;
+        margin-top: 5px;
+        font-style: italic;
+    }
+
+    .cc-actions {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+    }
+
+    /* Pain score scale */
+    .pain-scale {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+
+    .pain-dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        cursor: pointer;
+        color: #555;
+        background: #fff;
+    }
+
+        .pain-dot.active {
+            background: #6f42c1;
+            border-color: #6f42c1;
+            color: #fff;
+        }
+
+    .an-toggle-group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .an-toggle-btn {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        color: #444;
+    }
+
+        .an-toggle-btn.active {
+            background: #6f42c1;
+            border-color: #6f42c1;
+            color: #fff;
+        }
+
+    /* Autocomplete dropdown */
+    .ac-wrap {
+        position: relative;
+    }
+
+    .ac-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0,0,0,.08);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 50;
+        display: none;
+    }
+
+        .ac-dropdown.show {
+            display: block;
+        }
+
+    .ac-item {
+        padding: 7px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+    }
+
+        .ac-item:hover, .ac-item.active {
+            background: #f3e8fd;
+        }
+
+        .ac-item .ac-cat {
+            font-size: 10.5px;
+            color: #999;
+        }
+
+    .field-label {
+        font-size: 11.5px;
+        color: #666;
+        font-weight: 600;
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    /* ─── Department Template Bar ───────────────────────────── */
+    .dept-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 8px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        flex-wrap: wrap;
+    }
+
+        .dept-bar select {
+            max-width: 220px;
+        }
+
+    .dept-suggest-chip {
+        background: #eef2ff;
+        color: #4338ca;
+        border-radius: 10px;
+        padding: 2px 9px;
+        font-size: 11.5px;
+    }
+
+    /* ─── Quick-select chips (HPI) ──────────────────────────── */
+    .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .quick-chip {
+        border: 1px solid #e2e8f0;
+        background: #fafafa;
+        border-radius: 14px;
+        padding: 3px 11px;
+        font-size: 11.5px;
+        cursor: pointer;
+        color: #555;
+    }
+
+        .quick-chip:hover {
+            background: #f3e8fd;
+            border-color: #6f42c1;
+            color: #6f42c1;
+        }
+
+    /* ─── Structured Examination ────────────────────────────── */
+    .exam-section-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #6f42c1;
+        margin: 10px 0 6px;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .exam-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .exam-field label {
+        font-size: 11px;
+        color: #777;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .bmi-pill {
+        display: inline-block;
+        background: #f3e8fd;
+        color: #6f42c1;
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .systemic-block {
+        margin-bottom: 10px;
+    }
+
+    .finding-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 4px 0 6px;
+    }
+
+    .finding-chip {
+        border: 1px solid #d6bbf7;
+        background: #faf5ff;
+        color: #6f42c1;
+        border-radius: 12px;
+        padding: 2px 9px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+        .finding-chip:hover {
+            background: #6f42c1;
+            color: #fff;
+        }
+
+        .finding-chip.add-custom {
+            border-style: dashed;
+            color: #888;
+            border-color: #ccc;
+        }
+
+    /* ─── Previous Admission Comparison Panel ───────────────── */
+    .prev-toggle-btn {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 12.5px;
+        color: #6f42c1;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .prev-panel-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.25);
+        z-index: 998;
+        display: none;
+    }
+
+        .prev-panel-overlay.show {
+            display: block;
+        }
+
+    .prev-panel {
+        position: fixed;
+        top: 0;
+        right: -420px;
+        width: 400px;
+        max-width: 90vw;
+        height: 100vh;
+        background: #fff;
+        z-index: 999;
+        box-shadow: -4px 0 16px rgba(0,0,0,.15);
+        transition: right .25s ease;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+        .prev-panel.show {
+            right: 0;
+        }
+
+        .prev-panel h6 {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 2px;
+        }
+
+    .prev-section {
+        border-top: 1px solid #f0f0f0;
+        padding: 10px 0;
+    }
+
+    .prev-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6f42c1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .prev-copy-btn {
+        font-size: 10.5px;
+        border: 1px solid #6f42c1;
+        color: #6f42c1;
+        background: #fff;
+        border-radius: 10px;
+        padding: 1px 8px;
+        cursor: pointer;
+    }
+
+    .prev-diff {
+        background: #fff8e1;
+        border-left: 3px solid #f0b429;
+        padding: 4px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+
+    .prev-empty {
+        font-size: 12.5px;
+        color: #999;
+        text-align: center;
+        padding: 30px 0;
+    }
+
+    /* ─── Audit Trail Modal ─────────────────────────────────── */
+    .audit-btn {
+        background: none;
+        border: none;
+        font-size: 12.5px;
+        color: #6f42c1;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .audit-row {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 8px 0;
+        font-size: 12.5px;
+    }
+
+    .audit-meta {
+        color: #999;
+        font-size: 11px;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    @await Html.PartialAsync("_IPDTabs", "AdmissionNotes")
+
+
+</div>
+
+<div class="an-wrap">
+
+    <!-- ══ Sticky summary bar ══ -->
+    <div class="an-sticky">
+        <div class="an-sticky-left">
+            <span class="an-sticky-title">📋 Admission Notes</span>
+            <span class="an-sticky-sub">Patient #@Model.PatientId &nbsp;•&nbsp; IPD #@Model.IpdId</span>
+            <span class="an-progress-pill" id="sectionProgress">0/4 sections filled</span>
+        </div>
+        <span class="an-save-status" id="saveStatus">All changes saved</span>
+        <button class="audit-btn" onclick="openAuditLog()">View Audit History</button>
+    </div>
+
+    <!-- ══ Department Template Bar + Previous Admission toggle ══ -->
+    <div class="dept-bar">
+        <span class="field-label" style="margin:0;">Apply Department Template:</span>
+        <select id="deptTemplateSelect" class="form-select form-select-sm" style="width:auto;">
+            <option value="">-- Select Department --</option>
+            @foreach (var d in Model.DepartmentTemplates)
+            {
+                <option value="@d.DeptTemplateId">@d.DepartmentName @(d.IsHospitalWide ? "" : "(Personal)")</option>
+            }
+        </select>
+        <button class="btn-add-new" onclick="applyDepartmentTemplate()">Apply</button>
+        <span id="deptSuggestedDx"></span>
+
+        <span style="flex:1;"></span>
+        @if (Model.PreviousAdmission != null)
+        {
+            <button class="prev-toggle-btn" onclick="openPreviousPanel()">📑 Compare with Previous Admission</button>
+        }
+    </div>
+
+    <!-- ══ Previous Admission Comparison Panel ══ -->
+    <div class="prev-panel-overlay" id="prevOverlay" onclick="closePreviousPanel()"></div>
+    <div class="prev-panel" id="prevPanel">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6>Previous Admission</h6>
+            <button class="btn-close" onclick="closePreviousPanel()"></button>
+        </div>
+        <div id="prevPanelContent">
+            <div class="prev-empty">Loading...</div>
+        </div>
+    </div>
+
+    <!-- ══ Critical Allergy Banner ══ -->
+    <div class="an-critical-banner" id="criticalBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+        <div>
+            <strong>⚠ Critical Allergy Alert</strong>
+            <span class="cb-list" id="criticalBannerList"></span>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ROW 1 : Structured Chief Complaints (left) + Examination (right)
+    ══════════════════════════════════════════════════════ -->
+    <div class="row g-3 mb-2">
+
+        <!-- Structured Chief Complaints -->
+        <div class="col-md-6">
+            <div class="an-card">
+                <div class="an-head collapsible" onclick="toggleSection('ccBody', this)">
+                    <span class="an-title">
+                        <svg class="an-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        Chief Complaint(s)
+                    </span>
+                    <span class="an-links">
+                        <button class="btn-add-new" onclick="event.stopPropagation(); openComplaintModal()">+ Add Complaint</button>
+                    </span>
+                </div>
+                <div class="an-collapse-body" id="ccBody">
+                    <div id="ccList">
+                        @if (Model.ChiefComplaints == null || Model.ChiefComplaints.Count == 0)
+                        {
+                            <div class="cc-empty" id="ccEmpty">No chief complaints added yet. Click "+ Add Complaint" to begin.</div>
+                        }
+                        else
+                        {
+                            int ccIdx = 0;
+                            foreach (var c in Model.ChiefComplaints)
+                            {
+                                ccIdx++;
+                                <div class="cc-item" data-id="@c.ComplaintId">
+                                    <div class="cc-actions">
+                                        <svg onclick="viewComplaint(@c.ComplaintId)" class="tpl-icon tpl-icon-view" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        <svg onclick="editComplaint(@c.ComplaintId)" class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                        <svg onclick="deleteComplaint(@c.ComplaintId, this)" class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                    </div>
+                                    <div class="cc-item-top">
+                                        <span class="cc-name"><span class="cc-num">@ccIdx</span>@c.ComplaintName</span>
+                                    </div>
+                                    <div class="cc-meta">
+                                        @if (c.DurationValue.HasValue)
+                                        {
+                                            <span class="cc-chip">Since @c.DurationValue @c.DurationUnit</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(c.Severity))
+                                        {
+                                            <span class="an-badge badge-@c.Severity.ToLower()">@c.Severity</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(c.Onset))
+                                        {
+                                            <span class="cc-chip">@c.Onset Onset</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(c.Frequency))
+                                        {
+                                            <span class="cc-chip">@c.Frequency</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(c.BodyLocation))
+                                        {
+                                            <span class="cc-chip">📍 @c.BodyLocation</span>
+                                        }
+                                        @if (c.PainScore.HasValue)
+                                        {
+                                            <span class="cc-chip">Pain @c.PainScore/10</span>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(c.Remarks))
+                                    {
+                                        <div class="cc-remarks">@c.Remarks</div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examination -->
+        <div class="col-md-6">
+            <div class="an-card">
+                <div class="an-head">
+                    <span class="an-title">Examination — Quick Notes</span>
+                    <span class="an-links">
+                        <a onclick="loadPrevious('EXAMINATION')">Load Previous</a>
+                        <a onclick="clearField('EXAMINATION')">Clear</a>
+                    </span>
+                </div>
+                <textarea id="txtExamination" class="an-ta"
+                          placeholder="Type here...">@Model.Examination</textarea>
+
+                <div class="tpl-box">
+                    <div class="tpl-box-head">
+                        <strong>Templates</strong>
+                        <button class="btn-add-new" onclick="openTplModal('EXAMINATION')">+ Add New</button>
+                    </div>
+                    <input class="tpl-search" placeholder="Search Template"
+                           onkeyup="searchTpl('EXAMINATION', this.value)" />
+                    <ul class="tpl-list" id="listEXAMINATION">
+                        @foreach (var t in Model.ExaminationTemplates)
+                        {
+                            <li data-id="@t.TemplateId" data-text="@t.TemplateText">
+                                <span class="tpl-name" onclick="applyTpl('EXAMINATION',this)">@t.TemplateName</span>
+                                <span class="tpl-actions">
+                                    <svg onclick="editTpl('EXAMINATION',@t.TemplateId,'@t.TemplateName',this)" class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                    <svg onclick="deleteTpl(@t.TemplateId,this)" class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Examination Button (chief complaints save individually via modal) -->
+    <div class="mb-3">
+        <button class="btn-save" onclick="saveNotes()">Save Examination</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ROW 1.5 : Structured HPI
+    ══════════════════════════════════════════════════════ -->
+    <div class="an-card mb-2">
+        <div class="an-head collapsible" onclick="toggleSection('hpiBody', this)">
+            <span class="an-title">
+                <svg class="an-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                History of Present Illness (HPI)
+            </span>
+            <button class="btn-add-new" onclick="event.stopPropagation(); saveHpi()">Save HPI</button>
+        </div>
+        <div class="an-collapse-body" id="hpiBody">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Symptoms Started On</label>
+                    <input type="text" id="hpiStartedOn" class="form-control form-control-sm" placeholder="e.g. 3 days ago, 15 Jul 2026" value="@Model.Hpi.SymptomsStartedOn" />
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Progression</label>
+                    <div class="an-toggle-group" id="hpiProgressionGroup">
+                        <div class="an-toggle-btn" data-val="Improving" onclick="selectToggle('hpiProgressionGroup', this)">Improving</div>
+                        <div class="an-toggle-btn" data-val="Worsening" onclick="selectToggle('hpiProgressionGroup', this)">Worsening</div>
+                        <div class="an-toggle-btn" data-val="Static" onclick="selectToggle('hpiProgressionGroup', this)">Static</div>
+                        <div class="an-toggle-btn" data-val="Fluctuating" onclick="selectToggle('hpiProgressionGroup', this)">Fluctuating</div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Associated Symptoms</label>
+                    <div class="chip-row">
+                        <span class="quick-chip" onclick="appendChip('hpiAssociated', 'Nausea')">Nausea</span>
+                        <span class="quick-chip" onclick="appendChip('hpiAssociated', 'Vomiting')">Vomiting</span>
+                        <span class="quick-chip" onclick="appendChip('hpiAssociated', 'Fever')">Fever</span>
+                        <span class="quick-chip" onclick="appendChip('hpiAssociated', 'Weakness')">Weakness</span>
+                    </div>
+                    <input type="text" id="hpiAssociated" class="form-control form-control-sm" value="@Model.Hpi.AssociatedSymptoms" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label class="field-label">Aggravating Factors</label>
+                    <div class="chip-row">
+                        <span class="quick-chip" onclick="appendChip('hpiAggravating', 'Movement')">Movement</span>
+                        <span class="quick-chip" onclick="appendChip('hpiAggravating', 'Food intake')">Food intake</span>
+                        <span class="quick-chip" onclick="appendChip('hpiAggravating', 'Cold weather')">Cold weather</span>
+                    </div>
+                    <input type="text" id="hpiAggravating" class="form-control form-control-sm" value="@Model.Hpi.AggravatingFactors" />
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label class="field-label">Relieving Factors</label>
+                    <div class="chip-row">
+                        <span class="quick-chip" onclick="appendChip('hpiRelieving', 'Rest')">Rest</span>
+                        <span class="quick-chip" onclick="appendChip('hpiRelieving', 'Medication')">Medication</span>
+                        <span class="quick-chip" onclick="appendChip('hpiRelieving', 'Warm compress')">Warm compress</span>
+                    </div>
+                    <input type="text" id="hpiRelieving" class="form-control form-control-sm" value="@Model.Hpi.RelievingFactors" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Previous Treatment</label>
+                    <input type="text" id="hpiPrevTreatment" class="form-control form-control-sm" value="@Model.Hpi.PreviousTreatment" />
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Previous Consultation</label>
+                    <input type="text" id="hpiPrevConsultation" class="form-control form-control-sm" value="@Model.Hpi.PreviousConsultation" />
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="field-label">Previous Hospitalization</label>
+                    <input type="text" id="hpiPrevHospitalization" class="form-control form-control-sm" value="@Model.Hpi.PreviousHospitalization" />
+                </div>
+            </div>
+            <div class="mb-1">
+                <label class="field-label">Timeline of Events</label>
+                <textarea id="hpiTimeline" class="an-ta" style="min-height:60px;" placeholder="Free-text timeline...">@Model.Hpi.TimelineNotes</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ROW 1.6 : Professional Examination Module (structured)
+    ══════════════════════════════════════════════════════ -->
+    <div class="an-card mb-2">
+        <div class="an-head collapsible" onclick="toggleSection('examDetailBody', this)">
+            <span class="an-title">
+                <svg class="an-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                Professional Examination Module
+            </span>
+            <button class="btn-add-new" onclick="event.stopPropagation(); saveExaminationDetail()">Save Examination Detail</button>
+        </div>
+        <div class="an-collapse-body" id="examDetailBody">
+
+            <div class="exam-section-title">General Examination</div>
+            <div class="exam-grid">
+                <div class="exam-field">
+                    <label>Conscious</label>
+                    <select id="genConscious" class="form-select form-select-sm">
+                        <option value="">--</option>
+                        <option>Conscious</option>
+                        <option>Confused</option>
+                        <option>Unconscious</option>
+                    </select>
+                </div>
+                <div class="exam-field">
+                    <label>Orientation</label>
+                    <select id="genOrientation" class="form-select form-select-sm">
+                        <option value="">--</option>
+                        <option>Oriented</option>
+                        <option>Disoriented</option>
+                    </select>
+                </div>
+                <div class="exam-field">
+                    <label>Pallor</label>
+                    <select id="genPallor" class="form-select form-select-sm"><option value="">--</option><option>Present</option><option>Absent</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Icterus</label>
+                    <select id="genIcterus" class="form-select form-select-sm"><option value="">--</option><option>Present</option><option>Absent</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Cyanosis</label>
+                    <select id="genCyanosis" class="form-select form-select-sm"><option value="">--</option><option>Present</option><option>Absent</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Clubbing</label>
+                    <select id="genClubbing" class="form-select form-select-sm"><option value="">--</option><option>Present</option><option>Absent</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Edema</label>
+                    <select id="genEdema" class="form-select form-select-sm"><option value="">--</option><option>Present</option><option>Absent</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Lymph Nodes</label>
+                    <select id="genLymphNodes" class="form-select form-select-sm"><option value="">--</option><option>Palpable</option><option>Not Palpable</option></select>
+                </div>
+                <div class="exam-field">
+                    <label>Hydration</label>
+                    <select id="genHydration" class="form-select form-select-sm"><option value="">--</option><option>Adequate</option><option>Dehydrated</option></select>
+                </div>
+            </div>
+
+            <div class="exam-section-title">Vital Snapshot</div>
+            <div class="exam-grid">
+                <div class="exam-field"><label>BP Systolic</label><input type="number" id="vitBpSys" class="form-control form-control-sm" placeholder="mmHg" /></div>
+                <div class="exam-field"><label>BP Diastolic</label><input type="number" id="vitBpDia" class="form-control form-control-sm" placeholder="mmHg" /></div>
+                <div class="exam-field"><label>Pulse</label><input type="number" id="vitPulse" class="form-control form-control-sm" placeholder="/min" /></div>
+                <div class="exam-field"><label>Temperature (°F)</label><input type="number" step="0.1" id="vitTemp" class="form-control form-control-sm" /></div>
+                <div class="exam-field"><label>Respiratory Rate</label><input type="number" id="vitRR" class="form-control form-control-sm" placeholder="/min" /></div>
+                <div class="exam-field"><label>SpO₂ (%)</label><input type="number" id="vitSpo2" class="form-control form-control-sm" /></div>
+                <div class="exam-field"><label>Height (cm)</label><input type="number" step="0.1" id="vitHeight" class="form-control form-control-sm" oninput="calcBmi()" /></div>
+                <div class="exam-field"><label>Weight (kg)</label><input type="number" step="0.1" id="vitWeight" class="form-control form-control-sm" oninput="calcBmi()" /></div>
+                <div class="exam-field"><label>BMI</label><div class="bmi-pill" id="vitBmiDisplay">—</div></div>
+            </div>
+
+            <div class="exam-section-title">Systemic Examination</div>
+
+            @{
+                var systemicFields = new (string Field, string Label, string Id)[]
+                {
+                        ("CVS","CVS (Cardiovascular)","sysCvs"),
+                        ("RS","RS (Respiratory)","sysRs"),
+                        ("CNS","CNS (Neurological)","sysCns"),
+                        ("ABDOMEN","Abdomen","sysAbdomen"),
+                        ("ENT","ENT","sysEnt"),
+                        ("SKIN","Skin","sysSkin"),
+                        ("MSK","Musculoskeletal","sysMsk")
+                };
+            }
+            @foreach (var f in systemicFields)
+            {
+                <div class="systemic-block">
+                    <label class="field-label">@f.Label</label>
+                    <div class="finding-chips" id="chips_@f.Field" data-field="@f.Field" data-target="@f.Id"></div>
+                    <input type="text" class="form-control form-control-sm" id="@f.Id" placeholder="Findings..." />
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ROW 2 : Allergies (left) + Medical History (right)
+    ══════════════════════════════════════════════════════ -->
+    <div class="row g-3 mb-2">
+        <!-- Allergies -->
+        <div class="col-md-6">
+            <div class="an-card">
+                <div class="an-head collapsible" onclick="toggleSection('allergyBodyWrap', this)">
+                    <span class="an-title">
+                        <svg class="an-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        Allergies
+                    </span>
+                    <button class="btn-add-new" onclick="event.stopPropagation(); openAllergyModal()">+ Add New</button>
+                </div>
+                <div class="an-collapse-body" id="allergyBodyWrap">
+                    <table class="an-tbl">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Allergen / Reaction</th>
+                                <th>Severity</th>
+                                <th>Identified</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="allergyBody">
+                            @if (Model.Allergies == null || Model.Allergies.Count == 0)
+                            {
+                                <tr><td colspan="6" class="an-empty">No Allergies Added</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var a in Model.Allergies)
+                                {
+                                    <tr data-id="@a.AllergyId" data-severity="@a.Severity" data-name="@a.AllergyName">
+                                        <td>@a.AllergyType</td>
+                                        <td>@a.AllergyName @(string.IsNullOrEmpty(a.Reaction) ? "" : "/ " + a.Reaction)</td>
+                                        <td>
+                                            <span class="an-badge badge-@(a.Severity ?? "mild").ToLower()">@a.Severity</span>
+                                        </td>
+                                        <td>@(a.DateIdentified.HasValue? a.DateIdentified.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                        <td>@(a.ClinicalStatus ?? "Active")</td>
+                                        <td>
+                                            <svg onclick="viewAllergy(@a.AllergyId)" class="tpl-icon tpl-icon-view" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                            <svg onclick="editAllergy(@a.AllergyId)" class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            <svg onclick="deleteAllergy(@a.AllergyId, this)" class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical History -->
+        <div class="col-md-6">
+            <div class="an-card">
+                <div class="an-head collapsible" onclick="toggleSection('historyBodyWrap', this)">
+                    <span class="an-title">
+                        <svg class="an-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        Medical History
+                    </span>
+                    <button class="btn-add-new" onclick="event.stopPropagation(); openHistoryModal()">+ Add New</button>
+                </div>
+                <div class="an-collapse-body" id="historyBodyWrap">
+                    <table class="an-tbl">
+                        <thead>
+                            <tr>
+                                <th>Condition</th>
+                                <th>Since</th>
+                                <th>Status</th>
+                                <th>Control</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            @if (Model.MedicalHistory == null || Model.MedicalHistory.Count == 0)
+                            {
+                                <tr><td colspan="5" class="an-empty">No Medical History Added</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var h in Model.MedicalHistory)
+                                {
+                                    <tr data-id="@h.HistoryId">
+                                        <td>@h.HistoryType @(string.IsNullOrEmpty(h.Description) ? "" : "- " + h.Description)</td>
+                                        <td>@(h.SinceYear.HasValue? h.SinceYear.ToString() : "-")</td>
+                                        <td>@h.Status</td>
+                                        <td>@(h.ControlStatus ?? "-")</td>
+                                        <td>
+                                            <svg onclick="viewHistory(@h.HistoryId)" class="tpl-icon tpl-icon-view" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                            <svg onclick="editHistory(@h.HistoryId)" class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            <svg onclick="deleteHistory(@h.HistoryId, this)" class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         ROW 3 : Remarks (left textarea) + Templates (right)
+    ══════════════════════════════════════════════════════ -->
+    <div class="an-card">
+        <div class="remarks-row">
+
+            <!-- Remarks textarea side -->
+            <div class="remarks-left">
+                <div class="an-head">
+                    <span class="an-title">Remarks</span>
+                    <span class="an-links">
+                        <a onclick="clearField('REMARKS')">Clear</a>
+                    </span>
+                </div>
+                <textarea id="txtRemarks" class="an-ta" style="min-height:130px;"
+                          placeholder="Type here...">@Model.Remarks</textarea>
+                <button class="btn-save" onclick="saveRemarks()">Save Remarks</button>
+            </div>
+
+            <!-- Remarks templates side -->
+            <div class="remarks-right">
+                <div class="tpl-box" style="margin-top:0; height:100%;">
+                    <div class="tpl-box-head">
+                        <strong>Templates</strong>
+                        <button class="btn-add-new" onclick="openTplModal('REMARKS')">+ Add New</button>
+                    </div>
+                    <input class="tpl-search" placeholder="Search Template"
+                           onkeyup="searchTpl('REMARKS', this.value)" />
+                    <ul class="tpl-list" id="listREMARKS">
+                        @foreach (var t in Model.RemarksTemplates)
+                        {
+                            <li data-id="@t.TemplateId" data-text="@t.TemplateText">
+                                <span class="tpl-name" onclick="applyTpl('REMARKS',this)">@t.TemplateName</span>
+                                <span class="tpl-actions">
+                                    <svg onclick="editTpl('REMARKS',@t.TemplateId,'@t.TemplateName',this)" class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                    <svg onclick="deleteTpl(@t.TemplateId,this)" class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══ MODAL: Add Allergy ══════════════════════════════════════════ -->
+<div class="modal fade" id="allergyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allergyModalTitle">Add Allergy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="algId" value="0" />
+                <div class="mb-2">
+                    <label class="form-label">Allergy Type</label>
+                    <select id="algType" class="form-select form-select-sm">
+                        <option value="Drug">Drug</option>
+                        <option value="Food">Food</option>
+                        <option value="Dust">Dust</option>
+                        <option value="Latex">Latex</option>
+                        <option value="Contrast">Contrast</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Allergen Name</label>
+                    <input type="text" id="algName" class="form-control form-control-sm"
+                           placeholder="e.g. Penicillin" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Reaction</label>
+                    <input type="text" id="algReaction" class="form-control form-control-sm"
+                           placeholder="e.g. Rash, Anaphylaxis" />
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Severity</label>
+                        <select id="algSeverity" class="form-select form-select-sm">
+                            <option value="Mild">Mild</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Severe">Severe</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Date Identified</label>
+                        <input type="date" id="algDate" class="form-control form-control-sm" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Clinical Status</label>
+                        <select id="algClinicalStatus" class="form-select form-select-sm">
+                            <option value="Active">Active</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Unconfirmed">Unconfirmed</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Verified By (User ID)</label>
+                        <input type="number" id="algVerifiedBy" class="form-control form-control-sm" placeholder="Optional" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" id="algRemarks" class="form-control form-control-sm" placeholder="Optional notes" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveAllergy()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Add Medical History ══════════════════════════════════ -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalTitle">Add Medical History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="histId" value="0" />
+                <div class="mb-2">
+                    <label class="form-label">Type</label>
+                    <input type="text" id="histType" class="form-control form-control-sm"
+                           placeholder="e.g. Diabetes, Hypertension, Surgery" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Description</label>
+                    <input type="text" id="histDesc" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Medication</label>
+                    <input type="text" id="histMedication" class="form-control form-control-sm" placeholder="e.g. Metformin 500mg BD" />
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Since Year</label>
+                        <input type="number" id="histYear" class="form-control form-control-sm"
+                               placeholder="e.g. 2015" min="1900" max="2099" />
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Status</label>
+                        <select id="histStatus" class="form-select form-select-sm">
+                            <option value="Active">Active</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Control Status</label>
+                        <select id="histControlStatus" class="form-select form-select-sm">
+                            <option value="">-- N/A --</option>
+                            <option value="Controlled">Controlled</option>
+                            <option value="Uncontrolled">Uncontrolled</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="form-label">Last Follow-up</label>
+                        <input type="date" id="histFollowup" class="form-control form-control-sm" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" id="histRemarks" class="form-control form-control-sm" placeholder="Optional notes" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveHistory()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Add Chief Complaint ═══════════════════════════════════ -->
+<div class="modal fade" id="complaintModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="complaintModalTitle">Add Chief Complaint</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ccId" value="0" />
+
+                <div class="mb-2 ac-wrap">
+                    <label class="field-label">Complaint Name</label>
+                    <input type="text" id="ccName" class="form-control form-control-sm" autocomplete="off"
+                           placeholder="Start typing... e.g. Fever" oninput="searchComplaint(this.value)" />
+                    <div class="ac-dropdown" id="ccAutocomplete"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="field-label">Duration</label>
+                        <div class="d-flex gap-1">
+                            <input type="number" id="ccDurationValue" min="0" class="form-control form-control-sm" placeholder="e.g. 3" />
+                            <select id="ccDurationUnit" class="form-select form-select-sm">
+                                <option value="Minutes">Minutes</option>
+                                <option value="Hours">Hours</option>
+                                <option value="Days" selected>Days</option>
+                                <option value="Weeks">Weeks</option>
+                                <option value="Months">Months</option>
+                                <option value="Years">Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="field-label">Body Location</label>
+                        <input type="text" id="ccBodyLocation" class="form-control form-control-sm" placeholder="e.g. Right lower abdomen" />
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="field-label">Severity</label>
+                    <div class="an-toggle-group" id="ccSeverityGroup">
+                        <div class="an-toggle-btn" data-val="Mild" onclick="selectToggle('ccSeverityGroup', this)">Mild</div>
+                        <div class="an-toggle-btn" data-val="Moderate" onclick="selectToggle('ccSeverityGroup', this)">Moderate</div>
+                        <div class="an-toggle-btn" data-val="Severe" onclick="selectToggle('ccSeverityGroup', this)">Severe</div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="field-label">Onset</label>
+                    <div class="an-toggle-group" id="ccOnsetGroup">
+                        <div class="an-toggle-btn" data-val="Sudden" onclick="selectToggle('ccOnsetGroup', this)">Sudden</div>
+                        <div class="an-toggle-btn" data-val="Gradual" onclick="selectToggle('ccOnsetGroup', this)">Gradual</div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="field-label">Frequency</label>
+                    <input type="text" id="ccFrequency" class="form-control form-control-sm" placeholder="e.g. Intermittent, Continuous, Twice a day" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="field-label">Pain Score (0–10)</label>
+                    <div class="pain-scale" id="ccPainScale"></div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="field-label">Remarks</label>
+                    <textarea id="ccRemarks" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveComplaint()">Save Complaint</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: View Details (generic, read-only) ══════════════════════ -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewDetailsTitle">Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewDetailsBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Audit Trail ═══════════════════════════════════════════ -->
+<div class="modal fade" id="auditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Audit History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="auditLogBody">
+                <div class="prev-empty">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Add / Edit Template (shared) ═════════════════════════ -->
+<div class="modal fade" id="tplModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tplModalTitle">Add Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="tplId" value="0" />
+                <input type="hidden" id="tplType" value="" />
+                <div class="mb-2">
+                    <label class="form-label">Template Name</label>
+                    <input type="text" id="tplName" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Template Text</label>
+                    <textarea id="tplText" class="form-control form-control-sm" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveTpl()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var ipdId     = parseInt(document.getElementById('hdnIpdId').value);
+        var patientId = parseInt(document.getElementById('hdnPatientId').value);
+
+        var allergyModal   = new bootstrap.Modal(document.getElementById('allergyModal'));
+        var historyModal   = new bootstrap.Modal(document.getElementById('historyModal'));
+        var tplModal       = new bootstrap.Modal(document.getElementById('tplModal'));
+        var complaintModal = new bootstrap.Modal(document.getElementById('complaintModal'));
+        var auditModal     = new bootstrap.Modal(document.getElementById('auditModal'));
+        var viewDetailsModal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+
+        /* ─── helper ──────────────────────────────────────────── */
+        function esc(t) {
+            return (t || '').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+        }
+
+        /* ─── Generic read-only "View Details" modal renderer ──── */
+        function renderViewDetails(title, rows) {
+            $('#viewDetailsTitle').text(title);
+            var html = '';
+            rows.forEach(function (pair) {
+                var label = pair[0], value = pair[1];
+                html += '<div class="vd-row" style="margin-bottom:8px;">' +
+                    '<div class="field-label" style="margin-bottom:1px;">' + label + '</div>' +
+                    '<div>' + (value === null || value === undefined || value === '' ? '<span class="text-muted">—</span>' : esc(String(value))) + '</div>' +
+                    '</div>';
+            });
+            $('#viewDetailsBody').html(html);
+            viewDetailsModal.show();
+        }
+
+        /* ─── Safe refresh: works whether this view is loaded
+               inside the IPD tab shell (loadTab exists) or opened
+               directly by URL (loadTab does not exist) ────────── */
+        function refreshAdmissionNotes() {
+            if (typeof window.loadTab === 'function') {
+                try { window.loadTab('AdmissionNotes'); return; } catch (e) { /* fall through to reload */ }
+            }
+            location.reload();
+        }
+        function targetId(section) {
+            return section === 'COMPLAINT'   ? '#txtCurrentComplaint'
+                 : section === 'EXAMINATION' ? '#txtExamination'
+                 : '#txtRemarks';
+        }
+        function listId(section) {
+            return '#list' + section;
+        }
+
+        /* ─── Apply template text ─────────────────────────────── */
+        window.applyTpl = function (section, el) {
+            var text = $(el).closest('li').data('text') || '';
+            var t    = targetId(section);
+            var cur  = $(t).val();
+            $(t).val(cur ? cur + '\n' + text : text);
+        };
+
+        /* ─── Save Notes (Examination) ────────────────────────── */
+        window.saveNotes = function () {
+            $.ajax({
+                url: '/AdmissionNotes/SaveNotes', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ipdId: ipdId, patientId: patientId,
+                    currentComplaint: null, // structured chief complaints saved individually
+                    examination:      $('#txtExamination').val()
+                }),
+                success: function (r) { if (r.success) { markSaved(); alert(r.message); } },
+                error:   function ()  { alert('Error saving notes.'); }
+            });
+        };
+
+        /* ─── Save Remarks ────────────────────────────────────── */
+        window.saveRemarks = function () {
+            $.ajax({
+                url: '/AdmissionNotes/SaveRemarks', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ipdId: ipdId, patientId: patientId,
+                    remarks: $('#txtRemarks').val()
+                }),
+                success: function (r) { if (r.success) alert(r.message); },
+                error:   function ()  { alert('Error saving remarks.'); }
+            });
+        };
+
+        /* ─── Load Previous ───────────────────────────────────── */
+        window.loadPrevious = function (section) {
+            $.ajax({
+                url: '/AdmissionNotes/LoadPrevious', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ patientId: patientId, ipdId: ipdId }),
+                success: function (r) {
+                    if (!r.success) { alert(r.message); return; }
+                    if (section === 'COMPLAINT')   $('#txtCurrentComplaint').val(r.currentComplaint);
+                    else                           $('#txtExamination').val(r.examination);
+                }
+            });
+        };
+
+        /* ─── Clear field ─────────────────────────────────────── */
+        window.clearField = function (section) {
+            if (!confirm('Are you sure?')) return;
+            if (section === 'REMARKS') { $('#txtRemarks').val(''); return; }
+            $.ajax({
+                url: '/AdmissionNotes/ClearNotes', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ ipdId: ipdId, field: section }),
+                success: function (r) {
+                    if (r.success) $(targetId(section)).val('');
+                }
+            });
+        };
+
+        var svgEdit = '<svg class="tpl-icon tpl-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+        var svgDel  = '<svg class="tpl-icon tpl-icon-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+
+        /* ─── Search Templates ────────────────────────────────── */
+        var stimer;
+        window.searchTpl = function (section, val) {
+            clearTimeout(stimer);
+            stimer = setTimeout(function () {
+                $.ajax({
+                    url: '/AdmissionNotes/GetTemplates', type: 'GET',
+                    data: { type: section, search: val },
+                    success: function (list) {
+                        var ul = $(listId(section)).empty();
+                        list.forEach(function (t) {
+                            ul.append(
+                                '<li data-id="' + t.templateId + '" data-text="' + esc(t.templateText) + '">' +
+                                    '<span class="tpl-name" onclick="applyTpl(\'' + section + '\',this)">' + t.templateName + '</span>' +
+                                    '<span class="tpl-actions">' +
+                                        svgEdit.replace('viewBox', 'onclick="editTpl(\'' + section + '\',' + t.templateId + ',\'' + t.templateName + '\',this)" viewBox') +
+                                        svgDel.replace('viewBox', 'onclick="deleteTpl(' + t.templateId + ',this)" viewBox') +
+                                    '</span>' +
+                                '</li>'
+                            );
+                        });
+                    }
+                });
+            }, 300);
+        };
+
+        /* ─── Template Modal Open (Add) ───────────────────────── */
+        window.openTplModal = function (section) {
+            $('#tplModalTitle').text('Add Template');
+            $('#tplId').val(0); $('#tplType').val(section);
+            $('#tplName').val(''); $('#tplText').val('');
+            tplModal.show();
+        };
+
+        /* ─── Template Modal Open (Edit) ─────────────────────── */
+        window.editTpl = function (section, id, name, el) {
+            $('#tplModalTitle').text('Edit Template');
+            $('#tplId').val(id); $('#tplType').val(section);
+            $('#tplName').val(name);
+            $('#tplText').val($(el).closest('li').data('text') || '');
+            tplModal.show();
+        };
+
+        /* ─── Save Template ───────────────────────────────────── */
+        window.saveTpl = function () {
+            var id = parseInt($('#tplId').val());
+            $.ajax({
+                url: '/AdmissionNotes/SaveTemplate', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: id > 0 ? 'UPDATE' : 'ADD',
+                    templateId:   id,
+                    templateType: $('#tplType').val(),
+                    templateName: $('#tplName').val(),
+                    templateText: $('#tplText').val()
+                }),
+                success: function (r) {
+                    if (r.success) { tplModal.hide(); refreshAdmissionNotes(); }
+                }
+            });
+        };
+
+        /* ─── Delete Template ─────────────────────────────────── */
+        window.deleteTpl = function (id, el) {
+            if (!confirm('Delete template?')) return;
+            $.ajax({
+                url: '/AdmissionNotes/SaveTemplate', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ action: 'DELETE', templateId: id }),
+                success: function (r) { if (r.success) $(el).closest('li').remove(); }
+            });
+        };
+
+        /* ─── Allergy Modal ───────────────────────────────────── */
+        window.openAllergyModal = function () {
+            $('#allergyModalTitle').text('Add Allergy');
+            $('#algId').val(0);
+            $('#algType').val('Drug'); $('#algName').val('');
+            $('#algReaction').val(''); $('#algSeverity').val('Mild');
+            $('#algDate').val(''); $('#algClinicalStatus').val('Active');
+            $('#algVerifiedBy').val(''); $('#algRemarks').val('');
+            allergyModal.show();
+        };
+
+        window.editAllergy = function (id) {
+            var a = (__initialAllergies || []).find(function (x) { return x.allergyId === id; });
+            if (!a) { alert('Could not find this allergy record.'); return; }
+            $('#allergyModalTitle').text('Edit Allergy');
+            $('#algId').val(a.allergyId);
+            $('#algType').val(a.allergyType || 'Drug');
+            $('#algName').val(a.allergyName || '');
+            $('#algReaction').val(a.reaction || '');
+            $('#algSeverity').val(a.severity || 'Mild');
+            $('#algDate').val(a.dateIdentified ? a.dateIdentified.substring(0, 10) : '');
+            $('#algClinicalStatus').val(a.clinicalStatus || 'Active');
+            $('#algVerifiedBy').val(a.verifiedBy || '');
+            $('#algRemarks').val(a.remarks || '');
+            allergyModal.show();
+        };
+
+        window.viewAllergy = function (id) {
+            var a = (__initialAllergies || []).find(function (x) { return x.allergyId === id; });
+            if (!a) return;
+            renderViewDetails('Allergy Details', [
+                ['Type', a.allergyType], ['Allergen', a.allergyName], ['Reaction', a.reaction],
+                ['Severity', a.severity], ['Date Identified', a.dateIdentified ? a.dateIdentified.substring(0, 10) : ''],
+                ['Clinical Status', a.clinicalStatus], ['Verified By (User ID)', a.verifiedBy],
+                ['Remarks', a.remarks], ['Recorded Date', a.recordedDate ? a.recordedDate.substring(0, 10) : '']
+            ]);
+        };
+
+        window.saveAllergy = function () {
+            if (!$('#algName').val().trim()) { alert('Allergen name is required.'); return; }
+            var id = parseInt($('#algId').val()) || 0;
+            $.ajax({
+                url: '/AdmissionNotes/SaveAllergy', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: id > 0 ? 'UPDATE' : 'ADD', allergyId: id, patientId: patientId, ipdId: ipdId,
+                    allergyType: $('#algType').val(),
+                    allergyName: $('#algName').val(),
+                    reaction:    $('#algReaction').val(),
+                    severity:    $('#algSeverity').val(),
+                    dateIdentified: $('#algDate').val() || null,
+                    verifiedBy:  $('#algVerifiedBy').val() ? parseInt($('#algVerifiedBy').val()) : null,
+                    clinicalStatus: $('#algClinicalStatus').val(),
+                    remarks:     $('#algRemarks').val()
+                }),
+                success: function (r) {
+                    if (r.success) { allergyModal.hide(); refreshAdmissionNotes(); }
+                    else alert(r.message || 'Error saving allergy.');
+                },
+                error: function () { alert('Error saving allergy.'); }
+            });
+        };
+
+        window.deleteAllergy = function (id, el) {
+            if (!confirm('Delete this allergy?')) return;
+            $.ajax({
+                url: '/AdmissionNotes/SaveAllergy', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ action: 'DELETE', allergyId: id }),
+                success: function (r) {
+                    if (r.success) {
+                        $(el).closest('tr').remove();
+                        if ($('#allergyBody tr').length === 0)
+                            $('#allergyBody').html('<tr><td colspan="6" class="an-empty">No Allergies Added</td></tr>');
+                        refreshCriticalBanner();
+                        updateSectionProgress();
+                    }
+                }
+            });
+        };
+
+        /* ─── Medical History Modal ───────────────────────────── */
+        window.openHistoryModal = function () {
+            $('#historyModalTitle').text('Add Medical History');
+            $('#histId').val(0); $('#histType').val(''); $('#histDesc').val('');
+            $('#histMedication').val('');
+            $('#histYear').val(''); $('#histStatus').val('Active');
+            $('#histControlStatus').val(''); $('#histFollowup').val(''); $('#histRemarks').val('');
+            historyModal.show();
+        };
+
+        window.editHistory = function (id) {
+            var h = (__initialMedicalHistory || []).find(function (x) { return x.historyId === id; });
+            if (!h) { alert('Could not find this medical history record.'); return; }
+            $('#historyModalTitle').text('Edit Medical History');
+            $('#histId').val(h.historyId);
+            $('#histType').val(h.historyType || '');
+            $('#histDesc').val(h.description || '');
+            $('#histMedication').val(h.medication || '');
+            $('#histYear').val(h.sinceYear || '');
+            $('#histStatus').val(h.status || 'Active');
+            $('#histControlStatus').val(h.controlStatus || '');
+            $('#histFollowup').val(h.lastFollowupDate ? h.lastFollowupDate.substring(0, 10) : '');
+            $('#histRemarks').val(h.remarks || '');
+            historyModal.show();
+        };
+
+        window.viewHistory = function (id) {
+            var h = (__initialMedicalHistory || []).find(function (x) { return x.historyId === id; });
+            if (!h) return;
+            renderViewDetails('Medical History Details', [
+                ['Condition/Type', h.historyType], ['Description', h.description], ['Medication', h.medication],
+                ['Since Year', h.sinceYear], ['Status', h.status], ['Control Status', h.controlStatus],
+                ['Last Follow-up', h.lastFollowupDate ? h.lastFollowupDate.substring(0, 10) : ''],
+                ['Remarks', h.remarks], ['Recorded Date', h.recordedDate ? h.recordedDate.substring(0, 10) : '']
+            ]);
+        };
+
+        window.saveHistory = function () {
+            var id = parseInt($('#histId').val());
+            if (!$('#histType').val().trim()) { alert('Condition/Type is required.'); return; }
+            $.ajax({
+                url: '/AdmissionNotes/SaveMedicalHistory', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: id > 0 ? 'UPDATE' : 'ADD',
+                    historyId:   id, patientId: patientId,
+                    historyType: $('#histType').val(),
+                    description: $('#histDesc').val(),
+                    medication:  $('#histMedication').val(),
+                    sinceYear:   $('#histYear').val() ? parseInt($('#histYear').val()) : null,
+                    status:      $('#histStatus').val(),
+                    controlStatus: $('#histControlStatus').val() || null,
+                    lastFollowupDate: $('#histFollowup').val() || null,
+                    remarks:     $('#histRemarks').val()
+                }),
+                success: function (r) {
+                    if (r.success) { historyModal.hide(); refreshAdmissionNotes(); }
+                    else alert(r.message || 'Error saving medical history.');
+                },
+                error: function () { alert('Error saving medical history.'); }
+            });
+        };
+
+        window.deleteHistory = function (id, el) {
+            if (!confirm('Delete this record?')) return;
+            $.ajax({
+                url: '/AdmissionNotes/SaveMedicalHistory', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ action: 'DELETE', historyId: id }),
+                success: function (r) {
+                    if (r.success) {
+                        $(el).closest('tr').remove();
+                        if ($('#historyBody tr').length === 0)
+                            $('#historyBody').html('<tr><td colspan="5" class="an-empty">No Medical History Added</td></tr>');
+                        updateSectionProgress();
+                    }
+                }
+            });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           STRUCTURED CHIEF COMPLAINTS
+        ══════════════════════════════════════════════════════ */
+        var ccSelectedSeverity = '';
+        var ccSelectedOnset = '';
+        var ccSelectedPain = null;
+
+        function buildPainScale() {
+            var wrap = $('#ccPainScale').empty();
+            for (var i = 0; i <= 10; i++) {
+                wrap.append('<div class="pain-dot" data-val="' + i + '" onclick="selectPain(' + i + ')">' + i + '</div>');
+            }
+        }
+        window.selectPain = function (v) {
+            ccSelectedPain = v;
+            $('#ccPainScale .pain-dot').removeClass('active');
+            $('#ccPainScale .pain-dot[data-val="' + v + '"]').addClass('active');
+        };
+
+        window.selectToggle = function (groupId, el) {
+            $('#' + groupId + ' .an-toggle-btn').removeClass('active');
+            $(el).addClass('active');
+            var val = $(el).data('val');
+            if (groupId === 'ccSeverityGroup') ccSelectedSeverity = val;
+            if (groupId === 'ccOnsetGroup') ccSelectedOnset = val;
+            if (groupId === 'hpiProgressionGroup') hpiSelectedProgression = val;
+        };
+
+        window.openComplaintModal = function () {
+            $('#complaintModalTitle').text('Add Chief Complaint');
+            $('#ccId').val(0);
+            $('#ccName').val(''); $('#ccDurationValue').val(''); $('#ccDurationUnit').val('Days');
+            $('#ccBodyLocation').val(''); $('#ccFrequency').val(''); $('#ccRemarks').val('');
+            $('#ccSeverityGroup .an-toggle-btn, #ccOnsetGroup .an-toggle-btn').removeClass('active');
+            ccSelectedSeverity = ''; ccSelectedOnset = ''; ccSelectedPain = null;
+            buildPainScale();
+            $('#ccAutocomplete').removeClass('show').empty();
+            complaintModal.show();
+        };
+
+        window.editComplaint = function (id) {
+            var c = (__initialChiefComplaints || []).find(function (x) { return x.complaintId === id; });
+            if (!c) { alert('Could not find this complaint record.'); return; }
+            $('#complaintModalTitle').text('Edit Chief Complaint');
+            $('#ccId').val(c.complaintId);
+            $('#ccName').val(c.complaintName || '');
+            $('#ccDurationValue').val(c.durationValue || '');
+            $('#ccDurationUnit').val(c.durationUnit || 'Days');
+            $('#ccBodyLocation').val(c.bodyLocation || '');
+            $('#ccFrequency').val(c.frequency || '');
+            $('#ccRemarks').val(c.remarks || '');
+
+            $('#ccSeverityGroup .an-toggle-btn, #ccOnsetGroup .an-toggle-btn').removeClass('active');
+            ccSelectedSeverity = c.severity || '';
+            ccSelectedOnset = c.onset || '';
+            if (ccSelectedSeverity) $('#ccSeverityGroup .an-toggle-btn[data-val="' + ccSelectedSeverity + '"]').addClass('active');
+            if (ccSelectedOnset) $('#ccOnsetGroup .an-toggle-btn[data-val="' + ccSelectedOnset + '"]').addClass('active');
+
+            buildPainScale();
+            ccSelectedPain = (c.painScore === null || c.painScore === undefined) ? null : c.painScore;
+            if (ccSelectedPain !== null) $('#ccPainScale .pain-dot[data-val="' + ccSelectedPain + '"]').addClass('active');
+
+            $('#ccAutocomplete').removeClass('show').empty();
+            complaintModal.show();
+        };
+
+        window.viewComplaint = function (id) {
+            var c = (__initialChiefComplaints || []).find(function (x) { return x.complaintId === id; });
+            if (!c) return;
+            renderViewDetails('Chief Complaint Details', [
+                ['Complaint', c.complaintName],
+                ['Duration', c.durationValue ? (c.durationValue + ' ' + (c.durationUnit || '')) : ''],
+                ['Severity', c.severity], ['Onset', c.onset], ['Frequency', c.frequency],
+                ['Body Location', c.bodyLocation], ['Pain Score', c.painScore != null ? (c.painScore + '/10') : ''],
+                ['Remarks', c.remarks], ['Created Date', c.createdDate ? c.createdDate.substring(0, 10) : '']
+            ]);
+        };
+
+        /* ─── Smart complaint autocomplete ─────────────────────── */
+        var ccSearchTimer;
+        window.searchComplaint = function (val) {
+            clearTimeout(ccSearchTimer);
+            if (!val || val.trim().length < 2) { $('#ccAutocomplete').removeClass('show').empty(); return; }
+            ccSearchTimer = setTimeout(function () {
+                $.ajax({
+                    url: '/AdmissionNotes/SearchComplaints', type: 'GET',
+                    data: { search: val },
+                    success: function (list) {
+                        var dd = $('#ccAutocomplete').empty();
+                        if (!list || list.length === 0) { dd.removeClass('show'); return; }
+                        list.forEach(function (c) {
+                            dd.append(
+                                '<div class="ac-item" onclick="pickComplaint(\'' + c.complaintName.replace(/'/g, "\\'") + '\')">' +
+                                    '<span>' + c.complaintName + '</span>' +
+                                    '<span class="ac-cat">' + (c.category || '') + '</span>' +
+                                '</div>'
+                            );
+                        });
+                        dd.addClass('show');
+                    }
+                });
+            }, 250);
+        };
+
+        window.pickComplaint = function (name) {
+            $('#ccName').val(name);
+            $('#ccAutocomplete').removeClass('show').empty();
+        };
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.ac-wrap').length) $('#ccAutocomplete').removeClass('show');
+        });
+
+        window.saveComplaint = function () {
+            var name = $('#ccName').val().trim();
+            if (!name) { alert('Complaint name is required.'); return; }
+            var id = parseInt($('#ccId').val()) || 0;
+            $.ajax({
+                url: '/AdmissionNotes/SaveChiefComplaint', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: id > 0 ? 'UPDATE' : 'ADD', complaintId: id, ipdId: ipdId, patientId: patientId,
+                    complaintName: name,
+                    durationValue: $('#ccDurationValue').val() ? parseInt($('#ccDurationValue').val()) : null,
+                    durationUnit: $('#ccDurationUnit').val(),
+                    severity: ccSelectedSeverity || null,
+                    onset: ccSelectedOnset || null,
+                    frequency: $('#ccFrequency').val(),
+                    bodyLocation: $('#ccBodyLocation').val(),
+                    painScore: ccSelectedPain,
+                    remarks: $('#ccRemarks').val()
+                }),
+                success: function (r) {
+                    if (r.success) { complaintModal.hide(); refreshAdmissionNotes(); }
+                    else alert(r.message || 'Error saving complaint.');
+                },
+                error: function () { alert('Error saving complaint.'); }
+            });
+        };
+
+        window.deleteComplaint = function (id, el) {
+            if (!confirm('Delete this chief complaint?')) return;
+            $.ajax({
+                url: '/AdmissionNotes/SaveChiefComplaint', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ action: 'DELETE', complaintId: id }),
+                success: function (r) {
+                    if (r.success) {
+                        $(el).closest('.cc-item').remove();
+                        if ($('#ccList .cc-item').length === 0)
+                            $('#ccList').html('<div class="cc-empty" id="ccEmpty">No chief complaints added yet. Click "+ Add Complaint" to begin.</div>');
+                        updateSectionProgress();
+                    }
+                }
+            });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           ENTERPRISE UI: collapsible sections, critical banner,
+           progress pill, unsaved-changes warning
+        ══════════════════════════════════════════════════════ */
+        window.toggleSection = function (bodyId, headEl) {
+            $('#' + bodyId).toggleClass('collapsed');
+            $(headEl).find('.an-chevron').toggleClass('collapsed');
+        };
+
+        function refreshCriticalBanner() {
+            var names = [];
+            $('#allergyBody tr[data-severity="Severe"]').each(function () {
+                var n = $(this).data('name');
+                if (n) names.push(n);
+            });
+            if (names.length > 0) {
+                $('#criticalBannerList').text(names.join(', ') + ' — verify before prescribing / administering.');
+                $('#criticalBanner').addClass('show');
+            } else {
+                $('#criticalBanner').removeClass('show');
+            }
+        }
+
+        function updateSectionProgress() {
+            var filled = 0, total = 4;
+            if ($('#ccList .cc-item').length > 0) filled++;
+            if ($('#txtExamination').val() && $('#txtExamination').val().trim() !== '') filled++;
+            if ($('#allergyBody tr[data-id]').length > 0) filled++;
+            if ($('#historyBody tr[data-id]').length > 0) filled++;
+            $('#sectionProgress').text(filled + '/' + total + ' sections filled');
+        }
+
+        /* ─── Unsaved changes warning (Examination + Remarks) ──── */
+        var formDirty = false;
+        function markDirty() {
+            formDirty = true;
+            $('#saveStatus').addClass('dirty').text('Unsaved changes');
+        }
+        function markSaved() {
+            formDirty = false;
+            $('#saveStatus').removeClass('dirty').text('All changes saved');
+        }
+        $('#txtExamination, #txtRemarks').on('input', markDirty);
+        window.addEventListener('beforeunload', function (e) {
+            if (formDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
+        var _origSaveRemarks = window.saveRemarks;
+        window.saveRemarks = function () {
+            $.ajax({
+                url: '/AdmissionNotes/SaveRemarks', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ipdId: ipdId, patientId: patientId,
+                    remarks: $('#txtRemarks').val()
+                }),
+                success: function (r) { if (r.success) { markSaved(); alert(r.message); } },
+                error:   function ()  { alert('Error saving remarks.'); }
+            });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           STRUCTURED HPI
+        ══════════════════════════════════════════════════════ */
+        var hpiSelectedProgression = __initialHpi && __initialHpi.progression ? __initialHpi.progression : '';
+
+        window.appendChip = function (inputId, text) {
+            var $inp = $('#' + inputId);
+            var cur = ($inp.val() || '').trim();
+            if (!cur) { $inp.val(text); return; }
+            if (cur.split(',').map(function (s) { return s.trim().toLowerCase(); }).indexOf(text.toLowerCase()) === -1) {
+                $inp.val(cur + ', ' + text);
+            }
+        };
+
+        function initHpiFromServer() {
+            if (!__initialHpi) return;
+            if (__initialHpi.progression) {
+                $('#hpiProgressionGroup .an-toggle-btn[data-val="' + __initialHpi.progression + '"]').addClass('active');
+            }
+        }
+
+        window.saveHpi = function () {
+            $.ajax({
+                url: '/AdmissionNotes/SaveHpi', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ipdId: ipdId, patientId: patientId,
+                    symptomsStartedOn: $('#hpiStartedOn').val(),
+                    progression: hpiSelectedProgression || null,
+                    associatedSymptoms: $('#hpiAssociated').val(),
+                    aggravatingFactors: $('#hpiAggravating').val(),
+                    relievingFactors: $('#hpiRelieving').val(),
+                    previousTreatment: $('#hpiPrevTreatment').val(),
+                    previousConsultation: $('#hpiPrevConsultation').val(),
+                    previousHospitalization: $('#hpiPrevHospitalization').val(),
+                    timelineNotes: $('#hpiTimeline').val()
+                }),
+                success: function (r) { if (r.success) alert(r.message); else alert(r.message || 'Error saving HPI.'); },
+                error: function () { alert('Error saving HPI.'); }
+            });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           PROFESSIONAL EXAMINATION MODULE
+        ══════════════════════════════════════════════════════ */
+        window.calcBmi = function () {
+            var h = parseFloat($('#vitHeight').val());
+            var w = parseFloat($('#vitWeight').val());
+            if (h > 0 && w > 0) {
+                var bmi = (w / Math.pow(h / 100, 2)).toFixed(1);
+                $('#vitBmiDisplay').text(bmi);
+            } else {
+                $('#vitBmiDisplay').text('—');
+            }
+        };
+
+        function initExamFromServer() {
+            if (!__initialExam) return;
+            var e = __initialExam;
+            $('#genConscious').val(e.conscious || '');
+            $('#genOrientation').val(e.orientation || '');
+            $('#genPallor').val(e.pallor || '');
+            $('#genIcterus').val(e.icterus || '');
+            $('#genCyanosis').val(e.cyanosis || '');
+            $('#genClubbing').val(e.clubbing || '');
+            $('#genEdema').val(e.edema || '');
+            $('#genLymphNodes').val(e.lymphNodes || '');
+            $('#genHydration').val(e.hydration || '');
+            if (e.bpSystolic) $('#vitBpSys').val(e.bpSystolic);
+            if (e.bpDiastolic) $('#vitBpDia').val(e.bpDiastolic);
+            if (e.pulse) $('#vitPulse').val(e.pulse);
+            if (e.temperature) $('#vitTemp').val(e.temperature);
+            if (e.respiratoryRate) $('#vitRR').val(e.respiratoryRate);
+            if (e.spo2) $('#vitSpo2').val(e.spo2);
+            if (e.heightCm) $('#vitHeight').val(e.heightCm);
+            if (e.weightKg) $('#vitWeight').val(e.weightKg);
+            if (e.bmi) $('#vitBmiDisplay').text(e.bmi);
+            $('#sysCvs').val(e.cvs || '');
+            $('#sysRs').val(e.rs || '');
+            $('#sysCns').val(e.cns || '');
+            $('#sysAbdomen').val(e.abdomen || '');
+            $('#sysEnt').val(e.ent || '');
+            $('#sysSkin').val(e.skin || '');
+            $('#sysMsk').val(e.musculoskeletal || '');
+        }
+
+        window.saveExaminationDetail = function () {
+            $.ajax({
+                url: '/AdmissionNotes/SaveExaminationDetail', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ipdId: ipdId, patientId: patientId,
+                    conscious: $('#genConscious').val(), orientation: $('#genOrientation').val(),
+                    pallor: $('#genPallor').val(), icterus: $('#genIcterus').val(),
+                    cyanosis: $('#genCyanosis').val(), clubbing: $('#genClubbing').val(),
+                    edema: $('#genEdema').val(), lymphNodes: $('#genLymphNodes').val(),
+                    hydration: $('#genHydration').val(),
+                    bpSystolic: $('#vitBpSys').val() ? parseInt($('#vitBpSys').val()) : null,
+                    bpDiastolic: $('#vitBpDia').val() ? parseInt($('#vitBpDia').val()) : null,
+                    pulse: $('#vitPulse').val() ? parseInt($('#vitPulse').val()) : null,
+                    temperature: $('#vitTemp').val() ? parseFloat($('#vitTemp').val()) : null,
+                    respiratoryRate: $('#vitRR').val() ? parseInt($('#vitRR').val()) : null,
+                    spo2: $('#vitSpo2').val() ? parseInt($('#vitSpo2').val()) : null,
+                    heightCm: $('#vitHeight').val() ? parseFloat($('#vitHeight').val()) : null,
+                    weightKg: $('#vitWeight').val() ? parseFloat($('#vitWeight').val()) : null,
+                    cvs: $('#sysCvs').val(), rs: $('#sysRs').val(), cns: $('#sysCns').val(),
+                    abdomen: $('#sysAbdomen').val(), ent: $('#sysEnt').val(),
+                    skin: $('#sysSkin').val(), musculoskeletal: $('#sysMsk').val()
+                }),
+                success: function (r) { if (r.success) alert(r.message); else alert(r.message || 'Error saving examination.'); },
+                error: function () { alert('Error saving examination.'); }
+            });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           ONE-CLICK CLINICAL FINDINGS
+        ══════════════════════════════════════════════════════ */
+        function loadFindingChips(field, targetInputId) {
+            $.ajax({
+                url: '/AdmissionNotes/GetClinicalFindings', type: 'GET',
+                data: { fieldName: field },
+                success: function (list) {
+                    var wrap = $('#chips_' + field).empty();
+                    (list || []).forEach(function (f) {
+                        var chip = $('<span class="finding-chip"></span>').text(f.findingName)
+                            .attr('title', f.findingText)
+                            .on('click', function () { appendFinding(targetInputId, f.findingText); });
+                        wrap.append(chip);
+                    });
+                    var addChip = $('<span class="finding-chip add-custom">+ Custom</span>')
+                        .on('click', function () { addCustomFinding(field, targetInputId); });
+                    wrap.append(addChip);
+                }
+            });
+        }
+
+        function appendFinding(inputId, text) {
+            var $inp = $('#' + inputId);
+            var cur = ($inp.val() || '').trim();
+            $inp.val(cur ? (cur + ' ' + text) : text);
+        }
+
+        function addCustomFinding(field, targetInputId) {
+            var name = prompt('Finding name (e.g. "Mild Wheeze"):');
+            if (!name) return;
+            var text = prompt('Text to insert when this is clicked:');
+            if (!text) return;
+            $.ajax({
+                url: '/AdmissionNotes/SaveClinicalFinding', type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ fieldName: field, findingName: name, findingText: text }),
+                success: function (r) {
+                    if (r.success) loadFindingChips(field, targetInputId);
+                    else alert(r.message || 'Error saving finding.');
+                }
+            });
+        }
+
+        function initAllFindingChips() {
+            [['CVS', 'sysCvs'], ['RS', 'sysRs'], ['CNS', 'sysCns'], ['ABDOMEN', 'sysAbdomen'],
+             ['ENT', 'sysEnt'], ['SKIN', 'sysSkin'], ['MSK', 'sysMsk']].forEach(function (pair) {
+                loadFindingChips(pair[0], pair[1]);
+            });
+        }
+
+        /* ══════════════════════════════════════════════════════
+           DEPARTMENT-BASED CLINICAL TEMPLATES
+        ══════════════════════════════════════════════════════ */
+        window.applyDepartmentTemplate = function () {
+            var id = parseInt($('#deptTemplateSelect').val());
+            if (!id) { alert('Select a department template first.'); return; }
+            var tpl = (__deptTemplates || []).find(function (t) { return t.deptTemplateId === id; });
+            if (!tpl) return;
+
+            // Populate chief complaints (added one by one, then refreshed)
+            var complaints = (tpl.commonComplaints || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            var chain = Promise.resolve();
+            complaints.forEach(function (name) {
+                chain = chain.then(function () {
+                    return $.ajax({
+                        url: '/AdmissionNotes/SaveChiefComplaint', type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ action: 'ADD', ipdId: ipdId, patientId: patientId, complaintName: name })
+                    });
+                });
+            });
+
+            // Populate examination findings (JSON: {"CVS":"...","RS":"..."})
+            try {
+                var findings = JSON.parse(tpl.examinationFindings || '{}');
+                Object.keys(findings).forEach(function (field) {
+                    var inputMap = { CVS: 'sysCvs', RS: 'sysRs', CNS: 'sysCns', ABDOMEN: 'sysAbdomen', ENT: 'sysEnt', SKIN: 'sysSkin', MSK: 'sysMsk' };
+                    var targetId = inputMap[field];
+                    if (targetId) $('#' + targetId).val(findings[field]);
+                });
+            } catch (e) { /* ignore malformed JSON */ }
+
+            // Populate standard notes into Remarks (does not overwrite existing text — appends)
+            if (tpl.standardNotes) {
+                var cur = $('#txtRemarks').val() || '';
+                $('#txtRemarks').val(cur ? (cur + '\n' + tpl.standardNotes) : tpl.standardNotes);
+            }
+
+            // Show suggested diagnoses as display-only chips (never auto-written to Diagnosis module)
+            if (tpl.frequentDiagnosis) {
+                var chips = tpl.frequentDiagnosis.split(',').map(function (d) {
+                    return '<span class="dept-suggest-chip">' + d.trim() + '</span>';
+                }).join(' ');
+                $('#deptSuggestedDx').html('Suggested Dx (add via Diagnosis tab): ' + chips);
+            }
+
+            chain.then(function () { refreshAdmissionNotes(); })
+                 .catch(function () { alert('Some complaints may not have saved — please check the list.'); refreshAdmissionNotes(); });
+        };
+
+        /* ══════════════════════════════════════════════════════
+           PREVIOUS ADMISSION COMPARISON PANEL
+        ══════════════════════════════════════════════════════ */
+        window.openPreviousPanel = function () {
+            $('#prevOverlay').addClass('show');
+            $('#prevPanel').addClass('show');
+            $('#prevPanelContent').html('<div class="prev-empty">Loading...</div>');
+            $.ajax({
+                url: '/AdmissionNotes/GetPreviousAdmission', type: 'GET',
+                data: { patientId: patientId, ipdId: ipdId },
+                success: renderPreviousPanel,
+                error: function () { $('#prevPanelContent').html('<div class="prev-empty">Could not load previous admission.</div>'); }
+            });
+        };
+        window.closePreviousPanel = function () {
+            $('#prevOverlay').removeClass('show');
+            $('#prevPanel').removeClass('show');
+        };
+
+        function diffLine(label, prevVal, curVal, onCopy) {
+            var isDiff = (prevVal || '') !== (curVal || '') && prevVal;
+            var cls = isDiff ? 'prev-diff' : '';
+            var html = '<div class="' + cls + '" style="margin-bottom:6px;">' +
+                '<strong>' + label + ':</strong> ' + (prevVal ? esc(prevVal) : '<span class="text-muted">—</span>');
+            if (prevVal && onCopy) {
+                html += ' <span class="prev-copy-btn" onclick="' + onCopy + '">Copy</span>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderPreviousPanel(p) {
+            if (!p) { $('#prevPanelContent').html('<div class="prev-empty">No previous admission found for this patient.</div>'); return; }
+            var html = '';
+            html += '<div class="prev-section"><div class="prev-section-title">Admission #' + esc(p.admissionNumber) + '</div>' +
+                '<div class="an-save-status">' + (p.admissionDate ? new Date(p.admissionDate).toLocaleDateString() : '') +
+                ' → ' + (p.dischargeDate ? new Date(p.dischargeDate).toLocaleDateString() : 'Ongoing') + ' (' + esc(p.status) + ')</div></div>';
+
+            html += '<div class="prev-section"><div class="prev-section-title">Complaint / Examination (free text)</div>' +
+                diffLine('Complaint', p.previousCurrentComplaint, $('#txtCurrentComplaint').length ? $('#txtCurrentComplaint').val() : '', "copyToField('txtExamination', this)") +
+                diffLine('Examination', p.previousExamination, $('#txtExamination').val(), "copyToField('txtExamination', this)") + '</div>';
+
+            html += '<div class="prev-section"><div class="prev-section-title">Chief Complaints</div>';
+            if (p.previousChiefComplaints && p.previousChiefComplaints.length) {
+                p.previousChiefComplaints.forEach(function (c) {
+                    html += '<div style="margin-bottom:4px;">• ' + esc(c.complaintName) +
+                        (c.severity ? ' (' + c.severity + ')' : '') + '</div>';
+                });
+            } else { html += '<div class="text-muted">None recorded</div>'; }
+            html += '</div>';
+
+            html += '<div class="prev-section"><div class="prev-section-title">Allergies</div>';
+            if (p.previousAllergies && p.previousAllergies.length) {
+                p.previousAllergies.forEach(function (a) {
+                    html += '<div style="margin-bottom:4px;">• ' + esc(a.allergyName) + ' — ' + esc(a.severity) + '</div>';
+                });
+            } else { html += '<div class="text-muted">None recorded</div>'; }
+            html += '</div>';
+
+            html += '<div class="prev-section"><div class="prev-section-title">Medical History</div>';
+            if (p.previousMedicalHistory && p.previousMedicalHistory.length) {
+                p.previousMedicalHistory.forEach(function (h) {
+                    html += '<div style="margin-bottom:4px;">• ' + esc(h.historyType) + '</div>';
+                });
+            } else { html += '<div class="text-muted">None recorded</div>'; }
+            html += '</div>';
+
+            html += '<div class="prev-section"><div class="prev-section-title">Diagnosis (read-only, from Diagnosis tab)</div>';
+            if (p.previousDiagnoses && p.previousDiagnoses.length) {
+                p.previousDiagnoses.forEach(function (d) {
+                    html += '<div style="margin-bottom:4px;">• ' + esc(d.diagnosisName) + ' (' + esc(d.diagnosisType) + (d.diagnosisSubtype ? ', ' + d.diagnosisSubtype : '') + ')</div>';
+                });
+            } else { html += '<div class="text-muted">None recorded</div>'; }
+            html += '</div>';
+
+            $('#prevPanelContent').html(html);
+        }
+
+        window.copyToField = function (fieldId, el) {
+            var text = $(el).closest('div').text().replace('Copy', '').replace(/^[A-Za-z ]+:\s*/, '').trim();
+            var $target = $('#' + fieldId);
+            var cur = $target.val() || '';
+            $target.val(cur ? (cur + '\n' + text) : text);
+            markDirty();
+        };
+
+        /* ══════════════════════════════════════════════════════
+           AUDIT TRAIL
+        ══════════════════════════════════════════════════════ */
+        window.openAuditLog = function () {
+            auditModal.show();
+            $('#auditLogBody').html('<div class="prev-empty">Loading...</div>');
+            $.ajax({
+                url: '/AdmissionNotes/GetAuditLog', type: 'GET',
+                data: { ipdId: ipdId },
+                success: function (list) {
+                    if (!list || list.length === 0) {
+                        $('#auditLogBody').html('<div class="prev-empty">No audit entries yet for this admission.</div>');
+                        return;
+                    }
+                    var html = '';
+                    list.forEach(function (a) {
+                        html += '<div class="audit-row"><strong>[' + esc(a.entityType) + ' — ' + esc(a.action) + ']</strong> ' + esc(a.description) +
+                            '<div class="audit-meta">' + new Date(a.changedDate).toLocaleString() +
+                            (a.ipAddress ? ' • IP: ' + esc(a.ipAddress) : '') + '</div></div>';
+                    });
+                    $('#auditLogBody').html(html);
+                },
+                error: function () { $('#auditLogBody').html('<div class="prev-empty">Could not load audit history.</div>'); }
+            });
+        };
+
+        /* ─── init phase 2 ─────────────────────────────────────── */
+        initHpiFromServer();
+        initExamFromServer();
+        initAllFindingChips();
+
+        /* ─── init ──────────────────────────────────────────────── */
+        refreshCriticalBanner();
+        updateSectionProgress();
+
+    })();
+</script>

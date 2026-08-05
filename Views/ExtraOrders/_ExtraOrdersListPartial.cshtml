@@ -1,0 +1,39 @@
+﻿@* Views/ExtraOrders/_ExtraOrdersListPartial.cshtml *@
+@model List<WebApplicationSampleTest2.Models.ExtraOrderModel>
+@{
+    int ipdId = (int)ViewBag.IPDId;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Order Details</th><th>Time</th><th>Remark</th><th>Entered By</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-3">No extra orders added</td></tr>
+            }
+            else
+            {
+                foreach (var eo in Model)
+                {
+                    <tr>
+                        <td style="white-space:pre-wrap;">@eo.OrderDetails</td>
+                        <td>@eo.TimeGiven.ToString("hh:mm tt")</td>
+                        <td>@eo.Remark</td>
+                        <td>@(string.IsNullOrWhiteSpace(eo.EnteredByName) ? "-" : eo.EnteredByName)</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary eo-edit-btn" title="Edit"
+                                    data-id="@eo.Id" data-order-details="@eo.OrderDetails" data-remark="@eo.Remark">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger eo-delete-btn" title="Delete" data-id="@eo.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
