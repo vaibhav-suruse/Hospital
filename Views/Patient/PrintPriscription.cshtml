@@ -15,14 +15,14 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --rx-primary: #0f766e;          /* medical teal */
-            --rx-primary-dark: #115e59;
-            --rx-primary-bg: #f0fdfa;
-            --rx-accent: #0369a1;           /* deep blue accent */
+:root {
+            --rx-primary: #333333;
+            --rx-primary-dark: #111111;
+            --rx-primary-bg: #f5f5f5;
+            --rx-accent: #333333;
             --rx-text: #1f2937;
             --rx-muted: #6b7280;
-            --rx-border: #e5e7eb;
+            --rx-border: #d1d5db;
             --rx-soft: #f9fafb;
             --rx-danger: #b91c1c;
         }
@@ -159,8 +159,18 @@
         .doc-sub { font-size: 12.5px; color: var(--rx-muted); margin-top: 2px; }
 
         .rx-hospital {
-            text-align: right;
-            max-width: 300px;
+            text-align: left;
+            max-width: 460px;
+        }
+
+        .rx-brand {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .hospital-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .hospital-name {
@@ -176,6 +186,11 @@
             color: var(--rx-muted);
             margin-top: 3px;
             line-height: 1.45;
+        }
+
+        .rx-doctor {
+            text-align: right;
+            max-width: 260px;
         }
 
         .rx-badge-prescription {
@@ -227,10 +242,10 @@
             align-items: center;
         }
 
-        .vital-pill {
+.vital-pill {
             background: var(--rx-primary-bg);
             color: var(--rx-primary-dark);
-            border: 1px solid #99f6e4;
+            border: 1px solid var(--rx-border);
             border-radius: 999px;
             padding: 4px 14px;
             font-weight: 700;
@@ -264,9 +279,9 @@
 
         .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-        .chip {
+.chip {
             background: var(--rx-primary-bg);
-            border: 1px solid #ccfbf1;
+            border: 1px solid var(--rx-border);
             color: var(--rx-primary-dark);
             padding: 5px 12px;
             border-radius: 999px;
@@ -275,9 +290,9 @@
         }
 
         .clinical-text {
-            background: #fff8f0;
-            border: 1px solid #fed7aa;
-            color: #7c2d12;
+            background: var(--rx-soft);
+            border: 1px solid var(--rx-border);
+            color: var(--rx-text);
             padding: 10px 14px;
             border-radius: 10px;
             font-size: 13px;
@@ -324,10 +339,10 @@
             color: #111827;
         }
 
-        .dose-badge {
+.dose-badge {
             display: inline-block;
-            background: #eef2ff;
-            color: #3730a3;
+            background: var(--rx-primary-bg);
+            color: var(--rx-primary-dark);
             border-radius: 6px;
             padding: 3px 10px;
             font-weight: 700;
@@ -335,8 +350,8 @@
         }
 
         .dose-badge.syrup {
-            background: #fff3e0;
-            color: #c2410c;
+            background: var(--rx-primary-bg);
+            color: var(--rx-primary-dark);
         }
 
         .freq-dots {
@@ -360,13 +375,13 @@
         .freq-dot.on { background: var(--rx-primary); color: #fff; }
 
         /* ── ADVICE / NOTES ── */
-        .advice-box {
-            background: #f5f7ff;
+.advice-box {
+            background: var(--rx-soft);
             border-left: 4px solid var(--rx-accent);
             border-radius: 0 10px 10px 0;
             padding: 12px 16px;
             font-size: 13px;
-            color: #1e3a8a;
+            color: var(--rx-text);
             line-height: 1.7;
         }
 
@@ -562,7 +577,7 @@
         <!-- PRINT OPTIONS PANEL -->
         <div class="po-panel" id="printOptionsPanel">
             <div class="po-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
                 Print Options — select sections to include
             </div>
             <div class="po-grid">
@@ -586,41 +601,47 @@
 
         <div class="rx-card" id="prescriptionContent">
 
-            <!-- HEADER -->
+<!-- HEADER -->
             <div class="rx-header po-header-sec">
-                <div class="rx-brand">
-                    <div class="logo-box">
-                        @if (!string.IsNullOrEmpty(Model.HospitalLogo))
-                        {
-                            <img src="@Url.Content("~/uploads/hospitals/" + Model.HospitalLogo)" alt="Logo" onerror="this.style.display='none';document.getElementById('logoPh').style.display='flex';" />
-                        }
-                        <div class="logo-placeholder" id="logoPh" style="display:@(string.IsNullOrEmpty(Model.HospitalLogo) ? "flex" : "none");">+</div>
-                    </div>
-                    <div>
-                        <div class="doc-name">@docFullName</div>
-                        @if (!string.IsNullOrEmpty(Model.Education))
-                        {
-                            <div class="doc-sub">@Model.Education</div>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.Specialization))
-                        {
-                            <div class="doc-sub">@Model.Specialization</div>
-                        }
+                <div class="rx-hospital">
+                    <div class="rx-brand">
+                        <div class="logo-box">
+                            @if (!string.IsNullOrEmpty(Model.HospitalLogo))
+                            {
+                                <img src="@Url.Content("~/uploads/hospitals/" + Model.HospitalLogo)" alt="Logo" onerror="this.style.display='none';document.getElementById('logoPh').style.display='flex';" />
+                            }
+                            <div class="logo-placeholder" id="logoPh" style="display:@(string.IsNullOrEmpty(Model.HospitalLogo) ? "flex" : "none");">+</div>
+                        </div>
+                        <div class="hospital-info">
+                            <div class="hospital-name">@Model.HospitalName</div>
+                            @if (!string.IsNullOrEmpty(Model.HospitalAddress))
+                            {
+                                <div class="hospital-line">@Model.HospitalAddress</div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.HospitalEmail))
+                            {
+                                <div class="hospital-line">@Model.HospitalEmail</div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.HospitalRegistrationNo))
+                            {
+                                <div class="hospital-line">Reg. No: @Model.HospitalRegistrationNo</div>
+                            }
+                        </div>
                     </div>
                 </div>
-                <div class="rx-hospital">
-                    <div class="hospital-name">@Model.HospitalName</div>
-                    @if (!string.IsNullOrEmpty(Model.HospitalAddress))
+                <div class="rx-doctor">
+                    <div class="doc-name">@docFullName</div>
+                    @if (!string.IsNullOrEmpty(Model.Education))
                     {
-                        <div class="hospital-line">@Model.HospitalAddress</div>
+                        <div class="doc-sub">@Model.Education</div>
                     }
-                    @if (!string.IsNullOrEmpty(Model.HospitalEmail))
+                    @if (!string.IsNullOrEmpty(Model.Specialization))
                     {
-                        <div class="hospital-line">@Model.HospitalEmail</div>
+                        <div class="doc-sub">@Model.Specialization</div>
                     }
-                    @if (!string.IsNullOrEmpty(Model.HospitalRegistrationNo))
+                    @if (!string.IsNullOrEmpty(Model.DoctorRegNo))
                     {
-                        <div class="hospital-line">Reg. No: @Model.HospitalRegistrationNo</div>
+                        <div class="doc-sub">Reg. No: @Model.DoctorRegNo</div>
                     }
                     <div class="rx-badge-prescription" data-key="rxbadge">Prescription</div>
                 </div>

@@ -1,160 +1,429 @@
-﻿
-@model List<WebApplicationSampleTest2.Models.OPD>
+﻿@model WebApplicationSampleTest2.Models.PatientFullHistoryVM
 @{
     var backUrl = ViewBag.IsWalkIn == true
         ? Url.Action("Index", "WalkInConsultation")
         : Url.Action("Index", "OPDAppointment");
+    bool hasVisits = Model != null && Model.Visits != null && Model.Visits.Any();
+    bool hasClinical = Model?.Clinical != null;
 }
 
+<div class="container-fluid mt-2 mb-5">
 
-<div class="container-fluid mt-4">
-
-    <div class="d-flex align-items-center mb-4">
-        <a href="@backUrl" class="me-3 text-muted">
-            <i class="mdi mdi-arrow-left font-size-20"></i>
-        </a>
-        <h4 class="mb-0 fw-bold">Patient Full History</h4>
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center">
+            <a href="@backUrl" class="me-3 text-muted">
+                <i class="mdi mdi-arrow-left font-size-20"></i>
+            </a>
+            <div>
+                <h4 class="mb-0 fw-bold">Patient Full History</h4>
+                <span class="text-muted" style="font-size:13px;">Complete OPD visit history &amp; clinical profile</span>
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="mdi mdi-printer me-1"></i> Print
+        </button>
     </div>
 
-    @if (Model != null && Model.Any())
+    @if (Model != null)
     {
-        @foreach (var visit in Model)
-        {
-            <div class="row">
-                <div class="col-12">
-
-                    <div class="card shadow-sm mb-4">
-
-                        <!-- Header -->
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between">
-                                <span><strong>Visit ID:</strong> @visit.Id</span>
-                                <span>
-                                    <strong>Appointment Date:</strong>
-                                    @visit.AppointmentDate.ToString("dd MMM yyyy")
-                                </span>
+        <!-- ═══ PATIENT PROFILE CARD ═══ -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3 d-flex align-items-center">
+                        <div class="avatar-circle me-3" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4e73df,#224abe);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;">
+                            @(string.IsNullOrEmpty(Model.PatientName) ? "?" : Model.PatientName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]).Aggregate("", (a, b) => a + b).ToUpper())
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-5 text-dark">@Model.PatientName</div>
+                            <div class="text-muted" style="font-size:13px;">
+                                Patient ID: <strong>@Model.PatientId</strong>
+                            </div>
+                            <div class="text-muted" style="font-size:13px;">
+                                @if (!string.IsNullOrEmpty(Model.Gender)) { <text>@Model.Gender &nbsp;•&nbsp; </text> }
+                                Age: <strong>@(string.IsNullOrEmpty(Model.Age) ? "N/A" : Model.Age)</strong>
                             </div>
                         </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted" style="font-size:12px;">CONTACT</div>
+                        <div class="fw-semibold text-dark"><i class="mdi mdi-phone me-1" style="color:#4e73df;"></i>@(string.IsNullOrEmpty(Model.PhoneNumber) ? "—" : Model.PhoneNumber)</div>
+                        <div class="fw-semibold text-dark" style="font-size:13px;"><i class="mdi mdi-email me-1" style="color:#4e73df;"></i>@(string.IsNullOrEmpty(Model.Email) ? "—" : Model.Email)</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted" style="font-size:12px;">DEMOGRAPHICS</div>
+                        <div style="font-size:13px;">Blood Group: <strong>@(string.IsNullOrEmpty(Model.BloodGroup) ? "—" : Model.BloodGroup)</strong></div>
+                        <div style="font-size:13px;">Marital: <strong>@(string.IsNullOrEmpty(Model.MaritalStatus) ? "—" : Model.MaritalStatus)</strong></div>
+                        <div style="font-size:13px;">Occupation: <strong>@(string.IsNullOrEmpty(Model.Occupation) ? "—" : Model.Occupation)</strong></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted" style="font-size:12px;">ADDRESS</div>
+                        <div style="font-size:13px;">@(string.IsNullOrEmpty(Model.Address) ? "—" : Model.Address)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        <div class="card-body">
+        <!-- ═══ SUMMARY STAT CARDS ═══ -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6 mb-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted" style="font-size:12px;">TOTAL VISITS</div>
+                        <div class="fs-4 fw-bold text-primary">@Model.TotalVisits</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted" style="font-size:12px;">LAST VISIT</div>
+                        <div class="fs-6 fw-bold text-dark">@(Model.LastVisitDate?.ToString("dd MMM yyyy") ?? "—")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted" style="font-size:12px;">NEXT APPOINTMENT</div>
+                        <div class="fs-6 fw-bold text-success">@(Model.NextAppointmentDate?.ToString("dd MMM yyyy") ?? "—")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted" style="font-size:12px;">VISITS ON RECORD</div>
+                        <div class="fs-4 fw-bold text-info">@Model.Visits.Count</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                            <!-- Vitals -->
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>BP:</strong> @visit.BP
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Pulse:</strong> @visit.Pulse
-                                </div>
-                                <div class="col-md-4">
-                                    <strong>Investigation:</strong> @visit.Investigation
-                                </div>
-                            </div>
-
-                            <!-- Report -->
-                            <div class="mb-3">
-                                <strong>Report:</strong>
-                                @if (!string.IsNullOrEmpty(visit.ReportFilePath))
-                                {
-                                    <a href="@visit.ReportFilePath"
-                                       target="_blank"
-                                       class="btn btn-sm btn-outline-primary ms-2">
-                                        View Report
-                                    </a>
+        <div class="row">
+            <!-- ═══ LEFT: VISITS TIMELINE ═══ -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold"><i class="mdi mdi-calendar-clock me-2" style="color:#4e73df;"></i>OPD Visit History</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (hasVisits)
+                        {
+                            <div class="timeline">
+                                @{
+                                    int idx = 0;
                                 }
-                                else
+                                @foreach (var visit in Model.Visits)
                                 {
-                                    <span class="text-muted ms-2">No Report</span>
-                                }
-                            </div>
-
-                            <!-- Next Appointment -->
-                            <div class="mb-3">
-                                <strong>Next Appointment:</strong>
-                                <span class="badge bg-info text-dark ms-2">
-                                    @(visit.NextAppointmentDate?.ToString("dd-MM-yyyy") ?? "N/A")
-                                </span>
-                            </div>
-
-                            <hr />
-
-                            <div class="row">
-
-                                <!-- Symptoms -->
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold">Symptoms</h6>
-
-                                    @if (visit.Symptom != null && visit.Symptom.Any())
-                                    {
-                                        <ul class="list-group list-group-flush">
-                                            @foreach (var symptomId in visit.Symptom)
-                                            {
-                                                <li class="list-group-item">
-                                                   @symptomId
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                    else
-                                    {
-                                        <p class="text-muted">No Symptoms</p>
-                                    }
-                                </div>
-
-                                <!-- Medicines -->
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold">Medicines</h6>
-
-                                    @if (visit.Medicines != null && visit.Medicines.Any())
-                                    {
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-bordered">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Medicine</th>
-                                                        <th>M</th>
-                                                        <th>A</th>
-                                                        <th>E</th>
-                                                        <th>Days</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach (var med in visit.Medicines)
+                                    var symJoin = visit.Symptom != null && visit.Symptom.Any() ? string.Join(", ", visit.Symptom.Where(s => !string.IsNullOrEmpty(s))) : "—";
+                                    <div class="card mb-3 border-start border-4 @(idx == 0 ? "border-primary" : "border-light") shadow-none">
+                                        <div class="card-body">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <span class="badge bg-primary me-2">#@visit.Id</span>
+                                                    <span class="fw-bold text-dark">@visit.AppointmentDate.ToString("dd MMM yyyy")</span>
+                                                    @if (visit.AppointmentTime != TimeSpan.Zero)
                                                     {
-                                                        <tr>
-                                                            <td>@med.MedicineName</td>
-                                                            <td>@med.Morning</td>
-                                                            <td>@med.Afternoon</td>
-                                                            <td>@med.Evening</td>
-                                                            <td>@med.Days</td>
-                                                        </tr>
+                                                        <span class="text-muted ms-1">@DateTime.Today.Add(visit.AppointmentTime).ToString("hh:mm tt")</span>
                                                     }
-                                                </tbody>
-                                            </table>
+                                                </div>
+                                                <div>
+                                                    @if (!string.IsNullOrEmpty(visit.AppointmentStatus))
+                                                    {
+                                                        <span class="badge @(visit.AppointmentStatus == "OPD Completed" ? "bg-success" : "bg-secondary")">@visit.AppointmentStatus</span>
+                                                    }
+                                                    @if (visit.NextAppointmentDate.HasValue)
+                                                    {
+                                                        <span class="badge bg-info text-dark ms-1">Next: @visit.NextAppointmentDate.Value.ToString("dd-MM-yyyy")</span>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mb-2" style="font-size:13px;">
+                                                <div class="col-md-4">
+                                                    <span class="text-muted">Doctor:</span>
+                                                    <strong>@(string.IsNullOrEmpty(visit.DoctorName) ? "—" : visit.DoctorName)</strong>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <span class="text-muted">BP:</span>
+                                                    <strong>@(string.IsNullOrEmpty(visit.BP) ? "—" : visit.BP)</strong>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <span class="text-muted">Pulse:</span>
+                                                    <strong>@(string.IsNullOrEmpty(visit.Pulse) ? "—" : visit.Pulse)</strong>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-2" style="font-size:13px;">
+                                                <span class="text-muted">Symptoms:</span>
+                                                <span>@symJoin</span>
+                                            </div>
+
+                                            @if (visit.Diagnoses != null && visit.Diagnoses.Any(d => !string.IsNullOrEmpty(d.DiagnosisName)))
+                                            {
+                                                <div class="mb-2">
+                                                    <span class="text-muted" style="font-size:13px;">Diagnoses:</span>
+                                                    @foreach (var d in visit.Diagnoses.Where(d => !string.IsNullOrEmpty(d.DiagnosisName)))
+                                                    {
+                                                        <span class="badge bg-light text-dark border me-1">@d.DiagnosisName</span>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @if (visit.Medicines != null && visit.Medicines.Any())
+                                            {
+                                                <div class="table-responsive mt-2">
+                                                    <table class="table table-sm table-bordered mb-0" style="font-size:12px;">
+                                                        <thead class="table-light">
+                                                            <tr><th>Medicine</th><th>M</th><th>A</th><th>E</th><th>Days</th></tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var med in visit.Medicines)
+                                                            {
+                                                                <tr>
+                                                                    <td>@med.MedicineName</td>
+                                                                    <td>@med.Morning</td>
+                                                                    <td>@med.Afternoon</td>
+                                                                    <td>@med.Evening</td>
+                                                                    <td>@med.Days</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(visit.ReportFilePath))
+                                            {
+                                                <div class="mt-2">
+                                                    <span class="text-muted" style="font-size:13px;">Report:</span>
+                                                    <a href="@visit.ReportFilePath" target="_blank" class="btn btn-sm btn-outline-primary ms-1">
+                                                        <i class="mdi mdi-file-pdf me-1"></i>View Report
+                                                    </a>
+                                                </div>
+                                            }
                                         </div>
-                                    }
-                                    else
-                                    {
-                                        <p class="text-muted">No Medicines</p>
-                                    }
-                                </div>
-
+                                    </div>
+                                    idx++;
+                                }
                             </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="mdi mdi-calendar-blank" style="font-size:40px;"></i>
+                                <div>No OPD visits on record for this patient.</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
 
+            <!-- ═══ RIGHT: CLINICAL HISTORY ═══ -->
+            <div class="col-lg-4">
+                @if (hasClinical)
+                {
+                    <!-- Conditions -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-heart-pulse me-2" style="color:#e74a3b;"></i>Medical Conditions</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.Conditions.Any())
+                            {
+                                <ul class="list-group list-group-flush" style="font-size:13px;">
+                                    @foreach (var c in Model.Clinical.Conditions)
+                                    {
+                                        <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>@c.ConditionName</strong>
+                                                @if (c.OnMedication) { <span class="badge bg-warning text-dark ms-1" style="font-size:10px;">On Meds</span> }
+                                                <div class="text-muted" style="font-size:12px;">
+                                                    Since @c.SinceDays @c.SinceUnit • @c.Status
+                                                </div>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No recorded conditions.</div>
+                            }
                         </div>
                     </div>
 
-                </div>
+                    <!-- Allergies -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-alert-circle-outline me-2" style="color:#f6c23e;"></i>Allergies</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.Allergies.Any())
+                            {
+                                <ul class="list-group list-group-flush" style="font-size:13px;">
+                                    @foreach (var a in Model.Clinical.Allergies)
+                                    {
+                                        <li class="list-group-item px-0">
+                                            <strong>@a.AllergyTo</strong>
+                                            <span class="badge bg-danger text-white ms-1" style="font-size:10px;">@a.Status</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No recorded allergies.</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Surgical History -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-hospital-building me-2" style="color:#36b9cc;"></i>Surgical History</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.Surgeries.Any())
+                            {
+                                <ul class="list-group list-group-flush" style="font-size:13px;">
+                                    @foreach (var s in Model.Clinical.Surgeries)
+                                    {
+                                        <li class="list-group-item px-0">
+                                            <strong>@s.ProcedureName</strong>
+                                            @if (s.SurgeryDate.HasValue)
+                                            {
+                                                <div class="text-muted" style="font-size:12px;">@s.SurgeryDate.Value.ToString("dd-MM-yyyy")</div>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No surgical history.</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Family History -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-account-group me-2" style="color:#4e73df;"></i>Family History</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.FamilyHistory.Any())
+                            {
+                                <ul class="list-group list-group-flush" style="font-size:13px;">
+                                    @foreach (var f in Model.Clinical.FamilyHistory)
+                                    {
+                                        <li class="list-group-item px-0">
+                                            <strong>@f.Relation:</strong> @f.ConditionName
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No family history.</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Latest Vitals -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-thermometer me-2" style="color:#e74a3b;"></i>Latest Vitals</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.LatestVitals != null)
+                            {
+                                var v = Model.Clinical.LatestVitals;
+                                <div class="row g-2" style="font-size:13px;">
+                                    @if (v.Temperature.HasValue) { <div class="col-6">Temp: <strong>@v.Temperature.Value.ToString("0.0")°C</strong></div> }
+                                    @if (v.PulseRate.HasValue) { <div class="col-6">Pulse: <strong>@v.PulseRate /min</strong></div> }
+                                    @if (v.BPSystolic.HasValue && v.BPDiastolic.HasValue) { <div class="col-6">BP: <strong>@v.BPSystolic/@v.BPDiastolic</strong></div> }
+                                    @if (v.SPO2.HasValue) { <div class="col-6">SpO2: <strong>@v.SPO2.Value.ToString("0")%</strong></div> }
+                                    @if (v.RBS.HasValue) { <div class="col-6">RBS: <strong>@v.RBS.Value.ToString("0")</strong></div> }
+                                    @if (v.Weight.HasValue) { <div class="col-6">Weight: <strong>@v.Weight.Value.ToString("0.0") kg</strong></div> }
+                                    @if (v.Height.HasValue) { <div class="col-6">Height: <strong>@v.Height.Value.ToString("0.0") cm</strong></div> }
+                                    @if (v.BMI.HasValue) { <div class="col-6">BMI: <strong>@v.BMI.Value.ToString("0.0")</strong></div> }
+                                </div>
+                                <div class="text-muted mt-2" style="font-size:12px;">Recorded @v.RecordedDate.ToString("dd-MM-yyyy hh:mm tt")</div>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No vitals recorded.</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Lab Results -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-white border-0 py-2">
+                            <h6 class="mb-0 fw-bold"><i class="mdi mdi-test-tube me-2" style="color:#1cc88a;"></i>Lab Results</h6>
+                        </div>
+                        <div class="card-body py-2">
+                            @if (Model.Clinical.LabResults.Any())
+                            {
+                                <div class="table-responsive" style="font-size:12px;">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-light">
+                                            <tr><th>Test</th><th>Result</th><th>Date</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var l in Model.Clinical.LabResults)
+                                            {
+                                                <tr>
+                                                    <td>@l.TestName</td>
+                                                    <td class="@(l.IsAbnormal ? "text-danger fw-bold" : "")">@l.ResultValue @if (l.IsAbnormal) { <span class="badge bg-danger text-white ms-1" style="font-size:9px;">ABN</span> }</td>
+                                                    <td>@l.ResultDate.ToString("dd-MM-yyyy")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted py-2" style="font-size:13px;">No lab results recorded.</div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">Clinical history unavailable.</div>
+                }
             </div>
-        }
+        </div>
     }
     else
     {
-        <div class="alert alert-info">
-            No history records found.
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <i class="mdi mdi-account-alert" style="font-size:40px;"></i>
+                <div class="mt-2">No patient data available.</div>
+            </div>
         </div>
     }
 
 </div>
 
-
+<style>
+    .timeline {
+        position: relative;
+    }
+    .border-light {
+        border-color: #e9ecef !important;
+    }
+    .avatar-circle {
+        flex-shrink: 0;
+    }
+    @@media print {
+        .no-print { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    }
+</style>

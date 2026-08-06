@@ -381,7 +381,7 @@ namespace WebApplicationSampleTest2.Repository
             return list;
         }
 
-        public List<OPD> GetPatientFullHistory(int patientId)
+public List<OPD> GetPatientFullHistory(int patientId, int hospitalId, int? subHospitalId)
         {
             var opdList = new List<OPD>();
             try
@@ -399,20 +399,21 @@ namespace WebApplicationSampleTest2.Repository
                         // 1️⃣ Read OPD visits
                         while (reader.Read())
                         {
-                            opdList.Add(new OPD
+                            var opd = new OPD
                             {
                                 Id = Convert.ToInt32(reader["OPDId"]),
                                 AppointmentId = Convert.ToInt32(reader["AppointmentId"]),
                                 AppointmentDate = Convert.ToDateTime(reader["AppointmentDate"]),
-                                BP = reader["BP"].ToString(),
-                                Pulse = reader["Pulse"].ToString(),
-                                Investigation = reader["Investigation"].ToString(),
-                                ReportDetail = reader["ReportDetail"].ToString(),
-                                ReportFilePath = reader["ReportFilePath"].ToString(),
+                                BP = reader["BP"]?.ToString(),
+                                Pulse = reader["Pulse"]?.ToString(),
+                                Investigation = reader["Investigation"]?.ToString(),
+                                ReportDetail = reader["ReportDetail"]?.ToString(),
+                                ReportFilePath = reader["ReportFilePath"]?.ToString(),
                                 NextAppointmentDate = reader["NextAppointmentDate"] != DBNull.Value
                                                       ? Convert.ToDateTime(reader["NextAppointmentDate"])
                                                       : (DateTime?)null
-                            });
+                            };
+                            opdList.Add(opd);
                         }
 
                         // 2️⃣ Read Symptoms
@@ -423,8 +424,7 @@ namespace WebApplicationSampleTest2.Repository
                                 var opd = opdList.Find(x => x.Id == Convert.ToInt32(reader["OPD_Id"]));
                                 if (opd != null)
                                 {
-                                    opd.Symptom.Add(reader["SymptomName"].ToString());
-                                    // If you want full symptom details, you can also store OPDSymptomVM in a separate list
+                                    opd.Symptom.Add(reader["SymptomName"]?.ToString());
                                 }
                             }
                         }
@@ -439,25 +439,112 @@ namespace WebApplicationSampleTest2.Repository
                                 {
                                     opd.Medicines.Add(new OPDMedicine
                                     {
-                                        MedicineName = reader["MedicineName"].ToString(),
-                                        MedicineId = 0, // optional: you can pass Medicine_Id from SP if needed
-                                        Morning = reader["Morning"].ToString(),
-                                        Afternoon = reader["Afternoon"].ToString(),
-                                        Evening = reader["Evening"].ToString(),
-                                        Days = Convert.ToInt32(reader["Days"])
+                                        MedicineName = reader["MedicineName"]?.ToString(),
+                                        MedicineId = 0,
+                                        Morning = reader["Morning"]?.ToString(),
+                                        Afternoon = reader["Afternoon"]?.ToString(),
+                                        Evening = reader["Evening"]?.ToString(),
+                                        Days = reader["Days"] == DBNull.Value ? 0 : Convert.ToInt32(reader["Days"])
                                     });
                                 }
                             }
                         }
                     }
                 }
+
+                // ── ENRICH: doctor name + appointment time/status + diagnoses ──
+                if (opdList.Count > 0)
+                {
+                    var apptIds = opdList.Select(x => x.AppointmentId).Distinct().ToList();
+                    var opdIds = opdList.Select(x => x.Id).Distinct().ToList();
+
+                    // Doctor / time / status via appointment table (single query)
+                    var apptInfo = new Dictionary<int, (string doctor, TimeSpan time, string status)>();
+                    if (apptIds.Count > 0)
+                    {
+                        string idList = string.Join(",", apptIds);
+                        string subFilter = subHospitalId.HasValue
+                            ? "AND a.SubHospitalId = @SubHospitalId"
+                            : "AND (a.SubHospitalId IS NULL OR a.SubHospitalId = 0)";
+                        string sql = "SELECT a.Id, COALESCE(CONCAT(COALESCE(d.FirstName,''), ' ', COALESCE(d.LastName,'')),'') AS DoctorName, " +
+                                     "a.AppointmentTime, COALESCE(a.Status,'') AS Status " +
+                                     "FROM opdappointment a LEFT JOIN doctor d ON d.Doctor_Id = a.DoctorId " +
+                                     "WHERE a.Id IN (" + idList + ") AND a.HospitalId = @HospitalId " + subFilter;
+                        using (var conn2 = new MySqlConnection(_connectionString))
+                        using (var cmd2 = new MySqlCommand(sql, conn2))
+                        {
+                            cmd2.Parameters.AddWithValue("@HospitalId", hospitalId);
+                            if (subHospitalId.HasValue)
+                                cmd2.Parameters.AddWithValue("@SubHospitalId", subHospitalId.Value);
+                            conn2.Open();
+                            using var r2 = cmd2.ExecuteReader();
+                            while (r2.Read())
+                            {
+                                var time = r2["AppointmentTime"] == DBNull.Value
+                                    ? TimeSpan.Zero
+                                    : TimeSpan.TryParse(r2["AppointmentTime"]?.ToString(), out var t) ? t : TimeSpan.Zero;
+                                apptInfo[Convert.ToInt32(r2["Id"])] = (
+                                    r2["DoctorName"]?.ToString() ?? "",
+                                    time,
+                                    r2["Status"]?.ToString() ?? "");
+                            }
+                        }
+                    }
+
+                    // Diagnoses per OPD (single query)
+                    var diagByOpd = new Dictionary<int, List<OPDDiagnosis>>();
+                    if (opdIds.Count > 0)
+                    {
+                        string idList = string.Join(",", opdIds);
+                        string sql = "SELECT OPD_Id, Id AS DiagnId, DiagnosisName, Type, Notes FROM opd_diagnosis " +
+                                     "WHERE OPD_Id IN (" + idList + ") AND IsActive = 1";
+                        try
+                        {
+                            using var conn3 = new MySqlConnection(_connectionString);
+                            using var cmd3 = new MySqlCommand(sql, conn3);
+                            conn3.Open();
+                            using var r3 = cmd3.ExecuteReader();
+                            while (r3.Read())
+                            {
+                                int opdId = Convert.ToInt32(r3["OPD_Id"]);
+                                if (!diagByOpd.ContainsKey(opdId))
+                                    diagByOpd[opdId] = new List<OPDDiagnosis>();
+                                diagByOpd[opdId].Add(new OPDDiagnosis
+                                {
+                                    Id = Convert.ToInt32(r3["DiagnId"]),
+                                    OPDId = opdId,
+                                    DiagnosisName = r3["DiagnosisName"]?.ToString(),
+                                    Type = r3["Type"]?.ToString() ?? "Final",
+                                    Notes = r3["Notes"]?.ToString()
+                                });
+                            }
+                        }
+                        catch
+                        {
+                            // diagnosis table may not exist in some deployments — ignore
+                        }
+                    }
+
+                    foreach (var opd in opdList)
+                    {
+                        if (apptInfo.TryGetValue(opd.AppointmentId, out var ai))
+                        {
+                            opd.DoctorName = ai.doctor;
+                            opd.AppointmentTime = ai.time;
+                            opd.AppointmentStatus = ai.status;
+                        }
+                        if (diagByOpd.TryGetValue(opd.Id, out var diags))
+                            opd.Diagnoses = diags;
+                    }
+
+                    // Latest first
+                    opdList = opdList.OrderByDescending(v => v.AppointmentDate).ThenByDescending(v => v.Id).ToList();
+                }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while inserting hospital", ex);
+                throw new Exception("Error while getting patient full history", ex);
             }
-
-           
 
             return opdList;
         }

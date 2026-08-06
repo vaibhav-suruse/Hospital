@@ -112,6 +112,7 @@ namespace WebApplicationSampleTest2.Controllers
                 DoctorName = doctorFullName,
                 Specialization = doctor?.Specialization,
                 Education = doctor?.Education,
+                DoctorRegNo = doctor?.DoctorCode,
 
                 AppointmentDate = appointment.AppointmentDate,
 
@@ -1174,11 +1175,17 @@ public IActionResult PatientList(string search = "", int page = 1)
             return Json(result);
         }
 
-        // ── 4. Patient full history as JSON (for left panel history timeline) ─────
+// ── 4. Patient full history as JSON (for left panel history timeline) ─────
         [HttpGet]
         public JsonResult GetPatientHistory(int patientId)
         {
-            var history = _appointmentRepo.GetPatientFullHistory(patientId);
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId")
+                             ?? HttpContext.Session.GetInt32("PatientHospitalId")
+                             ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId")
+                              ?? HttpContext.Session.GetInt32("PatientSubHospitalId");
+
+            var history = _appointmentRepo.GetPatientFullHistory(patientId, hospitalId, subHospitalId);
             var result = history.Select(v => new
             {
                 id = v.Id,

@@ -3,6 +3,7 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using WebApplicationSampleTest2.Models;
 
 namespace WebApplicationSampleTest2.Repository
@@ -113,9 +114,10 @@ namespace WebApplicationSampleTest2.Repository
                     {
                         if (dr.Read())
                         {
-                            model = new Doctor
+model = new Doctor
                             {
                                 Doctor_Id = Convert.ToInt32(dr["Doctor_Id"]),
+                                DoctorCode = ReadDoctorCode(dr),
                                 FirstName = dr["FirstName"].ToString(),
                                 LastName = dr["LastName"].ToString(),
                                 Gender = dr["Gender"].ToString(),
@@ -137,6 +139,22 @@ namespace WebApplicationSampleTest2.Repository
 
            
             return model;
+        }
+
+// Safely reads the DoctorCode column if it exists in the reader schema.
+        private static string ReadDoctorCode(System.Data.IDataRecord dr)
+        {
+            try
+            {
+                int ordinal = dr.GetOrdinal("DoctorCode");
+                if (ordinal < 0) return null;
+                return dr.IsDBNull(ordinal) ? null : dr.GetValue(ordinal)?.ToString();
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Column not present in the result set
+                return null;
+            }
         }
 
         // ---------------- UPDATE ----------------

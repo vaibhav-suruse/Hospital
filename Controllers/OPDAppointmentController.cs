@@ -11,12 +11,13 @@ namespace WebApplicationSampleTest2.Controllers
 {
     public class OPDAppointmentController : Controller
     {
-        private readonly IOPDAppointment _iAppointment;
+private readonly IOPDAppointment _iAppointment;
         private readonly IDoctor _iDoctor;
         private readonly Ipatient _ipatient;
         private readonly IOPD _IOPD;
         private readonly IIPDAdmission iPDAdmission;
         private readonly INotification _notifRepo;
+        private readonly IPatientHistory _iPatientHistory;
 
         public OPDAppointmentController(
             IIPDAdmission IPDAdmission,
@@ -24,7 +25,8 @@ namespace WebApplicationSampleTest2.Controllers
             Ipatient ipatient,
             IOPD OPD,
             IDoctor doctor,
-            INotification notifRepo)
+            INotification notifRepo,
+            IPatientHistory patientHistory)
         {
             _iAppointment = appointment;
             _iDoctor = doctor;
@@ -32,6 +34,7 @@ namespace WebApplicationSampleTest2.Controllers
             _IOPD = OPD;
             iPDAdmission = IPDAdmission;
             _notifRepo = notifRepo;
+            _iPatientHistory = patientHistory;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -224,7 +227,7 @@ public IActionResult Index(string search, int page = 1, string date = "")
         // ─────────────────────────────────────────────────────────────────
         // PATIENT HISTORY
         // ─────────────────────────────────────────────────────────────────
-        public IActionResult PatientHistory(int appointmentId)
+public IActionResult PatientHistory(int appointmentId)
         {
             int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
             int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
@@ -235,8 +238,41 @@ public IActionResult Index(string search, int page = 1, string date = "")
             // ✅ Set ViewBag for redirect target based on appointment type
             ViewBag.IsWalkIn = appointment.IsWalkIn;
 
-            var history = _iAppointment.GetPatientFullHistory(appointment.PatientId);
-            return View(history);
+            // ── Build the combined full-history VM ──────────────────────
+            var patient = _ipatient.GetPatientById(appointment.PatientId, hospitalId, subHospitalId);
+            var visits = _iAppointment.GetPatientFullHistory(appointment.PatientId, hospitalId, subHospitalId);
+            var clinical = _iPatientHistory.GetFullHistory(appointment.PatientId, hospitalId);
+
+            var vm = new PatientFullHistoryVM
+            {
+                PatientId = appointment.PatientId,
+                PatientName = patient != null ? $"{patient.FirstName} {patient.LastName}".Trim() : $"Patient #{appointment.PatientId}",
+                Gender = patient?.Gender,
+                PhoneNumber = patient?.PhoneNumber,
+                BloodGroup = patient?.BloodGroup,
+                Email = patient?.Email,
+                Address = patient?.Address,
+                MaritalStatus = patient?.MaritalStatus,
+                Occupation = patient?.Occupation,
+                Age = patient != null ? ComputeAge(patient.DateOfBirth) : null,
+                Visits = visits ?? new List<OPD>(),
+                Clinical = clinical ?? new PatientHistoryVM()
+            };
+
+            return View(vm);
+        }
+
+        private static string ComputeAge(DateTime? dob)
+        {
+            if (!dob.HasValue) return null;
+            var now = DateTime.Today;
+            int years = now.Year - dob.Value.Year;
+            int months = now.Month - dob.Value.Month;
+            if (months < 0) { years--; months += 12; }
+            if (years > 0) return $"{years} Y {months} M";
+            if (months > 0) return $"{months} M";
+            int days = (now - dob.Value.Date).Days;
+            return $"{days} D";
         }
 
         // ─────────────────────────────────────────────────────────────────

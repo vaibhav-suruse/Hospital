@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WebApplicationSampleTest2.Models
 {
@@ -105,6 +106,34 @@ namespace WebApplicationSampleTest2.Models
         public List<PatientFamilyHistory> FamilyHistory { get; set; } = new List<PatientFamilyHistory>();
         public PatientVitals LatestVitals { get; set; }
         public List<PatientLabResult> LabResults { get; set; } = new List<PatientLabResult>();
+    }
+
+    // ── FULL PATIENT HISTORY DASHBOARD ──────────────────────────────
+    // Aggregates patient demographics + every OPD visit + clinical history.
+    public class PatientFullHistoryVM
+    {
+        // Patient
+        public int PatientId { get; set; }
+        public string PatientName { get; set; }
+        public string Gender { get; set; }
+        public string Age { get; set; }
+        public string PhoneNumber { get; set; }
+        public string BloodGroup { get; set; }
+        public string Email { get; set; }
+        public string Address { get; set; }
+        public string MaritalStatus { get; set; }
+        public string Occupation { get; set; }
+
+        // Visits (latest first)
+        public List<OPD> Visits { get; set; } = new List<OPD>();
+
+        // Summary counts
+        public int TotalVisits => Visits.Count;
+        public DateTime? LastVisitDate => Visits.Count > 0 ? (DateTime?)Visits.Max(v => v.AppointmentDate) : null;
+        public DateTime? NextAppointmentDate => Visits.Count > 0 ? Visits.Where(v => v.NextAppointmentDate.HasValue).Max(v => v.NextAppointmentDate) : null;
+
+        // Clinical history
+        public PatientHistoryVM Clinical { get; set; } = new PatientHistoryVM();
     }
 
 

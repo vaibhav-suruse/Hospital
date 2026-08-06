@@ -365,7 +365,7 @@
         width: 100%;
     }
 
-    .opb-icon-btn {
+.opb-icon-btn {
         border: none;
         background: none;
         cursor: pointer;
@@ -387,6 +387,73 @@
             background: var(--clr-success-bg);
             color: var(--clr-success);
         }
+
+    /* Larger, labeled action buttons for the items grid */
+    .opb-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        padding: 7px 12px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .opb-action-btn.edit {
+        color: var(--clr-primary);
+        background: var(--clr-primary-bg);
+        border-color: #C7D2FE;
+    }
+
+        .opb-action-btn.edit:hover {
+            background: #E0E7FF;
+            box-shadow: 0 1px 3px rgba(79,70,229,.25);
+        }
+
+    .opb-action-btn.save {
+        color: var(--clr-success);
+        background: var(--clr-success-bg);
+        border-color: #BBF7D0;
+        font-weight: 700;
+    }
+
+        .opb-action-btn.save:hover {
+            background: #DCFCE7;
+            box-shadow: 0 1px 3px rgba(22,163,74,.25);
+        }
+
+    .opb-action-btn.cancel {
+        color: var(--clr-muted);
+        background: #F3F4F6;
+        border-color: var(--clr-border);
+    }
+
+        .opb-action-btn.cancel:hover {
+            background: #E5E7EB;
+        }
+
+    .opb-action-btn.delete {
+        color: var(--clr-danger);
+        background: var(--clr-danger-bg);
+        border-color: #FECACA;
+    }
+
+        .opb-action-btn.delete:hover {
+            background: #FEE2E2;
+            box-shadow: 0 1px 3px rgba(220,38,38,.25);
+        }
+
+    .opb-action-btn svg {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+    }
 
     .opb-empty-row td {
         text-align: center;
@@ -835,8 +902,8 @@
                                 <th class="opb-cell-right" style="width:100px;">Price</th>
                                 <th class="opb-cell-right" style="width:90px;">Discount</th>
                                 <th class="opb-cell-center" style="width:70px;">GST</th>
-                                <th class="opb-cell-right" style="width:100px;">Amount</th>
-                                <th style="width:70px;">Action</th>
+<th class="opb-cell-right" style="width:100px;">Amount</th>
+                                <th style="width:150px;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="gridBody">
@@ -1138,18 +1205,21 @@
         } else {
             tbody.innerHTML = visible.map(function (it, idx) {
                 var m = rowAmount(it);
-                if (it._editing) {
+if (it._editing) {
+                    var editRowKey = 'rowKeydown(event, ' + it.uid + ')';
                     return '<tr>' +
                         '<td>' + (idx + 1) + '</td>' +
                         '<td>' + escapeHtml(it.itemName) + '</td>' +
-                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="1" id="e_qty_' + it.uid + '" value="' + it.qty + '" /></td>' +
-                        '<td><input class="opb-row-edit-input" type="number" min="0" step="0.01" id="e_price_' + it.uid + '" value="' + it.price + '" /></td>' +
-                        '<td><input class="opb-row-edit-input" type="number" min="0" id="e_disc_' + it.uid + '" value="' + it.discVal + '" /></td>' +
-                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="0" max="100" id="e_gst_' + it.uid + '" value="' + it.gstPct + '" /></td>' +
-                        '<td class="opb-cell-right">₹' + m.total.toFixed(2) + '</td>' +
-                        '<td>' +
-                        '<button class="opb-icon-btn success" title="Save" onclick="saveRowEdit(' + it.uid + ')">✔</button>' +
-                        '<button class="opb-icon-btn" title="Cancel" onclick="cancelRowEdit(' + it.uid + ')">✕</button>' +
+                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="1" onkeydown="' + editRowKey + '" id="e_qty_' + it.uid + '" value="' + it.qty + '" /></td>' +
+                        '<td><input class="opb-row-edit-input" type="number" min="0" step="0.01" onkeydown="' + editRowKey + '" id="e_price_' + it.uid + '" value="' + it.price + '" /></td>' +
+                        '<td><input class="opb-row-edit-input" type="number" min="0" onkeydown="' + editRowKey + '" id="e_disc_' + it.uid + '" value="' + it.discVal + '" /></td>' +
+                        '<td class="opb-cell-center"><input class="opb-row-edit-input" type="number" min="0" max="100" onkeydown="' + editRowKey + '" id="e_gst_' + it.uid + '" value="' + it.gstPct + '" /></td>' +
+'<td class="opb-cell-right">₹' + m.total.toFixed(2) + '</td>' +
+                        '<td style="display:flex;gap:6px;">' +
+                        '<button class="opb-action-btn save" title="Save (Enter)" onclick="saveRowEdit(' + it.uid + ')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>Save</button>' +
+                        '<button class="opb-action-btn cancel" title="Cancel (Esc)" onclick="cancelRowEdit(' + it.uid + ')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"></path></svg>Cancel</button>' +
                         '</td></tr>';
                 }
                 return '<tr>' +
@@ -1159,10 +1229,12 @@
                     '<td class="opb-cell-right">₹' + Number(it.price).toFixed(2) + '</td>' +
                     '<td class="opb-cell-right">' + (it.discVal > 0 ? (it.discIsPct ? it.discVal + '%' : '₹' + Number(it.discVal).toFixed(2)) : '—') + '</td>' +
                     '<td class="opb-cell-center">' + (it.gstPct > 0 ? it.gstPct + '%' : '—') + '</td>' +
-                    '<td class="opb-cell-right"><strong>₹' + m.total.toFixed(2) + '</strong></td>' +
-                    '<td>' +
-                    '<button class="opb-icon-btn" title="Edit" onclick="startRowEdit(' + it.uid + ')">✎</button>' +
-                    '<button class="opb-icon-btn danger" title="Delete" onclick="deleteRow(' + it.uid + ')">🗑</button>' +
+'<td class="opb-cell-right"><strong>₹' + m.total.toFixed(2) + '</strong></td>' +
+                    '<td style="display:flex;gap:6px;">' +
+                    '<button class="opb-action-btn edit" title="Edit" onclick="startRowEdit(' + it.uid + ')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>Edit</button>' +
+                    '<button class="opb-action-btn delete" title="Delete" onclick="deleteRow(' + it.uid + ')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"></path></svg>Delete</button>' +
                     '</td></tr>';
             }).join('');
         }
@@ -1171,13 +1243,30 @@
         recalcTotals();
     }
 
-    function startRowEdit(uid) {
-        billItems.forEach(function (it) { it._editing = (it.uid === uid); });
+function startRowEdit(uid) {
+        billItems.forEach(function (it) { it._editing = false; });
+        var it = billItems.find(function (x) { return x.uid === uid; });
+        if (it) it._editing = true;
         renderGrid();
+        // Focus the price field so the user can type right away.
+        setTimeout(function () {
+            var priceEl = document.getElementById('e_price_' + uid);
+            if (priceEl) { priceEl.focus(); priceEl.select(); }
+        }, 0);
     }
     function cancelRowEdit(uid) {
         billItems.forEach(function (it) { it._editing = false; });
         renderGrid();
+    }
+    // Enter = save the row, Escape = cancel editing (no extra click needed).
+    function rowKeydown(e, uid) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveRowEdit(uid);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelRowEdit(uid);
+        }
     }
     function saveRowEdit(uid) {
         var it = billItems.find(function (x) { return x.uid === uid; });

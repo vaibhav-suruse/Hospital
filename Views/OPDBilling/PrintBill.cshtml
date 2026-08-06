@@ -493,9 +493,91 @@
             line-height: 1.5;
         }
 
-        .cancelled-watermark {
+.cancelled-watermark {
             position: relative;
         }
+
+        /* ── PRINT OPTIONS PANEL (screen only) ── */
+        .print-options {
+            width: 820px;
+            margin: 0 auto 20px;
+            background: #fff;
+            border: 1px solid #d9dde3;
+            border-radius: 10px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+            padding: 18px 22px;
+        }
+
+        .print-options h3 {
+            margin: 0 0 4px;
+            font-size: 15px;
+            color: #3b4cbf;
+        }
+
+        .print-options .po-sub {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 12px;
+        }
+
+        .po-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px 16px;
+        }
+
+        .po-grid label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: #333;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background .15s;
+        }
+
+        .po-grid label:hover {
+            background: #f0f4ff;
+        }
+
+        .po-grid input[type="checkbox"] {
+            accent-color: #3b4cbf;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .po-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .po-btn {
+            padding: 9px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .po-btn-print { background: #3b4cbf; }
+        .po-btn-pdf { background: #28a745; }
+        .po-btn-back { background: #6c757d; }
+        .po-btn-all { background: #0d6efd; }
+        .po-btn-none { background: #adb5bd; }
+
+        /* Sections excluded from print (screen stays complete) */
+        .exclude-from-print { display: none !important; }
 
         /* ── PRINT ── */
         @@media print {
@@ -576,6 +658,33 @@
         </a>
     </div>
 
+<!-- PRINT OPTIONS PANEL -->
+    <div class="print-options no-print">
+        <h3>Print / PDF Options</h3>
+        <div class="po-sub">Select which sections to include in the printed bill or PDF download.</div>
+        <div class="po-grid">
+            <label><input type="checkbox" data-section="header" checked> Hospital Header</label>
+            <label><input type="checkbox" data-section="patient" checked> Patient &amp; Doctor Info</label>
+            <label><input type="checkbox" data-section="items" checked> Bill Items</label>
+            <label><input type="checkbox" data-section="summary" checked> Summary / Totals</label>
+            <label><input type="checkbox" data-section="signature" checked> Signature Blocks</label>
+            <label><input type="checkbox" data-section="footer" checked> Footer Note</label>
+        </div>
+        <div class="po-actions">
+            <button class="po-btn po-btn-all" onclick="setAll(true)">Select All</button>
+            <button class="po-btn po-btn-none" onclick="setAll(false)">Select None</button>
+            <button class="po-btn po-btn-print" onclick="printBill()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Bill
+            </button>
+            <button class="po-btn po-btn-pdf" onclick="downloadPDF()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+            </button>
+            <a class="po-btn po-btn-back" href="@backUrl" style="text-decoration:none;">Back to List</a>
+        </div>
+    </div>
+
     <!-- BILL DOCUMENT -->
     <div class="bill-wrap">
 
@@ -592,7 +701,7 @@
         <div class="bill-card" id="billContent">
 
             <!-- HEADER -->
-            <div class="bill-header">
+            <div class="bill-header" data-print-section="header">
                 <div class="bill-header-left">
                     @if (!string.IsNullOrEmpty(hospitalLogo))
                     {
@@ -626,7 +735,7 @@
 
             @if (isCancelled)
             {
-                <div style="background:#fdeaea;border:1px solid #f3c1c1;color:#b3261e;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;">
+                <div data-print-section="cancelled" style="background:#fdeaea;border:1px solid #f3c1c1;color:#b3261e;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;">
                     <strong>⚠ This bill was cancelled</strong>@(Model.CancelledDate.HasValue ? " on " + Model.CancelledDate.Value.ToString("dd-MMM-yyyy HH:mm") : "").
                     @if (!string.IsNullOrEmpty(Model.CancelledReason))
                     {
@@ -636,7 +745,7 @@
             }
 
             <!-- PATIENT & DOCTOR INFO -->
-            <div class="info-grid">
+            <div class="info-grid" data-print-section="patient">
                 <div class="info-box">
                     <div class="info-box-title" data-key="billedto">Billed To / Patient</div>
                     <div style="font-weight:700;font-size:14px;color:#111827;margin-top:2px;">@Model.PatientName</div>
@@ -659,6 +768,7 @@
             </div>
 
             <!-- ITEMS -->
+            <div class="items-section" data-print-section="items">
             <div class="sec-title" data-key="items-title">Bill Items</div>
             <table class="bill-table">
                 <thead>
@@ -703,9 +813,10 @@
                     }
                 </tbody>
             </table>
+            </div><!-- /.items-section -->
 
             <!-- SUMMARY -->
-            <div class="summary-wrap">
+            <div class="summary-wrap" data-print-section="summary">
                 <div class="summary-left">
                     <div class="amount-in-words">
                         <div class="aw-lbl" data-key="amountwords">Amount In Words</div>
@@ -774,7 +885,7 @@
             </div>
 
             <!-- SIGNATURE -->
-            <div class="sig-row">
+            <div class="sig-row" data-print-section="signature">
                 <div class="sig-box">
                     <div class="sig-line"></div>
                     <div class="sig-name">@Model.PatientName</div>
@@ -787,7 +898,7 @@
                 </div>
             </div>
 
-            <div class="footer-note" data-key="footer">
+            <div class="footer-note" data-key="footer" data-print-section="footer">
                 This is a computer generated bill and does not require a signature.<br />
                 @if (!string.IsNullOrEmpty(hospitalRegNo)) { <text>Reg. No: @hospitalRegNo</text> }
                 @if (!string.IsNullOrEmpty(hospitalPhone)) { <text> &nbsp;|&nbsp; Ph: @hospitalPhone</text> }
@@ -855,7 +966,7 @@
             }
         };
 
-        function applyLanguage(lang) {
+function applyLanguage(lang) {
             var dict = T[lang] || T['en'];
             document.getElementById('lbl-lang').textContent = dict['lbl-lang'];
             document.querySelectorAll('[data-key]').forEach(function (el) {
@@ -864,8 +975,51 @@
             });
         }
 
+        /* ── PRINT SECTION TOGGLING ── */
+        function getSelectedSections() {
+            var sections = [];
+            document.querySelectorAll('.po-grid input[data-section]').forEach(function (cb) {
+                if (cb.checked) sections.push(cb.getAttribute('data-section'));
+            });
+            return sections;
+        }
+
+        function applyPrintSelections() {
+            var selected = getSelectedSections();
+            document.querySelectorAll('[data-print-section]').forEach(function (el) {
+                var sec = el.getAttribute('data-print-section');
+                // 'cancelled' watermark always follows the 'header' toggle
+                var effective = (sec === 'cancelled') ? 'header' : sec;
+                if (selected.indexOf(effective) === -1) {
+                    el.classList.add('exclude-from-print');
+                } else {
+                    el.classList.remove('exclude-from-print');
+                }
+            });
+        }
+
+        function setAll(val) {
+            document.querySelectorAll('.po-grid input[data-section]').forEach(function (cb) {
+                cb.checked = val;
+            });
+            applyPrintSelections();
+        }
+
+function printBill() {
+            applyPrintSelections();
+            window.print();
+        }
+
+        // Keep the on-screen bill in sync as checkboxes change
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.po-grid input[data-section]').forEach(function (cb) {
+                cb.addEventListener('change', applyPrintSelections);
+            });
+        });
+
         /* ── PDF DOWNLOAD ── */
         function downloadPDF() {
+            applyPrintSelections();
             var el = document.getElementById('billContent');
             html2canvas(el, { scale: 2 }).then(function (canvas) {
                 var { jsPDF } = window.jspdf;

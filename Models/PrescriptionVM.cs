@@ -15,10 +15,11 @@ namespace WebApplicationSampleTest2.Models
         public int Age { get; set; }
         public string Gender { get; set; }
 
-        // Doctor
+// Doctor
         public string DoctorName { get; set; }
         public string Specialization { get; set; }
         public string Education { get; set; }
+        public string DoctorRegNo { get; set; }
 
         // Appointment
         public DateTime AppointmentDate { get; set; }

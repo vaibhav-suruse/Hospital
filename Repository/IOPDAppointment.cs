@@ -24,7 +24,7 @@ List<OPDAppointmentModel> GetAllAppointments(int hospitalId, int? subHospitalId)
         void UpdateStatus(int appointmentId, int hospitalId, int? subHospitalId, string status);
         List<OPDMedicineVM> GetMedicinesByOPDId(int opdId);
 
-        List<OPD> GetPatientFullHistory(int patientId);
+List<OPD> GetPatientFullHistory(int patientId, int hospitalId, int? subHospitalId);
 
         /// <summary>
         /// Batch-fetch OPD ID + IPD admission status for a list of appointment IDs.

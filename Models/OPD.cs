@@ -17,10 +17,18 @@ namespace WebApplicationSampleTest2.Models
         public string ReportFilePath { get; set; }  // DB sathi path
         [NotMapped]
         public IFormFile ReportFile { get; set; }   // Upload sathi
-        public DateTime? NextAppointmentDate { get; set; }
+public DateTime? NextAppointmentDate { get; set; }
         public int HospitalId { get; set; }
         public int? SubHospitalId { get; set; }
         public DateTime AppointmentDate { get; set; }
+
+        // ── Enriched fields used by the full-history view (not DB columns) ──
+        [NotMapped]
+        public string DoctorName { get; set; }
+        [NotMapped]
+        public TimeSpan AppointmentTime { get; set; }
+        [NotMapped]
+        public string AppointmentStatus { get; set; }
 
         public List<string> Symptom { get; set; } = new List<string>();
 
