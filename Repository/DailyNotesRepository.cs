@@ -930,7 +930,7 @@ namespace WebApplicationSampleTest2.Repository
         }
 
         // ============================================================
-        // SYMPTOMS (Daily Notes) — same pattern as InsertDailyNotesMedicine:
+        // SYMPTOMS (Daily Notes) ï¿½ same pattern as InsertDailyNotesMedicine:
         // creates its own ipd_doctor_round row so ipd_round_symptom's FK to
         // RoundId is satisfied.
         // ============================================================
@@ -1283,7 +1283,7 @@ namespace WebApplicationSampleTest2.Repository
         }
 
         // ============================================================
-        // COMPLETED LAB REPORTS — visible to the doctor once the lab
+        // COMPLETED LAB REPORTS ï¿½ visible to the doctor once the lab
         // uploads a result. sp_GetPendingLabOrdersByIPD only ever returns
         // Status IN ('Ordered','Collected'), so once LabInvestigationController
         // marks a test 'Completed' it silently disappears from Daily Notes
@@ -1430,15 +1430,25 @@ namespace WebApplicationSampleTest2.Repository
 
 
 
-        // In your DailyNotesRepository
-        public List<DoctorModel> GetDoctors()
+// In your DailyNotesRepository
+        // BUGFIX: previously this queried ALL doctors across every hospital.
+        // Now it is scoped to the current session's hospital/sub-hospital so
+        // the Daily Notes dropdown only shows doctors belonging to this facility.
+        public List<DoctorModel> GetDoctors(int hospitalId, int? subHospitalId)
         {
             var list = new List<DoctorModel>();
             using (var con = new MySqlConnection(_connectionString))
             {
-                string sql = "SELECT Doctor_Id, CONCAT(FirstName, ' ', LastName) AS Name FROM doctor WHERE IsActive = 1";
+                string sql = "SELECT Doctor_Id, CONCAT(FirstName, ' ', LastName) AS Name FROM doctor WHERE IsActive = 1 AND Hospital_Id = @hospitalId";
+                sql += subHospitalId.HasValue
+                    ? " AND Sub_Hospital_Id = @subHospitalId"
+                    : " AND (Sub_Hospital_Id IS NULL OR Sub_Hospital_Id = 0)";
+                sql += " ORDER BY Name";
                 using (var cmd = new MySqlCommand(sql, con))
                 {
+                    cmd.Parameters.AddWithValue("@hospitalId", hospitalId);
+                    if (subHospitalId.HasValue)
+                        cmd.Parameters.AddWithValue("@subHospitalId", subHospitalId.Value);
                     con.Open();
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -1457,14 +1467,24 @@ namespace WebApplicationSampleTest2.Repository
         }
 
         // Get active nurses for Daily Notes dropdown
-        public List<NurseDropdownModel> GetNurses()
+        // BUGFIX: previously this queried ALL nurses across every hospital.
+        // Now it is scoped to the current session's hospital/sub-hospital so
+        // the Daily Notes dropdown only shows nurses belonging to this facility.
+        public List<NurseDropdownModel> GetNurses(int hospitalId, int? subHospitalId)
         {
             var list = new List<NurseDropdownModel>();
             using (var con = new MySqlConnection(_connectionString))
             {
-                string sql = "SELECT NurseId, CONCAT(FirstName, ' ', LastName) AS Name FROM nurse WHERE IsActive = 1";
+                string sql = "SELECT NurseId, CONCAT(FirstName, ' ', LastName) AS Name FROM nurse WHERE IsActive = 1 AND ParentHospitalId = @hospitalId";
+                sql += subHospitalId.HasValue
+                    ? " AND SubHospitalId = @subHospitalId"
+                    : " AND (SubHospitalId IS NULL OR SubHospitalId = 0)";
+                sql += " ORDER BY Name";
                 using (var cmd = new MySqlCommand(sql, con))
                 {
+                    cmd.Parameters.AddWithValue("@hospitalId", hospitalId);
+                    if (subHospitalId.HasValue)
+                        cmd.Parameters.AddWithValue("@subHospitalId", subHospitalId.Value);
                     con.Open();
                     using (var reader = cmd.ExecuteReader())
                     {

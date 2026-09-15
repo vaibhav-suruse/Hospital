@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
@@ -7,18 +7,21 @@ using System.Collections.Generic;
 using System.Data;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
 public class WalkInConsultationController : Controller
     {
+        private readonly ILogger<WalkInConsultationController> _logger;
         private readonly Ipatient _patientService;
         private readonly IIPDAdmission _ipdRepo;
         private readonly string _connectionString;
 
-        public WalkInConsultationController(Ipatient patientService, IIPDAdmission ipdRepo, IConfiguration configuration)
+        public WalkInConsultationController(Ipatient patientService, IIPDAdmission ipdRepo, IConfiguration configuration, ILogger<WalkInConsultationController> logger)
         {
             _patientService = patientService;
+            _logger = logger;
             _ipdRepo = ipdRepo;
             _connectionString = configuration.GetConnectionString("MySqlConnection");
         }
@@ -147,6 +150,7 @@ public IActionResult Index(int ipdId = 0, string date = "")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SearchPatient");
                 return Json(new { error = ex.Message });
             }
 
@@ -185,6 +189,7 @@ public IActionResult Index(int ipdId = 0, string date = "")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddPatient");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -223,6 +228,7 @@ public IActionResult Index(int ipdId = 0, string date = "")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AssignDoctor");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -248,6 +254,7 @@ public IActionResult Index(int ipdId = 0, string date = "")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CreateWalkInAppointment");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -287,6 +294,7 @@ public IActionResult Index(int ipdId = 0, string date = "")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CancelWalkInAppointment");
                 return Json(new { success = false, message = ex.Message });
             }
         }

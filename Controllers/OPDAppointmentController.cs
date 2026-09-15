@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class OPDAppointmentController : Controller
     {
+        private readonly ILogger<OPDAppointmentController> _logger;
 private readonly IOPDAppointment _iAppointment;
         private readonly IDoctor _iDoctor;
         private readonly Ipatient _ipatient;
@@ -26,9 +28,10 @@ private readonly IOPDAppointment _iAppointment;
             IOPD OPD,
             IDoctor doctor,
             INotification notifRepo,
-            IPatientHistory patientHistory)
+            IPatientHistory patientHistory, ILogger<OPDAppointmentController> logger)
         {
             _iAppointment = appointment;
+            _logger = logger;
             _iDoctor = doctor;
             _ipatient = ipatient;
             _IOPD = OPD;
@@ -439,6 +442,7 @@ public IActionResult PatientHistory(int appointmentId)
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetPrescriptionDetail");
                 return Json(new { error = ex.Message });
             }
         }
@@ -457,6 +461,7 @@ public IActionResult PatientHistory(int appointmentId)
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DispenseMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -476,6 +481,7 @@ public IActionResult PatientHistory(int appointmentId)
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CompleteVisit");
                 return Json(new { success = false, message = ex.Message });
             }
         }

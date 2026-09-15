@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -7,11 +7,13 @@ using System.Linq;
 using System.Security.Cryptography;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class NurseVitalsController : Controller
     {
+        private readonly ILogger<NurseVitalsController> _logger;
         private readonly IIPDNurseVitals _vitalsRepo;
         private readonly INurse _nurseRepo;
         private readonly IDoctor _doctorRepo;
@@ -25,9 +27,10 @@ private readonly IIPDAdmission _admissionRepo; // used only to resolve Admission
 
         public NurseVitalsController(IIPDNurseVitals vitalsRepo, INurse nurseRepo, IDoctor doctorRepo,
     IIPDNursingCharge nursingChargeRepo, INursingChargesMaster nursingMasterRepo, IIPDAdmission admissionRepo,
-    IIPDClinicalExtras extrasRepo, Ipatient patientRepo, IHospital hospitalRepo)
+    IIPDClinicalExtras extrasRepo, Ipatient patientRepo, IHospital hospitalRepo, ILogger<NurseVitalsController> logger)
         {
             _vitalsRepo = vitalsRepo;
+            _logger = logger;
             _nurseRepo = nurseRepo;
             _doctorRepo = doctorRepo;
             _nursingChargeRepo = nursingChargeRepo;
@@ -234,6 +237,7 @@ private readonly IIPDAdmission _admissionRepo; // used only to resolve Admission
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteVitalAjax");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -757,6 +761,7 @@ var vitals = _vitalsRepo.GetVitalsByIPDId(ipdId, hospitalId, subHospitalId) ?? n
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 LoadNurses();
                 LoadDoctors();
                 LoadNursingMaster();
@@ -898,6 +903,7 @@ var vitals = _vitalsRepo.GetVitalsByIPDId(ipdId, hospitalId, subHospitalId) ?? n
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveNursingProcedures");
                 LoadNurses();
                 ViewBag.NursingMaster = _nursingMasterRepo.GetAll(hid, subid);
                 ViewBag.IPDId = IPDId;

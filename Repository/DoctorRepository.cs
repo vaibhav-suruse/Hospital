@@ -65,7 +65,7 @@ namespace WebApplicationSampleTest2.Repository
                     cmd.Parameters.AddWithValue("@p_Sub_Hospital_Id", subHospitalId ?? (object)DBNull.Value);
 
                     con.Open();
-                    using (MySqlDataReader dr = cmd.ExecuteReader())
+using (MySqlDataReader dr = cmd.ExecuteReader())
                     {
                         while (dr.Read())
                         {
@@ -80,7 +80,9 @@ namespace WebApplicationSampleTest2.Repository
                                 ExperienceYears = Convert.ToInt32(dr["ExperienceYears"]),
                                 MobileNo = dr["MobileNo"].ToString(),
                                 Email = dr["Email"].ToString(),
-                                Address = dr["Address"].ToString()
+                                Address = dr["Address"].ToString(),
+                                Hospital_Id = ReadIntColumn(dr, "Hospital_Id"),
+                                Sub_Hospital_Id = ReadNullableIntColumn(dr, "Sub_Hospital_Id")
                             });
                         }
                     }
@@ -153,6 +155,38 @@ model = new Doctor
             catch (IndexOutOfRangeException)
             {
                 // Column not present in the result set
+                return null;
+            }
+        }
+
+        // Safely reads an int column (0 if missing/null) so hospital scoping in
+        // the caller can rely on Hospital_Id being hydrated even if the current
+        // stored procedure does not return that column yet.
+        private static int ReadIntColumn(System.Data.IDataRecord dr, string column)
+        {
+            try
+            {
+                int ordinal = dr.GetOrdinal(column);
+                if (ordinal < 0) return 0;
+                return dr.IsDBNull(ordinal) ? 0 : Convert.ToInt32(dr.GetValue(ordinal));
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return 0;
+            }
+        }
+
+        // Safely reads a nullable int column (null if missing/null).
+        private static int? ReadNullableIntColumn(System.Data.IDataRecord dr, string column)
+        {
+            try
+            {
+                int ordinal = dr.GetOrdinal(column);
+                if (ordinal < 0) return null;
+                return dr.IsDBNull(ordinal) ? (int?)null : Convert.ToInt32(dr.GetValue(ordinal));
+            }
+            catch (IndexOutOfRangeException)
+            {
                 return null;
             }
         }

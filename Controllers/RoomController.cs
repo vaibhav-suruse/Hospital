@@ -1,21 +1,24 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class RoomController : Controller
     {
+        private readonly ILogger<RoomController> _logger;
         private readonly IRoom _roomService;
         private readonly IWard _wardService;
 
-        public RoomController(IRoom roomService, IWard wardService)
+        public RoomController(IRoom roomService, IWard wardService, ILogger<RoomController> logger)
         {
             _roomService = roomService;
+            _logger = logger;
             _wardService = wardService;
         }
 
@@ -68,6 +71,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Index");
                 ViewBag.Error = "Error fetching rooms: " + ex.Message;
                 return View(new List<RoomListVM>());
             }
@@ -106,6 +110,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 ViewBag.Error = "Error loading create room page: " + ex.Message;
                 return RedirectToAction("Index");
             }
@@ -140,6 +145,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 ViewBag.Error = "Error creating room: " + ex.Message;
                 PopulateDropdowns(model.WardId);
                 return View(model);
@@ -166,6 +172,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 ViewBag.Error = "Error loading edit page: " + ex.Message;
                 return RedirectToAction("Index");
             }
@@ -222,6 +229,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 ViewBag.Error = "Error updating room: " + ex.Message;
                 PopulateDropdowns(model.WardId);
                 return View(model);
@@ -242,6 +250,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 ViewBag.Error = "Error deleting room: " + ex.Message;
                 return RedirectToAction("Index", new { wardId = wardId });
             }

@@ -1,89 +1,99 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "OPD Medicine Queue";
 }
 
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="pharm-hero d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <div class="pharm-hero-icon"><i class="bx bx-user-check"></i></div>
+        <div>
+            <h4>OPD Medicine Queue</h4>
+            <p>Real-time prescriptions from doctors — dispense &amp; bill instantly</p>
+        </div>
+    </div>
+    <div class="live-pill"><span class="live-dot"></span><span>Live — refreshes every 8s</span></div>
+</div>
+
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-body">
+        <div class="card pharm-card">
+            <div class="pharm-card-body">
 
-                <h4 class="card-title">OPD Medicine Queue</h4>
-                <p class="card-title-desc">
-                    Prescriptions from doctor — real-time pharmacy view
-                </p>
-
-                <!-- Stats + Filter row -->
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge bg-primary px-3 py-2" style="font-size:.85rem">
-                            Total: <b id="statTotal">0</b>
-                        </span>
-                        <span class="badge bg-warning text-dark px-3 py-2" style="font-size:.85rem">
-                            Pending: <b id="statPending">0</b>
-                        </span>
-                        <span class="badge bg-success px-3 py-2" style="font-size:.85rem">
-                            Dispensed: <b id="statDispensed">0</b>
-                        </span>
-                        <span class="badge bg-info px-3 py-2" style="font-size:.85rem">
-                            Billed: <b id="statBilled">0</b>
-                        </span>
+                <!-- Stats row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card pharm-stat mb-0">
+                            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="pharm-stat-label">Total</div>
+                                    <div class="pharm-stat-value" id="statTotal">0</div>
+                                </div>
+                                <div class="pharm-stat-icon pg-dark"><i class="bx bxs-collection"></i></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small">
-                            <span class="spinner-grow spinner-grow-sm text-success me-1" id="liveIndicator"></span>
-                            Live — refreshes every 8s
-                        </span>
+                    <div class="col-6 col-md-3">
+                        <div class="card pharm-stat mb-0">
+                            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="pharm-stat-label">Pending</div>
+                                    <div class="pharm-stat-value text-warning" id="statPending">0</div>
+                                </div>
+                                <div class="pharm-stat-icon pg-warning"><i class="bx bxs-hourglass"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card pharm-stat mb-0">
+                            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="pharm-stat-label">Dispensed</div>
+                                    <div class="pharm-stat-value" style="color:var(--pharm-success)" id="statDispensed">0</div>
+                                </div>
+                                <div class="pharm-stat-icon pg-success"><i class="bx bxs-check-shield"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card pharm-stat mb-0">
+                            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="pharm-stat-label">Billed</div>
+                                    <div class="pharm-stat-value" style="color:var(--pharm-info)" id="statBilled">0</div>
+                                </div>
+                                <div class="pharm-stat-icon pg-info"><i class="bx bxs-receipt"></i></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tabs -->
-                <ul class="nav nav-tabs mb-3" id="pharmaTabs">
-                    <li class="nav-item">
-                        <button class="nav-link active" id="tabAll"
-                                onclick="setTab('all')">
-                            All
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" id="tabPending"
-                                onclick="setTab('Pending')">
-                            Pending
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" id="tabDispensed"
-                                onclick="setTab('Dispensed')">
-                            Dispensed
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" id="tabBilled"
-                                onclick="setTab('Billed')">
-                            Billed
-                        </button>
-                    </li>
+                <ul class="nav pharm-tabs mb-3" id="pharmaTabs">
+                    <li class="nav-item"><button class="nav-link active" id="tabAll" onclick="setTab('all')">All</button></li>
+                    <li class="nav-item"><button class="nav-link" id="tabPending" onclick="setTab('Pending')">Pending</button></li>
+                    <li class="nav-item"><button class="nav-link" id="tabDispensed" onclick="setTab('Dispensed')">Dispensed</button></li>
+                    <li class="nav-item"><button class="nav-link" id="tabBilled" onclick="setTab('Billed')">Billed</button></li>
                 </ul>
 
                 <!-- Queue Table -->
                 <div class="table-responsive">
-                    <table class="table table-striped table-bordered">
-                        <thead class="table-light">
+                    <table class="table pharm-table align-middle">
+                        <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Patient Name</th>
+                                <th>Patient</th>
                                 <th>Doctor</th>
-                                <th>Medicines</th>
+                                <th class="text-center">Medicines</th>
                                 <th>Summary</th>
                                 <th>Time</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="queueBody">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                    Loading prescriptions...
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>Loading prescriptions...
                                 </td>
                             </tr>
                         </tbody>
@@ -95,22 +105,21 @@
     </div>
 </div>
 
-<!-- ═══════════ PRESCRIPTION DETAIL MODAL ═══════════ -->
-<div class="modal fade" id="prescModal" tabindex="-1" aria-hidden="true">
+<!-- ═══════════════ PRESCRIPTION DETAIL MODAL ═══════════════ -->
+<div class="modal fade pharm-modal" id="prescModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
 
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header primary">
                 <h5 class="modal-title">
                     <i class="fas fa-prescription-bottle me-2"></i>
                     Prescription — <span id="modalPatientName"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white"
-                        data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <!-- Patient info strip -->
-            <div class="px-4 py-2 bg-light border-bottom">
+            <div class="px-4 py-3 bg-light border-bottom">
                 <div class="row">
                     <div class="col-md-6">
                         <small class="text-muted">Doctor</small>
@@ -134,16 +143,13 @@
             </div>
 
             <div class="modal-footer" id="prescModalFooter" style="display:none;">
-                <button class="btn btn-success" id="btnDispense">
+                <button class="btn btn-grad-success" id="btnDispense">
                     <i class="fas fa-check me-1"></i> Mark All Dispensed
                 </button>
-                <a href="#" class="btn btn-primary" id="btnGenerateBill">
+                <a href="#" class="btn btn-grad-primary" id="btnGenerateBill">
                     <i class="fas fa-file-invoice-dollar me-1"></i> Generate Medicine Bill
                 </a>
-                <button type="button" class="btn btn-secondary"
-                        data-bs-dismiss="modal">
-                    Close
-                </button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
             </div>
 
         </div>
@@ -168,8 +174,7 @@
                 },
                 error: function() {
                     document.getElementById('queueBody').innerHTML =
-                        '<tr><td colspan="8" class="text-center text-danger py-3">' +
-                        'Failed to load. Please refresh.</td></tr>';
+                        '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load. Please refresh.</td></tr>';
                 }
             });
         }
@@ -185,8 +190,7 @@
 
             if (!filtered.length) {
                 tbody.innerHTML =
-                    '<tr><td colspan="8" class="text-center text-muted py-4">' +
-                    'No prescriptions in this category</td></tr>';
+                    '<tr><td colspan="8" class="text-center text-muted py-5">No prescriptions in this category</td></tr>';
                 return;
             }
 
@@ -199,14 +203,14 @@
             var status = item.status || 'Pending';
 
             var badge = '';
-            if      (status === 'Pending')   badge = '<span class="badge bg-warning text-dark">🟡 Pending</span>';
-            else if (status === 'Dispensed') badge = '<span class="badge bg-success">🟢 Dispensed</span>';
-            else if (status === 'Billed')    badge = '<span class="badge bg-primary">🔵 Billed</span>';
-            else if (status === 'Cancelled') badge = '<span class="badge bg-danger">❌ Cancelled</span>';
-            else                             badge = '<span class="badge bg-secondary">' + esc(status) + '</span>';
+            if      (status === 'Pending')   badge = '<span class="pharm-badge badge-soft-warning"><i class="bx bxs-hourglass me-1"></i>Pending</span>';
+            else if (status === 'Dispensed') badge = '<span class="pharm-badge badge-soft-success"><i class="bx bxs-check-circle me-1"></i>Dispensed</span>';
+            else if (status === 'Billed')    badge = '<span class="pharm-badge badge-soft-primary"><i class="bx bxs-receipt me-1"></i>Billed</span>';
+            else if (status === 'Cancelled') badge = '<span class="pharm-badge badge-soft-danger"><i class="bx bx-x-circle me-1"></i>Cancelled</span>';
+            else                             badge = '<span class="pharm-badge badge-soft-dark">' + esc(status) + '</span>';
 
             var medCount = item.medicineCount > 0
-                ? '<span class="badge bg-info text-dark">' + item.medicineCount + ' med' +
+                ? '<span class="pharm-badge badge-soft-info">' + item.medicineCount + ' med' +
                   (item.medicineCount > 1 ? 's' : '') + '</span>'
                 : '<span class="text-muted">—</span>';
 
@@ -214,26 +218,34 @@
                 ? '<small class="text-muted">' + esc(item.medicinesSummary) + '</small>'
                 : '<small class="text-muted">—</small>';
 
+            // Patient avatar initial
+            var initial = (item.patientName || '?').trim().charAt(0).toUpperCase();
+            var patientHtml =
+                '<div class="d-flex align-items-center gap-2">' +
+                '<span class="pharm-avatar pg-primary">' + initial + '</span>' +
+                '<strong>' + esc(item.patientName) + '</strong>' +
+                '</div>';
+
             var actionBtns =
-                '<button class="btn btn-sm btn-info" onclick="openPrescription(' + item.notificationId + ')">' +
-                '<i class="fas fa-eye"></i> View</button>';
+                '<button class="btn btn-sm btn-outline-primary" onclick="openPrescription(' + item.notificationId + ')">' +
+                '<i class="fas fa-eye"></i></button>';
 
             if (status === 'Dispensed') {
                 actionBtns +=
                     ' <a href="/PharmacyQueue/MedicineBill?notificationId=' + item.notificationId + '"' +
-                    ' class="btn btn-sm btn-primary">' +
-                    '<i class="fas fa-file-invoice-dollar"></i> Bill</a>';
+                    ' class="btn btn-sm btn-grad-primary">' +
+                    '<i class="fas fa-file-invoice-dollar"></i></a>';
             }
 
             return '<tr>' +
-                '<td>' + idx + '</td>' +
-                '<td><strong>' + esc(item.patientName) + '</strong></td>' +
+                '<td><span class="text-muted">' + idx + '</span></td>' +
+                '<td>' + patientHtml + '</td>' +
                 '<td>Dr. ' + esc(item.doctorName || '—') + '</td>' +
                 '<td class="text-center">' + medCount + '</td>' +
-                '<td>' + summary + '</td>' +
-                '<td><small>' + esc(item.timeAgo || item.createdAt) + '</small></td>' +
+                '<td><small class="text-truncate-2">' + summary + '</small></td>' +
+                '<td><small class="text-muted">' + esc(item.timeAgo || item.createdAt) + '</small></td>' +
                 '<td>' + badge + '</td>' +
-                '<td>' + actionBtns + '</td>' +
+                '<td class="text-center">' + actionBtns + '</td>' +
             '</tr>';
         }
 
@@ -265,7 +277,6 @@
         window.openPrescription = function(notificationId) {
             selectedNotifId = notificationId;
 
-            // Reset modal
             document.getElementById('prescModalBody').innerHTML =
                 '<div class="text-center py-4 text-muted">' +
                 '<span class="spinner-border spinner-border-sm me-2"></span>Loading...</div>';
@@ -277,7 +288,6 @@
 
             new bootstrap.Modal(document.getElementById('prescModal')).show();
 
-            // Fetch prescription
             $.ajax({
                 url:  '/PharmacyQueue/GetPrescription',
                 type: 'GET',
@@ -285,84 +295,71 @@
                 success: function(d) {
                     if (!d.success) {
                         document.getElementById('prescModalBody').innerHTML =
-                            '<div class="alert alert-danger">' + esc(d.message) + '</div>';
+                            '<div class="pharm-alert danger"><i class="fas fa-exclamation-circle alert-icon"></i><div>' + esc(d.message) + '</div></div>';
                         return;
                     }
                     renderPrescModal(d);
                 },
                 error: function() {
                     document.getElementById('prescModalBody').innerHTML =
-                        '<div class="alert alert-danger">Could not load prescription.</div>';
+                        '<div class="pharm-alert danger"><i class="fas fa-exclamation-circle alert-icon"></i><div>Could not load prescription.</div></div>';
                 }
             });
         };
 
         function renderPrescModal(d) {
-            // Header
             document.getElementById('modalPatientName').textContent = d.patientName;
             document.getElementById('modalDoctorName').textContent  = 'Dr. ' + (d.doctorName || '—');
             document.getElementById('modalCreatedAt').textContent   = d.createdAt;
 
             var statusHtml = '';
-            if (d.status === 'Pending')
-                statusHtml = '<span class="badge bg-warning text-dark">🟡 Pending</span>';
-            else if (d.status === 'Dispensed')
-                statusHtml = '<span class="badge bg-success">🟢 Dispensed</span>';
-            else if (d.status === 'Billed')
-                statusHtml = '<span class="badge bg-primary">🔵 Billed</span>';
+            if (d.status === 'Pending')   statusHtml = '<span class="pharm-badge badge-soft-warning"><i class="bx bxs-hourglass me-1"></i>Pending</span>';
+            else if (d.status === 'Dispensed') statusHtml = '<span class="pharm-badge badge-soft-success"><i class="bx bxs-check-circle me-1"></i>Dispensed</span>';
+            else if (d.status === 'Billed') statusHtml = '<span class="pharm-badge badge-soft-primary"><i class="bx bxs-receipt me-1"></i>Billed</span>';
             document.getElementById('modalStatusBadge').innerHTML = statusHtml;
 
-            // Medicine table
             var medsHtml = '';
             if (d.medicines && d.medicines.length > 0) {
                 medsHtml =
                     '<div class="table-responsive">' +
-                    '<table class="table table-bordered table-sm mb-0">' +
-                    '<thead class="table-light">' +
+                    '<table class="table pharm-table table-bordered-table table-sm mb-0">' +
+                    '<thead>' +
                     '<tr>' +
-                    '<th>#</th>' +
-                    '<th>Medicine</th>' +
-                    '<th>Type</th>' +
-                    '<th class="text-center">Morning</th>' +
-                    '<th class="text-center">Afternoon</th>' +
-                    '<th class="text-center">Evening</th>' +
-                    '<th class="text-center">Days</th>' +
-                    '<th class="text-center">Prescribed Qty</th>' +
-                    '<th class="text-center">Stock</th>' +
-                    '<th class="text-end">Rate (₹)</th>' +
-                    '<th class="text-end">Total (₹)</th>' +
+                    '<th>#</th><th>Medicine</th><th>Type</th>' +
+                    '<th class="text-center">Morning</th><th class="text-center">Afternoon</th><th class="text-center">Evening</th>' +
+                    '<th class="text-center">Days</th><th class="text-center">Qty</th><th class="text-center">Stock</th>' +
+                    '<th class="text-end">Rate</th><th class="text-end">Total</th>' +
                     '</tr>' +
                     '</thead><tbody>';
 
                 var hasStockWarning = false;
 
                 d.medicines.forEach(function(m, i) {
-                    var tick  = '<i class="fas fa-check text-success"></i>';
+                    var tick  = '<i class="fas fa-check-circle text-success"></i>';
                     var cross = '<span class="text-muted">—</span>';
 
-                    // ── Stock badge ───────────────────────────────────────
                     var stockBadge = '';
                     var rowClass   = '';
                     if (m.stockStatus === 'outofstock') {
-                        stockBadge = '<span class="badge bg-danger">🔴 Out of Stock</span>';
+                        stockBadge = '<span class="pharm-badge badge-soft-danger">Out of Stock</span>';
                         rowClass   = 'table-danger';
                         hasStockWarning = true;
                     } else if (m.stockStatus === 'partial') {
-                        stockBadge = '<span class="badge bg-warning text-dark">🟡 Only ' + m.availableStock + ' of ' + m.totalQty + '</span>';
+                        stockBadge = '<span class="pharm-badge badge-soft-warning">Only ' + m.availableStock + ' / ' + m.totalQty + '</span>';
                         rowClass   = 'table-warning';
                         hasStockWarning = true;
                     } else {
-                        stockBadge = '<span class="badge bg-success">🟢 ' + m.availableStock + ' in stock</span>';
+                        stockBadge = '<span class="pharm-badge badge-soft-success">' + m.availableStock + ' in stock</span>';
                     }
 
                     medsHtml +=
                         '<tr class="' + rowClass + '">' +
                         '<td>' + (i + 1) + '</td>' +
                         '<td><strong>' + esc(m.medicineName) + '</strong></td>' +
-                        '<td><span class="badge bg-light text-dark border">' + esc(m.medicineType || 'Tablet') + '</span></td>' +
-                        '<td class="text-center">' + (m.morning    ? tick : cross) + '</td>' +
-                        '<td class="text-center">' + (m.afternoon  ? tick : cross) + '</td>' +
-                        '<td class="text-center">' + (m.evening    ? tick : cross) + '</td>' +
+                        '<td><span class="pharm-badge badge-soft-dark">' + esc(m.medicineType || 'Tablet') + '</span></td>' +
+                        '<td class="text-center">' + (m.morning ? tick : cross) + '</td>' +
+                        '<td class="text-center">' + (m.afternoon ? tick : cross) + '</td>' +
+                        '<td class="text-center">' + (m.evening   ? tick : cross) + '</td>' +
                         '<td class="text-center">' + m.days + ' days</td>' +
                         '<td class="text-center"><strong>' + m.totalQty + '</strong></td>' +
                         '<td class="text-center">' + stockBadge + '</td>' +
@@ -373,31 +370,24 @@
 
                 var grandTotal = d.medicines.reduce(function(s, m) { return s + m.lineTotal; }, 0);
                 medsHtml +=
-                    '<tr class="table-light fw-bold">' +
+                    '<tr class="tfoot-total">' +
                     '<td colspan="10" class="text-end">Estimated Total</td>' +
                     '<td class="text-end">₹' + grandTotal.toFixed(2) + '</td>' +
-                    '</tr>' +
-                    '</tbody></table></div>';
+                    '</tr></tbody></table></div>';
 
-                // ── Stock warning banner ───────────────────────────────────
                 if (hasStockWarning) {
-                    medsHtml = '<div class="alert alert-warning d-flex align-items-center mb-3" role="alert">' +
-                        '<i class="fas fa-exclamation-triangle me-2"></i>' +
-                        '<div><strong>Stock Alert:</strong> One or more medicines have insufficient stock. ' +
-                        'Highlighted rows show available quantity. Please dispense what is available and ' +
-                        'inform the patient about pending medicines.</div>' +
+                    medsHtml = '<div class="pharm-alert warn d-flex align-items-center mb-3"><i class="fas fa-exclamation-triangle alert-icon"></i>' +
+                        '<div><strong>Stock Alert:</strong> Some medicines have insufficient stock. Dispense what is available and inform the patient about pending medicines.</div>' +
                         '</div>' + medsHtml;
                 }
             } else {
-                medsHtml = '<div class="alert alert-info mb-0">No medicines found for this prescription.</div>';
+                medsHtml = '<div class="pharm-alert info"><i class="fas fa-info-circle alert-icon"></i><div>No medicines found for this prescription.</div></div>';
             }
 
             document.getElementById('prescModalBody').innerHTML = medsHtml;
 
-            // Footer buttons — show based on status
-            var footer = document.getElementById('prescModalFooter');
+            var footer      = document.getElementById('prescModalFooter');
             footer.style.display = '';
-
             var dispenseBtn = document.getElementById('btnDispense');
             var billBtn     = document.getElementById('btnGenerateBill');
 
@@ -410,7 +400,6 @@
                 billBtn.style.display     = '';
                 billBtn.href = '/PharmacyQueue/MedicineBill?notificationId=' + d.notificationId;
             } else {
-                // Billed or Cancelled — no actions
                 dispenseBtn.style.display = 'none';
                 billBtn.style.display     = 'none';
             }
@@ -432,35 +421,32 @@
                     if (res.success) {
                         loadQueue();
                         bootstrap.Modal.getInstance(document.getElementById('prescModal')).hide();
-                        if (typeof toastr !== 'undefined')
-                            toastr.success('Medicines marked as dispensed!');
+                        if (typeof toastr !== 'undefined') toastr.success('Medicines marked as dispensed!');
                     } else {
-                        btn.disabled    = false;
-                        btn.innerHTML   = '<i class="fas fa-check me-1"></i> Mark All Dispensed';
+                        btn.disabled  = false;
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i> Mark All Dispensed';
                         alert(res.message || 'Could not dispense.');
                     }
                 },
                 error: function() {
-                    btn.disabled = false;
+                    btn.disabled  = false;
                     btn.innerHTML = '<i class="fas fa-check me-1"></i> Mark All Dispensed';
                     alert('Server error. Please try again.');
                 }
             });
         }
 
-        // ── ESCAPE HTML ───────────────────────────────────────────
         function esc(s) {
             return (s || '').toString()
-                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                .replace(/&/g,'&amp;').replace(/</g,'<').replace(/>/g,'>');
         }
 
-        // ── INIT ──────────────────────────────────────────────────
         $(document).ready(function() {
             loadQueue();
             setInterval(loadQueue, 8000);
         });
     </script>
 
-    @* CSRF token for POST *@
     @Html.AntiForgeryToken()
 }
+

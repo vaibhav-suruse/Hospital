@@ -1,4 +1,4 @@
-﻿// Controllers/DoctorRoundController.cs
+// Controllers/DoctorRoundController.cs
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,11 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DoctorRoundController : Controller
     {
+        private readonly ILogger<DoctorRoundController> _logger;
         private readonly IDoctorRound _roundRepo;
         private readonly IDoctor _doctorRepo;
         private readonly ISymptom _symptomRepo;
@@ -23,9 +25,10 @@ namespace WebApplicationSampleTest2.Controllers
             IDoctor doctorRepo,
             ISymptom symptomRepo,
             IMedicine medicineRepo,
-            IIPDAdmission ipdRepo)
+            IIPDAdmission ipdRepo, ILogger<DoctorRoundController> logger)
         {
             _roundRepo = roundRepo;
+            _logger = logger;
             _doctorRepo = doctorRepo;
             _symptomRepo = symptomRepo;
             _medicineRepo = medicineRepo;
@@ -90,6 +93,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Details", "IPDAdmission", new { id = ipdId });
             }
@@ -207,6 +211,7 @@ public IActionResult Create(
     }
     catch (Exception ex)
     {
+        _logger.LogError(ex, "Error in Create");
         LoadDropdowns();
         TempData["Error"] = ex.Message;
         return View(model);
@@ -339,6 +344,7 @@ public IActionResult Create(
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Detail");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Details", "IPDAdmission", new { id = ipdId });
             }
@@ -358,6 +364,7 @@ public IActionResult Create(
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 TempData["Error"] = ex.Message;
             }
 
@@ -382,6 +389,7 @@ public IActionResult Create(
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PrintPrescription");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Detail", new { roundId = roundId, ipdId = ipdId });
             }
@@ -405,6 +413,7 @@ public IActionResult Create(
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PrintAllPrescriptions");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Details", "IPDAdmission", new { id = ipdId });
             }

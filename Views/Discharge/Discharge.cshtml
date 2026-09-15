@@ -54,11 +54,12 @@
             <i class="fas fa-sign-out-alt me-2 text-primary"></i>
             Patient Discharge
         </h4>
-        <a asp-controller="IPDAdmission"
-           asp-action="Details"
-           asp-route-id="@Model.IPDId"
+<a asp-controller="InpatientDocument"
+           asp-action="Index"
+           asp-route-ipId="@Model.IPDId"
+           asp-route-patientId="@Model.PatientId"
            class="btn btn-secondary btn-sm">
-            ← Back
+            <i class="fas fa-arrow-left me-1"></i> Back
         </a>
     </div>
 
@@ -600,9 +601,10 @@
 
         @* ── ACTION BUTTONS ── *@
         <div class="d-flex justify-content-end gap-2 mt-2 mb-4">
-            <a asp-controller="IPDAdmission"
-               asp-action="Details"
-               asp-route-id="@Model.IPDId"
+<a asp-controller="InpatientDocument"
+               asp-action="Index"
+               asp-route-ipId="@Model.IPDId"
+               asp-route-patientId="@Model.PatientId"
                class="btn btn-secondary">
                 Cancel
             </a>

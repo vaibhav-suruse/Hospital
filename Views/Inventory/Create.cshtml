@@ -52,7 +52,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Batch</label>
-                                <input type="text" name="BatchNumber" class="form-control" value="@Model.BatchNumber" />     
+                                <input asp-for="BatchNumber" type="text" name="BatchNumber" id="BatchNumber" class="form-control" value="@Model.BatchNumber" />     
                                 
                                 <small class="text-danger" id="errBatch"></small>
                             </div>

@@ -1,20 +1,23 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 using static QuestPDF.Helpers.Colors;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class BillingMasterController : Controller
     {
+        private readonly ILogger<BillingMasterController> _logger;
         private readonly IBillingMaster _IBillingMaster;
-        public BillingMasterController(IBillingMaster billingMaster)
+        public BillingMasterController(IBillingMaster billingMaster, ILogger<BillingMasterController> logger)
         {
             _IBillingMaster = billingMaster;
+            _logger = logger;
         }
         public IActionResult Index(string search, int page = 1)
         {

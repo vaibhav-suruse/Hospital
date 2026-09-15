@@ -88,16 +88,20 @@ namespace WebApplicationSampleTest2.Repository
             return list;
         }
 
-        // ── Helper: get live stock qty for a medicine ─────────────────────────
+// ── Helper: get live stock qty for a medicine ─────────────────────────
+        // Phase A fix: read from batches (real physical stock, excluding expired)
+        // via sp_Stock_GetAvailable, NOT stock.TotalQuantity — prevents stale
+        // stock displays causing over-dispensing.
         private int GetAvailableStock(int medicineId, int hospitalId)
         {
             try
             {
                 using var con = new MySqlConnection(_conn);
-                using var cmd = new MySqlCommand(
-                    "SELECT COALESCE(TotalQuantity,0) FROM stock WHERE MedicineId=@m AND HospitalId=@h LIMIT 1", con);
-                cmd.Parameters.AddWithValue("@m", medicineId);
-                cmd.Parameters.AddWithValue("@h", hospitalId);
+                using var cmd = new MySqlCommand("sp_Stock_GetAvailable", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_MedicineId", medicineId);
+                cmd.Parameters.AddWithValue("p_HospitalId", hospitalId);
+                cmd.Parameters.AddWithValue("p_SubHospitalId", 0);
                 con.Open();
                 var result = cmd.ExecuteScalar();
                 return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
@@ -367,9 +371,12 @@ namespace WebApplicationSampleTest2.Repository
             return Convert.ToInt32(outBillId.Value);
         }
 
-        private void InsertBillItem(MySqlConnection con, MySqlTransaction tx,
+private void InsertBillItem(MySqlConnection con, MySqlTransaction tx,
             int billId, PharmacyBillItemVM item, int hospitalId, int? subHospitalId)
         {
+            // 1) Insert the bill line item (sp_Counter_InsertBillItem no longer
+            //    deducts stock — with MODEL A single-stock-path, deduction is
+            //    handled by the shared FEFO procedure below).
             using var cmd = new MySqlCommand("sp_Counter_InsertBillItem", con, tx);
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("p_BillId", billId);
@@ -383,6 +390,32 @@ namespace WebApplicationSampleTest2.Repository
             var outSuccess = new MySqlParameter("p_Success", MySqlDbType.Byte) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outSuccess);
             cmd.ExecuteNonQuery();
+
+            // 2) Deduct stock via the SHARED multi-batch FEFO procedure (fixes
+            //    P0-4). On insufficient stock it returns p_Success=0 and we throw
+            //    so the whole bill transaction rolls back — no silent skip, no
+            //    under-deduction, no negative batches.
+            using var fefoCmd = new MySqlCommand("sp_Stock_DeductFEFO", con, tx);
+            fefoCmd.CommandType = CommandType.StoredProcedure;
+            fefoCmd.Parameters.AddWithValue("p_MedicineId", item.MedicineId);
+            fefoCmd.Parameters.AddWithValue("p_Quantity", item.Quantity);
+            fefoCmd.Parameters.AddWithValue("p_HospitalId", hospitalId);
+            fefoCmd.Parameters.AddWithValue("p_SubHospitalId", subHospitalId ?? 0);
+            var pFefoSuccess = new MySqlParameter("p_Success", MySqlDbType.Byte) { Direction = ParameterDirection.Output };
+            fefoCmd.Parameters.Add(pFefoSuccess);
+            fefoCmd.ExecuteNonQuery();
+
+if (Convert.ToBoolean(pFefoSuccess.Value) == false)
+                throw new Exception($"Insufficient stock for {item.MedicineName}");
+
+            // 3) Reconcile the aggregate stock.TotalQuantity from batches so the
+            //    dashboard / low-stock reporting stays accurate (Phase A).
+            using var recCmd = new MySqlCommand("sp_Pharmacy_ReconcileStock", con, tx);
+            recCmd.CommandType = CommandType.StoredProcedure;
+            recCmd.Parameters.AddWithValue("p_MedicineId", item.MedicineId);
+            recCmd.Parameters.AddWithValue("p_HospitalId", hospitalId);
+            recCmd.Parameters.AddWithValue("p_SubHospitalId", subHospitalId ?? 0);
+            recCmd.ExecuteNonQuery();
         }
 
         // =====================================================================

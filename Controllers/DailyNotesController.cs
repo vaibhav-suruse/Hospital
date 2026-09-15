@@ -7,12 +7,14 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     [WebApplicationSampleTest2.Filters.RequireLogin]
     public class DailyNotesController : Controller
     {
+        private readonly ILogger<DailyNotesController> _logger;
         private readonly IDailyNotes _repo;
         // BUGFIX: needed so OrderMedicine can raise an IPD Pharmacy Queue
         // notification the same way DoctorRoundController does — without
@@ -24,9 +26,10 @@ namespace WebApplicationSampleTest2.Controllers
         private readonly IIPDAdmission _ipdRepo;
         private readonly ISymptom _symptomRepo;
 
-        public DailyNotesController(IDailyNotes repo, IDoctorRound roundRepo, IDoctor doctorRepo, IMedicine medicineRepo, IIPDAdmission ipdRepo, ISymptom symptomRepo)
+        public DailyNotesController(IDailyNotes repo, IDoctorRound roundRepo, IDoctor doctorRepo, IMedicine medicineRepo, IIPDAdmission ipdRepo, ISymptom symptomRepo, ILogger<DailyNotesController> logger)
         {
             _repo = repo;
+            _logger = logger;
             _roundRepo = roundRepo;
             _doctorRepo = doctorRepo;
             _medicineRepo = medicineRepo;
@@ -78,9 +81,9 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
                 ActiveTab = tab,
                 DoctorNotes = _repo.GetDoctorNotes(idToUse),
                 NurseNotes = _repo.GetNurseNotes(idToUse),
-                Templates = _repo.GetTemplates(tab, string.Empty),
-                Doctors = _repo.GetDoctors(),
-                Nurses = _repo.GetNurses()
+Templates = _repo.GetTemplates(tab, string.Empty),
+                Doctors = _repo.GetDoctors(hospitalId, subHospitalId),
+                Nurses = _repo.GetNurses(hospitalId, subHospitalId)
             };
             return View(vm);
         }
@@ -100,6 +103,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorNoteById");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -190,6 +194,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveDoctorNote");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -229,6 +234,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteDoctorNote");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -243,6 +249,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorNotesList");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -262,6 +269,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetNurseNoteById");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -321,6 +329,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveNurseNote");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -340,6 +349,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteNurseNote");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -354,6 +364,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetNurseNotesList");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -372,6 +383,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetTemplates");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -386,6 +398,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveTemplate");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -404,6 +417,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetNoteHistory");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -565,6 +579,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetVitalsTrend");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -621,6 +636,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SearchMedicines");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -742,6 +758,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetHandoverReport");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -765,6 +782,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SearchLabTests");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -798,6 +816,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in OrderLab");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -815,6 +834,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetPendingLabOrders");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -834,6 +854,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetCompletedLabReports");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -864,6 +885,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetNoteDetail");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -888,6 +910,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SearchSymptoms");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -910,6 +933,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in OrderSymptom");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -924,6 +948,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetActiveSymptoms");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1014,6 +1039,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in OrderMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1032,6 +1058,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetCurrentMedications");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1086,6 +1113,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DiscontinueMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1102,6 +1130,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetMAR");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1121,6 +1150,7 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in RecordAdministration");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1140,16 +1170,20 @@ public IActionResult Index(int ipdId, int ipId, string tab = "doctor")
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetPendingMedicines");
                 return Json(new { success = false, message = ex.Message });
             }
         }
 
 
         // Add this action to load the Daily Notes page
-        public IActionResult DailyNotes(int ipdId)
+public IActionResult DailyNotes(int ipdId)
         {
+            int hospitalId = HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
+            int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
+
             // Get doctors
-            var doctors = _repo.GetDoctors(); // You need to add this method
+            var doctors = _repo.GetDoctors(hospitalId, subHospitalId);
             ViewBag.Doctors = doctors;
 
 

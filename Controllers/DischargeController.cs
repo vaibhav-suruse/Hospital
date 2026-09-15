@@ -1,4 +1,4 @@
-﻿// DischargeController.cs
+// DischargeController.cs
 // Full file — replace your existing DischargeController.cs with this
 
 using Microsoft.AspNetCore.Http;
@@ -10,11 +10,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DischargeController : Controller
     {
+        private readonly ILogger<DischargeController> _logger;
         private readonly IDischarge _dischargeRepo;
         private readonly IDoctor _doctorRepo;
         private readonly IHospital _IHospital;
@@ -38,9 +40,10 @@ namespace WebApplicationSampleTest2.Controllers
             IIPDOperation operationRepo,
             ILabReports labReportsRepo,
             IAdmissionNotes admissionNotesRepo,
-            IRadiology radiologyRepo)
+            IRadiology radiologyRepo, ILogger<DischargeController> logger)
         {
             _dischargeRepo = dischargeRepo;
+            _logger = logger;
             _doctorRepo = doctorRepo;
             _IHospital = iHospital;
             _medicineRepo = medicineRepo;
@@ -125,6 +128,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Details", "IPDAdmission", new { id = ipdId });
             }
@@ -175,6 +179,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Discharge");
                 TempData["Error"] = ex.Message;
                 LoadDropdowns(model.IPDId);
                 var existingOnError = _dischargeRepo.GetAdmissionForDischarge(model.IPDId, HospitalId, SubHospitalId);
@@ -213,6 +218,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Discharge");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Index", "IPDAdmission");
             }
@@ -250,6 +256,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Discharge");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Summary", new { ipdId = ipdId });
             }
@@ -267,6 +274,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -282,6 +290,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }

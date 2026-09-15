@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DischargePlanningController : Controller
     {
+        private readonly ILogger<DischargePlanningController> _logger;
         private readonly IDischargePlanning _planningRepo;
         private readonly IIPDAdmission _admissionRepo;
         private readonly IIPDBilling _billingRepo;
@@ -15,9 +17,10 @@ namespace WebApplicationSampleTest2.Controllers
         public DischargePlanningController(
             IDischargePlanning planningRepo,
             IIPDAdmission admissionRepo,
-            IIPDBilling billingRepo)
+            IIPDBilling billingRepo, ILogger<DischargePlanningController> logger)
         {
             _planningRepo = planningRepo;
+            _logger = logger;
             _admissionRepo = admissionRepo;
             _billingRepo = billingRepo;
         }
@@ -84,6 +87,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Save");
                 return Json(new { success = false, message = ex.Message });
             }
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using WebApplicationSampleTest2.Models;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
@@ -13,11 +14,13 @@ namespace WebApplicationSampleTest2.Controllers
     // ── Controller ───────────────────────────────────────────────────────────
     public class PharmacyDashboardController : Controller
     {
+        private readonly ILogger<PharmacyDashboardController> _logger;
         private readonly string _conn;
 
-        public PharmacyDashboardController(IConfiguration configuration)
+        public PharmacyDashboardController(IConfiguration configuration, ILogger<PharmacyDashboardController> logger)
         {
             _conn = configuration.GetConnectionString("MySqlConnection");
+            _logger = logger;
         }
 
         public IActionResult Index()
@@ -104,10 +107,10 @@ namespace WebApplicationSampleTest2.Controllers
                 using var cmd = new MySqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@h", hospitalId);
                 con.Open();
-                var result = cmd.ExecuteScalar();
+var result = cmd.ExecuteScalar();
                 return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
             }
-            catch { return 0; }
+            catch (Exception ex) { _logger.LogError(ex, "GetScalar failed: {Sql}", sql); return 0; }
         }
 
         private decimal GetDecimal(string sql, int hospitalId)

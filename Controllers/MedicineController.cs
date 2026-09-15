@@ -1,19 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class MedicineController : Controller
     {
+        private readonly ILogger<MedicineController> _logger;
         private readonly IMedicine _Imedicine;
 
-        public MedicineController(IMedicine medicine) 
+        public MedicineController(IMedicine medicine, ILogger<MedicineController> logger) 
         {
             _Imedicine = medicine;
+            _logger = logger;
         }
         public IActionResult Index(string search, int page = 1)
         {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -9,20 +9,23 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DiagnosisController : Controller
     {
+        private readonly ILogger<DiagnosisController> _logger;
         private readonly IDiagnosis _repository;
         private readonly IOPD _opdRepository; // reused ONLY for the existing sp_GetAllDiagnoses / diagnosis_master lookup — no new lookup logic duplicated
         private readonly IDoctor _doctorRepository; // reused ONLY for the existing GetAllDoctor lookup — powers the "Diagnosed By" dropdown
         private readonly IIPDAdmission _ipdRepo; // NEW — multi-hospital data isolation
         private readonly Ipatient _patientRepo;  // NEW — multi-hospital data isolation
 
-        public DiagnosisController(IDiagnosis repository, IOPD opdRepository, IDoctor doctorRepository, IIPDAdmission ipdRepo, Ipatient patientRepo)
+        public DiagnosisController(IDiagnosis repository, IOPD opdRepository, IDoctor doctorRepository, IIPDAdmission ipdRepo, Ipatient patientRepo, ILogger<DiagnosisController> logger)
         {
             _repository = repository;
+            _logger = logger;
             _opdRepository = opdRepository;
             _doctorRepository = doctorRepository;
             _ipdRepo = ipdRepo;
@@ -118,6 +121,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 TempData["Error"] = ex.Message;
             }
 
@@ -145,6 +149,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 TempData["Error"] = ex.Message;
             }
 
@@ -323,6 +328,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorsForDropdown");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong saving this diagnosis. Please try again. (" + ex.Message + ")" });
             }
         }
@@ -368,6 +374,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorsForDropdown");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong verifying this diagnosis. Please try again. (" + ex.Message + ")" });
             }
         }
@@ -394,6 +401,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorsForDropdown");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong approving this diagnosis. Please try again. (" + ex.Message + ")" });
             }
         }
@@ -415,6 +423,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetDoctorsForDropdown");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong deleting this diagnosis. Please try again. (" + ex.Message + ")" });
             }
         }
@@ -559,6 +568,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong saving this diagnosis. Please try again. (" + ex.Message + ")" });
             }
         }
@@ -586,6 +596,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong resolving this diagnosis. (" + ex.Message + ")" });
             }
         }
@@ -611,6 +622,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong rejecting this diagnosis. (" + ex.Message + ")" });
             }
         }
@@ -635,6 +647,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong freezing this diagnosis. (" + ex.Message + ")" });
             }
         }
@@ -659,6 +672,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong unlocking this diagnosis. (" + ex.Message + ")" });
             }
         }
@@ -684,6 +698,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = "Something went wrong linking evidence. (" + ex.Message + ")" });
             }
         }
@@ -755,6 +770,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = ex.Message });
             }
         }
@@ -786,6 +802,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = ex.Message });
             }
         }
@@ -812,6 +829,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = ex.Message });
             }
         }
@@ -837,6 +855,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = ex.Message });
             }
         }
@@ -862,6 +881,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Reports");
                 return Json(new DiagnosisOperationResult { Success = false, Message = ex.Message });
             }
         }

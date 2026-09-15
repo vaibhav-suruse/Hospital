@@ -1,4 +1,4 @@
-﻿@* Views/BillingSheet/Index.cshtml *@
+@* Views/BillingSheet/Index.cshtml *@
 @model WebApplicationSampleTest2.Models.BillingSheetVM
 @{
     ViewData["Title"] = "Billing Sheet";
@@ -22,7 +22,7 @@
                     <small>(Adm# @Model.Admission.AdmissionNumber)</small>
                 </span>
             </div>
-            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
+            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-ipId="@ipdId" asp-route-ipdId="@ipdId" asp-route-patientId="@Model.Admission.PatientId" class="btn btn-sm btn-light">
                 <i class="fas fa-arrow-left me-1"></i> Back
             </a>
         </div>

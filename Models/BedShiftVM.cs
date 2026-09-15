@@ -14,7 +14,8 @@
         public int CurrentBedId { get; set; }
         public string Status { get; set; }
 
-        // Patient info (for display)
+// Patient info (for display)
+        public int PatientId { get; set; }
         public string PatientName { get; set; }
         public string AdmissionNumber { get; set; }
     }

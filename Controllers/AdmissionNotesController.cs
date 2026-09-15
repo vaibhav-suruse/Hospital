@@ -1,22 +1,25 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class AdmissionNotesController : Controller
     {
+        private readonly ILogger<AdmissionNotesController> _logger;
 
         private readonly IAdmissionNotes _repo;
         private readonly IIPDAdmission _ipdRepo;
         private readonly Ipatient _patientRepo;
 
-        public AdmissionNotesController(IAdmissionNotes repo, IIPDAdmission ipdRepo, Ipatient patientRepo)
+        public AdmissionNotesController(IAdmissionNotes repo, IIPDAdmission ipdRepo, Ipatient patientRepo, ILogger<AdmissionNotesController> logger)
         {
             _repo = repo;
+            _logger = logger;
             _ipdRepo = ipdRepo;
             _patientRepo = patientRepo;
         }
@@ -118,6 +121,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new
                 {
                     success = false,
@@ -189,6 +193,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -245,6 +250,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -288,6 +294,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new
                 {
                     success = false,
@@ -327,6 +334,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new
                 {
                     success = false,
@@ -385,6 +393,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -414,6 +423,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -437,6 +447,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -461,6 +472,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Action");
                 return Json(new { success = false, message = ex.Message });
             }
         }

@@ -1,0 +1,513 @@
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE.CSS — Global responsive fixes for the Hospital Management System
+   Loaded site-wide via _head_css.cshtml. Overrides only where the
+   Skote template / Bootstrap defaults are not mobile-friendly.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Base / body fixes ────────────────────────────────────────────── */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Neutralise the hard-coded min-height on <body> that forces horizontal
+   scrolling on small screens. (Kept as a guard in case a layout sets it.) */
+body[style*="min-height:1050px"] {
+    min-height: auto !important;
+}
+
+/* ── 2. Topbar / navbar responsive ───────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .navbar-header {
+        padding: 0 8px 0 0;
+    }
+
+    .navbar-brand-box {
+        padding: 0 0.75rem;
+    }
+
+    #page-topbar .navbar-header .d-flex {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 380px) {
+    /* Keep logo small but visible on very narrow screens */
+    .navbar-brand-box {
+        display: block !important;
+        padding: 0 6px;
+    }
+
+    .navbar-brand-box .logo-sm img {
+        height: 22px;
+    }
+}
+
+/* ── 3. Main content padding ─────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+    .page-content {
+        padding: calc(70px + 14px) 10px 60px 10px;
+    }
+
+    .container-fluid {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+
+/* ── 4. Page title ───────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .page-title-box {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 6px;
+    }
+
+    .page-title-box .page-title-right {
+        width: 100%;
+    }
+
+    .page-title-box .breadcrumb {
+        margin: 0;
+    }
+}
+
+/* ── 5. Responsive tables ────────────────────────────────────────────── */
+/* Ensure every data table scrolls horizontally instead of breaking layout */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+/* Tables that are NOT wrapped in .table-responsive still need to be
+   scrollable when they exceed the viewport width. */
+table.table,
+table.opb-grid,
+table.rx-table {
+    max-width: 100%;
+}
+
+/* ── 6. Search / filter / toolbar forms ──────────────────────────────── */
+/* Allow flex toolbars to wrap instead of overflowing on small screens */
+.d-flex.justify-content-end.mb-3 form,
+.d-flex.justify-content-end.mb-3,
+.opb-grid-footer,
+.block-header,
+.opd-toolbar,
+.opd-section-nav,
+.page-title-box,
+.opb-header,
+.d-flex.align-items-center.mb-4 {
+    flex-wrap: wrap;
+}
+
+form.d-flex {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+form.d-flex .form-control,
+form.d-flex input[type="date"],
+form.d-flex input[type="search"],
+form.d-flex input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 160px;
+}
+
+@media (max-width: 575.98px) {
+    .d-flex.justify-content-end.mb-3 {
+        justify-content: flex-start !important;
+    }
+
+    .d-flex.justify-content-end.mb-3 form {
+        width: 100%;
+    }
+
+    form.d-flex {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    form.d-flex .form-control,
+    form.d-flex input[type="date"] {
+        width: 100% !important;
+        min-width: 0;
+    }
+}
+
+/* ── 7. Buttons & action groups ──────────────────────────────────────── */
+.btn-group,
+.btn-toolbar {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 575.98px) {
+    .d-flex.gap-1,
+    .d-flex.gap-2,
+    .d-flex.gap-3 {
+        flex-wrap: wrap;
+    }
+
+    .d-flex.gap-1 .btn,
+    .d-flex.gap-2 .btn {
+        flex: 1 1 auto;
+        margin-bottom: 4px;
+    }
+}
+
+/* ── 8. Cards ────────────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+}
+
+/* ── 9. Modals on small screens ──────────────────────────────────────── */
+@media (max-width: 575.98px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .modal-dialog.modal-xl,
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-md,
+    .modal-dialog {
+        max-width: calc(100% - 1rem);
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}
+
+/* ── 10. IPD tab bar refinements ─────────────────────────────────────── */
+.ipd-tabbar {
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 575.98px) {
+    .ipd-tabbar {
+        padding: 8px;
+        gap: 2px;
+    }
+
+    .ipd-tab,
+    .ipd-dropdown-toggle {
+        min-width: 84px;
+        width: auto;
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+
+    .ipd-tab i,
+    .ipd-dropdown-toggle > i {
+        font-size: 16px;
+    }
+}
+
+/* ── 11. OPD Consultation workspace refinements ──────────────────────── */
+@media (max-width: 575.98px) {
+    .opd-toolbar {
+        padding: 10px 12px;
+    }
+
+    .opd-toolbar .patient-header {
+        gap: 8px;
+    }
+
+    .opd-toolbar .toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .opd-workspace {
+        height: auto;
+        min-height: 0;
+    }
+
+    .opd-left {
+        max-height: none !important;
+        border-right: none;
+        border-bottom: 1px solid #eff0f2;
+    }
+
+    .vitals-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .vitals-row {
+        grid-template-columns: 1fr;
+    }
+
+    .right-block {
+        padding: 14px;
+    }
+
+    .save-bar {
+        flex-wrap: wrap;
+        padding: 10px 14px;
+        gap: 8px;
+    }
+}
+
+/* ── 12. OPD Billing / GenerateBill refinements ──────────────────────── */
+@media (max-width: 575.98px) {
+    .opb-wrap {
+        padding-bottom: 120px;
+    }
+
+    .opb-card.opb-header {
+        margin: 12px 10px 12px;
+        padding: 12px 14px;
+        gap: 12px;
+    }
+
+    .opb-main {
+        padding: 0 10px;
+        flex-direction: column;
+    }
+
+    .opb-additem {
+        margin: 12px 10px;
+    }
+
+    .opb-grid-wrap {
+        margin: 0 10px 12px;
+        overflow-x: auto;
+    }
+
+    table.opb-grid {
+        min-width: 680px;
+    }
+
+    .opb-grid-footer {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .opb-grid-footer input {
+        width: 100%;
+    }
+
+    .opb-form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .opb-field {
+        min-width: 0;
+    }
+
+    .opb-field-grow {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .opb-actionbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .opb-actionbar > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .opb-toast-host {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+    }
+
+    .opb-toast {
+        text-align: center;
+    }
+}
+
+/* ── 13. Print views / prescription / bills ──────────────────────────── */
+@media (max-width: 575.98px) {
+    .print-header,
+    .prescription-header,
+    .bill-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .print-actions,
+    .no-print {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}
+
+@media print {
+    .vertical-menu,
+    .right-bar,
+    .page-title-box,
+    .navbar-header,
+    .footer,
+    .no-print,
+    .btn,
+    .opb-actionbar,
+    .save-bar,
+    .opd-toolbar,
+    .opd-section-nav {
+        display: none !important;
+    }
+
+    .main-content,
+    .page-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body {
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+}
+
+/* ── 14. Patient Portal (PatientLayout) mobile sidebar ───────────────── */
+@media (max-width: 991.98px) {
+    .patient-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+    }
+
+    body.patient-sidebar-open .patient-sidebar {
+        transform: translateX(0);
+    }
+
+    .patient-main {
+        margin-left: 0;
+        padding: 16px;
+    }
+
+    .patient-topbar {
+        margin: -16px -16px 16px;
+        padding: 10px 16px;
+    }
+
+    .patient-menu-toggle {
+        display: inline-flex !important;
+    }
+}
+
+/* Patient hamburger toggle button (hidden on desktop) */
+.patient-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background: #fff;
+    color: #2c3e50;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+@media (min-width: 992px) {
+    .patient-menu-toggle {
+        display: none;
+    }
+}
+
+/* Mobile overlay for patient sidebar */
+.patient-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1049;
+}
+
+body.patient-sidebar-open .patient-sidebar-overlay {
+    display: block;
+}
+
+@media (min-width: 992px) {
+    .patient-sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* ── 15. Misc utilities ──────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+    .w-auto {
+        width: 100% !important;
+    }
+
+    input[type="date"].form-control,
+    input[type="date"] {
+        min-width: 0;
+    }
+
+    .d-sm-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Larger touch targets for pagination on mobile */
+@media (max-width: 575.98px) {
+    .pagination .page-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+    }
+}
+
+/* Responsive date/filter inputs (e.g. Walk-In date filter) */
+.schedule-date-input {
+    width: 180px;
+}
+
+@media (max-width: 575.98px) {
+    .schedule-date-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .schedule-date-input + .input-group-append {
+        flex-wrap: wrap;
+    }
+}
+
+/* Prevent DevExtreme / other widgets from overflowing */
+.dx-widget,
+.dx-datagrid,
+.dx-visibility-change-handler {
+    max-width: 100%;
+}
+

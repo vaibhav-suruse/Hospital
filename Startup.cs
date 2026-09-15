@@ -116,7 +116,8 @@ public IConfiguration Configuration { get; }
             services.AddScoped<ICounter, CounterRepository>();
 services.AddScoped<IDashboardRepository, DashboardRepository>();
             services.AddScoped<IIPDDashboardRepository, IPDDashboardRepository>();
-            services.AddScoped<IPharmacyQueue, PharmacyQueueRepository>();
+services.AddScoped<IPharmacyQueue, PharmacyQueueRepository>();
+            services.AddScoped<IAdvancedPharmacy, AdvancedPharmacyRepository>();
             services.AddScoped<IPatientHistory, PatientHistoryRepository>();
             services.AddScoped<IAdmissionNotes, AdmissionNoteRepository>();
             services.AddScoped<IDiagnosis, DiagnosisRepository>();

@@ -262,10 +262,11 @@ namespace WebApplicationSampleTest2.Repository
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     string query = @"
-                SELECT 
+SELECT 
                     ia.IPDId,
                     ia.AdmissionNumber,
                     ia.Status,
+                    p.Id AS PatientId,
                     CONCAT(p.FirstName,' ',p.LastName) AS PatientName,
                     b.BedId AS CurrentBedId,
                     b.BedNumber AS CurrentBedNumber,
@@ -291,11 +292,12 @@ namespace WebApplicationSampleTest2.Repository
                         {
                             if (reader.Read())
                             {
-                                return new BedShiftVM
+return new BedShiftVM
                                 {
                                     IPDId = Convert.ToInt32(reader["IPDId"]),
                                     AdmissionNumber = reader["AdmissionNumber"].ToString(),
                                     Status = reader["Status"]?.ToString(),
+                                    PatientId = Convert.ToInt32(reader["PatientId"]),
                                     PatientName = reader["PatientName"].ToString(),
                                     CurrentBedId = reader["CurrentBedId"] == DBNull.Value ? 0 : Convert.ToInt32(reader["CurrentBedId"]),
                                     CurrentBedNumber = reader["CurrentBedNumber"] == DBNull.Value ? "N/A" : reader["CurrentBedNumber"].ToString(),

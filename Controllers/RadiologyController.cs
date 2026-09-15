@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -6,19 +6,22 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class RadiologyController : Controller
     {
+        private readonly ILogger<RadiologyController> _logger;
         private readonly IRadiology _radiologyRepo;
         private readonly IIPDAdmission _admissionRepo;
         private readonly IDoctor _doctorRepo;
         private readonly IHospital _hospitalRepo;
 
-        public RadiologyController(IRadiology radiologyRepo, IIPDAdmission admissionRepo, IDoctor doctorRepo, IHospital hospitalRepo)
+        public RadiologyController(IRadiology radiologyRepo, IIPDAdmission admissionRepo, IDoctor doctorRepo, IHospital hospitalRepo, ILogger<RadiologyController> logger)
         {
             _radiologyRepo = radiologyRepo;
+            _logger = logger;
             _admissionRepo = admissionRepo;
             _doctorRepo = doctorRepo;
             _hospitalRepo = hospitalRepo;
@@ -91,6 +94,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveTemplate");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -134,6 +138,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddReport");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -156,6 +161,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditReport");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -171,6 +177,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteReport");
                 return Json(new { success = false, message = ex.Message });
             }
         }

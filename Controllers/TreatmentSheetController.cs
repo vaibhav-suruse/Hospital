@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class TreatmentSheetController : Controller
     {
+        private readonly ILogger<TreatmentSheetController> _logger;
         private readonly ITreatmentSheet _sheetRepo;
         private readonly IDailyNotes _dailyNotesRepo;   // reused: MAR + medicine search + discontinue (proven, working code)
         private readonly IIPDAdmission _admissionRepo;
@@ -26,9 +28,10 @@ namespace WebApplicationSampleTest2.Controllers
             IDoctor doctorRepo,
             INurse nurseRepo,
             IAdmissionNotes admissionNotesRepo,
-            IHospital hospitalRepo)
+            IHospital hospitalRepo, ILogger<TreatmentSheetController> logger)
         {
             _sheetRepo = sheetRepo;
+            _logger = logger;
             _dailyNotesRepo = dailyNotesRepo;
             _admissionRepo = admissionRepo;
             _doctorRepo = doctorRepo;
@@ -172,6 +175,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in RecordAdministration");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -214,6 +218,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveGeneralOrderTemplate");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -250,6 +255,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddGeneralOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -268,6 +274,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditGeneralOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -283,6 +290,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SetGeneralOrderStatus");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -298,6 +306,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteGeneralOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -349,6 +358,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -367,6 +377,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -382,6 +393,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DiscontinueMedicine");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -397,6 +409,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in ReorderMedicines");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -438,6 +451,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddInvestigation");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -456,6 +470,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditInvestigation");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -471,6 +486,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteInvestigation");
                 return Json(new { success = false, message = ex.Message });
             }
         }

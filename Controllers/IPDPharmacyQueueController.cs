@@ -1,20 +1,23 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class IPDPharmacyQueueController : Controller
     {
+        private readonly ILogger<IPDPharmacyQueueController> _logger;
         private readonly IPharmacyQueue _pharmacy;
 
-        public IPDPharmacyQueueController(IPharmacyQueue pharmacy)
+        public IPDPharmacyQueueController(IPharmacyQueue pharmacy, ILogger<IPDPharmacyQueueController> logger)
         {
             _pharmacy = pharmacy;
+            _logger = logger;
         }
 
         // ── 1. QUEUE PAGE ─────────────────────────────────────────────────────
@@ -106,6 +109,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetPrescription");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -122,6 +126,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in MarkDispensed");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -181,6 +186,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveMedicineBill");
                 return Json(new { success = false, message = ex.Message });
             }
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -6,17 +6,20 @@ using System.Data;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class UserController : Controller
     {
+        private readonly ILogger<UserController> _logger;
         private readonly IUser _IUser;
         private readonly IHospital _IHospital;
 
-        public UserController(IUser User, IHospital hospital)
+        public UserController(IUser User, IHospital hospital, ILogger<UserController> logger)
         {
             _IUser = User;
+            _logger = logger;
             _IHospital = hospital;
         }
         public IActionResult Index(string search, int page = 1)
@@ -256,7 +259,7 @@ namespace WebApplicationSampleTest2.Controllers
                     model.password,
                     model.MainHospitalId,
                     model.SubHospitalId
-                );
+);
 
                 if (user == null)
                 {
@@ -265,13 +268,9 @@ namespace WebApplicationSampleTest2.Controllers
                     return View("Login", model);
                 }
 
-
-                if (user.Role != "SuperAdmin" && !model.MainHospitalId.HasValue)
-                {
-                    ViewBag.Error = "Please select Main Hospital";
-                    ViewBag.MainHospitals = _IHospital.GetMainHospitals();
-                    return View("Login", model);
-                }
+                // NOTE: Hospital is auto-selected from the user's own record
+                // by the LoginUser stored procedure, so no manual
+                // MainHospitalId selection is required here.
 
                 // SESSION
                 HttpContext.Session.SetInt32("UserId", user.Id);
@@ -285,13 +284,14 @@ namespace WebApplicationSampleTest2.Controllers
                         HttpContext.Session.SetInt32("SubHospitalId", user.SubHospitalId.Value);
                 }
 
-                if (user.Role == "SuperAdmin")
+if (user.Role == "SuperAdmin")
                     return RedirectToAction("Dash", "DashBord");
                 else
                     return RedirectToAction("Index", "DashBord");
             }
-catch (Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in LoginClick");
                 // Security: do not surface raw exception text (which can leak
                 // DB/SP internals) to the end user. The stored procedure that
                 // throws already carries a friendly message like "Invalid

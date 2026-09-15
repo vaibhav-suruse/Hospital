@@ -112,7 +112,11 @@
                 ← Back to IPD
             </a> *@
 
-            <a asp-controller="InpatientDocument" asp-action="Index" asp-route-id="@Model.IPDId"class="btn btn-sm btn-light">
+<a asp-controller="AdmissionNotes"
+               asp-action="Index"
+               asp-route-ipdId="@Model.IPDId"
+               asp-route-patientId="@Model.PatientId"
+               class="btn btn-sm btn-light">
                 <i class="fas fa-arrow-left me-1"></i> Back
             </a>
 

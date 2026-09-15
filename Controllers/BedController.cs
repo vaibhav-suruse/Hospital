@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -6,18 +6,21 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class BedController : Controller
     {
+        private readonly ILogger<BedController> _logger;
         private readonly IBed _bedService;
         private readonly IWard _wardService;
         private readonly IRoom _roomService;
 
-        public BedController(IBed bedService, IWard wardService, IRoom roomService)
+        public BedController(IBed bedService, IWard wardService, IRoom roomService, ILogger<BedController> logger)
         {
             _bedService = bedService;
+            _logger = logger;
             _wardService = wardService;
             _roomService = roomService;
         }
@@ -48,6 +51,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Index");
                 ViewBag.Error = "Error loading beds: " + ex.Message;
                 return View(new List<Bed>());
             }
@@ -63,6 +67,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 ViewBag.Error = "Error loading create bed page: " + ex.Message;
                 return RedirectToAction("Index");
             }
@@ -130,6 +135,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 ViewBag.Error = "Error loading edit bed page: " + ex.Message;
                 return RedirectToAction("Index");
             }
@@ -194,6 +200,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 //ViewBag.Error = "Error deleting bed: " + ex.Message;
 
                 TempData["ToastMessage"] = "Delete failed.";
@@ -247,6 +254,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in GetRoomsByWard");
                 return Json(new { error = ex.Message });
             }
         }

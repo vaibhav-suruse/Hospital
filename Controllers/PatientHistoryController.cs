@@ -1,19 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class PatientHistoryController : Controller
     {
+        private readonly ILogger<PatientHistoryController> _logger;
         private readonly IPatientHistory _repo;
 
-        public PatientHistoryController(IPatientHistory repo)
+        public PatientHistoryController(IPatientHistory repo, ILogger<PatientHistoryController> logger)
         {
             _repo = repo;
+            _logger = logger;
         }
 
         private int HospitalId => HttpContext.Session.GetInt32("MainHospitalId") ?? 0;
@@ -43,6 +46,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveVitals");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -65,6 +69,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveCondition");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -79,6 +84,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteCondition");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -111,6 +117,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveAllergy");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -125,6 +132,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteAllergy");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -147,6 +155,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveSurgery");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -161,6 +170,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteSurgery");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -182,6 +192,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveFamilyHistory");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -196,6 +207,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteFamilyHistory");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -229,6 +241,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveLabResult");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -243,6 +256,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteLabResult");
                 return Json(new { success = false, message = ex.Message });
             }
         }

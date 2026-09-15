@@ -41,9 +41,11 @@ namespace WebApplicationSampleTest2.Repository
         List<MedicineOrderModel> SearchMedicinesForDailyNotes(string searchTerm);
 
 
-        // In your IDailyNotes interface
-        List<DoctorModel> GetDoctors();
-        List<NurseDropdownModel> GetNurses();
+// In your IDailyNotes interface
+        // BUGFIX: hospital-scoped so the Daily Notes dropdowns only show
+        // doctors/nurses belonging to the current facility.
+        List<DoctorModel> GetDoctors(int hospitalId, int? subHospitalId);
+        List<NurseDropdownModel> GetNurses(int hospitalId, int? subHospitalId);
 
         // Symptoms (Daily Notes)
         int InsertDailyNotesSymptom(int parentHospitalId, int? subHospitalId, int ipdId, int symptomId, int doctorId, int roundIdIn = 0);

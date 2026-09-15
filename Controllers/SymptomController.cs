@@ -1,20 +1,23 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class SymptomController : Controller
     {
+        private readonly ILogger<SymptomController> _logger;
         private readonly ISymptom _Symptom;
        
-        public SymptomController(ISymptom symptom)
+        public SymptomController(ISymptom symptom, ILogger<SymptomController> logger)
         {
             _Symptom = symptom;
+            _logger = logger;
         }
         public IActionResult Index(string search = "", int page = 1)
         {

@@ -208,6 +208,9 @@ namespace WebApplicationSampleTest2.Repository
                     // Insert Bill Items and Update Stock
                     foreach (var item in cartItems)
                     {
+                        // 1) Insert the bill item line (this SP no longer deducts
+                        //    stock — with MODEL A single-stock-path, deduction is
+                        //    handled by the shared FEFO procedure below).
                         using (var cmd = new MySqlCommand("sp_Counter_InsertBillItem", conn, tran))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
@@ -225,10 +228,39 @@ namespace WebApplicationSampleTest2.Repository
                             cmd.Parameters.Add(pSuccess);
 
                             cmd.ExecuteNonQuery();
+                        }
 
-                            if (Convert.ToBoolean(pSuccess.Value) == false)
+                        // 2) Deduct stock via the SHARED multi-batch FEFO procedure
+                        //    (fixes P0-4: previously only ONE earliest batch was
+                        //    decremented, driving it negative). On insufficient
+                        //    stock it signals failure and we roll back the whole
+                        //    bill — no silent under-deduction.
+                        using (var fefoCmd = new MySqlCommand("sp_Stock_DeductFEFO", conn, tran))
+                        {
+                            fefoCmd.CommandType = CommandType.StoredProcedure;
+                            fefoCmd.Parameters.AddWithValue("p_MedicineId", item.MedicineId);
+                            fefoCmd.Parameters.AddWithValue("p_Quantity", item.Quantity);
+                            fefoCmd.Parameters.AddWithValue("p_HospitalId", hospitalId);
+                            fefoCmd.Parameters.AddWithValue("p_SubHospitalId", subHospitalId ?? 0);
+
+                            var pFefoSuccess = new MySqlParameter("p_Success", MySqlDbType.Byte) { Direction = ParameterDirection.Output };
+                            fefoCmd.Parameters.Add(pFefoSuccess);
+
+fefoCmd.ExecuteNonQuery();
+
+                            if (Convert.ToBoolean(pFefoSuccess.Value) == false)
                             {
                                 throw new Exception($"Insufficient stock for {item.MedicineName}");
+                            }
+
+                            // 3) Reconcile aggregate stock.TotalQuantity from batches
+                            using (var recCmd = new MySqlCommand("sp_Pharmacy_ReconcileStock", conn, tran))
+                            {
+                                recCmd.CommandType = CommandType.StoredProcedure;
+                                recCmd.Parameters.AddWithValue("p_MedicineId", item.MedicineId);
+                                recCmd.Parameters.AddWithValue("p_HospitalId", hospitalId);
+                                recCmd.Parameters.AddWithValue("p_SubHospitalId", subHospitalId ?? 0);
+                                recCmd.ExecuteNonQuery();
                             }
                         }
                     }

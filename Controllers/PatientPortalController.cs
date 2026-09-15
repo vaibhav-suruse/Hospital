@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
@@ -7,11 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class PatientPortalController : Controller
     {
+        private readonly ILogger<PatientPortalController> _logger;
         private readonly IPatientPortal _portalRepo;
         private readonly Ipatient _patientRepo;
         private readonly IDoctor _doctorRepo;
@@ -25,9 +27,10 @@ namespace WebApplicationSampleTest2.Controllers
             IDoctor doctorRepo,
             IOPDAppointment appointmentRepo,
             IHospital hospitalRepo,
-            IConfiguration configuration)
+            IConfiguration configuration, ILogger<PatientPortalController> logger)
         {
             _portalRepo = portalRepo;
+            _logger = logger;
             _patientRepo = patientRepo;
             _doctorRepo = doctorRepo;
             _appointmentRepo = appointmentRepo;
@@ -94,6 +97,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Dashboard");
                 TempData["Error"] =
                     "Dashboard error: " + ex.Message;
                 return View(new PatientDashboardVM
@@ -143,6 +147,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Appointments");
                 TempData["Error"] =
                     "Unable to load appointments. " +
                     ex.Message;
@@ -173,6 +178,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CancelAppointment");
                 TempData["Error"] =
                     "Cancellation failed: " + ex.Message;
             }
@@ -363,6 +369,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in BookAppointment");
                 TempData["Error"] =
                     "Booking failed: " + ex.Message;
                 return ReloadBookView(model);
@@ -429,6 +436,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in OPDHistory");
                 TempData["Error"] =
                     "Unable to load OPD history. " +
                     ex.Message;
@@ -506,6 +514,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in IPDHistory");
                 TempData["Error"] =
                     "Unable to load IPD history. " + ex.Message;
 
@@ -545,6 +554,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Billing");
                 TempData["Error"] =
                     "Unable to load billing. " +
                     ex.Message;

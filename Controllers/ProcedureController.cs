@@ -5,19 +5,22 @@ using System;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class ProcedureController : Controller
     {
+        private readonly ILogger<ProcedureController> _logger;
 private readonly IProcedure _repository;
         private readonly IDoctor _IDoctor;
         private readonly Ipatient _patientRepo; // NEW — multi-hospital data isolation
         private readonly IIPDAdmission _ipdRepo; // NEW — hospital-scoped IPD admission check
 
-        public ProcedureController(IProcedure repository, IDoctor doctor, Ipatient patientRepo, IIPDAdmission ipdRepo)
+        public ProcedureController(IProcedure repository, IDoctor doctor, Ipatient patientRepo, IIPDAdmission ipdRepo, ILogger<ProcedureController> logger)
         {
             _repository = repository;
+            _logger = logger;
             _IDoctor = doctor;
             _patientRepo = patientRepo;
             _ipdRepo = ipdRepo;

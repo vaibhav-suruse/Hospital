@@ -1,16 +1,21 @@
-# TODO - Professional Full Patient History (OPD)
+# TODO — Fix Pharmacy Module Issues
 
-## Goal
-Rebuild the OPD "History" button page into a comprehensive, professional
-medical-history dashboard showing the ENTIRE history of a patient's OPD visits
-plus clinical history (conditions/allergies/surgeries/family/lab results).
+## Task
+Resolve reported issues:
+1. Pharmacy dashboard counts showing 0 (low stock, OPD/IPD patients, other counts)
+2. Inventory "Add Medicine" not working
+3. Inventory search bar not working
+4. Counter medicine search not showing results
+
+## Root Cause
+- Missing stored procedures/tables in DB (AddInventory, UpdateInventoryItem, GetAllInventory, GetInventoryById, DeleteInventory, GetAllSuppliers, GetAllCategories, sp_Counter_* procedures, medicine_notifications)
+- Inventory search form has no submit button
+- Dashboard OPD/IPD counts query non-existent `medicine_notifications` table; silent `catch { return 0; }` hides errors
 
 ## Steps
-1. [x] Models: Add `DoctorName` + `AppointmentTime` (non-mapped) to `OPD`;
-        create `PatientFullHistoryVM` aggregating patient + visits + clinical history.
-2. [x] Repository: Enhance `IOPDAppointment.GetPatientFullHistory` to also fetch
-        doctor name + diagnoses per visit; update signature to pass hospitalId.
-3. [x] Controller: Inject `IPatientHistory`; assemble combined VM in `PatientHistory` action.
-4. [x] View: Rewrite `PatientHistory.cshtml` as a professional full-history dashboard.
-5. [x] Build the solution to verify compilation (Build succeeded).
-6. [x] Fix secondary caller `PatientController.GetPatientHistory` to pass hospitalId/subHospitalId.
+- [x] 1. Create `pharmacy_fix_missing_sp.sql` — add missing inventory SPs
+- [x] 2. Create missing `sp_Counter_*` stored procedures in SQL migration
+- [x] 3. Fix `Views/Inventory/Index.cshtml` — add search submit button
+- [ ] 4. Fix `Controllers/PharmacyDashboardController.cs` — robust OPD/IPD counts (use counter_bill), add error logging
+- [ ] 5. Rebuild and verify build passes (DLL lock permitting)
+- [ ] 6. Provide SQL migration for user to run against DB

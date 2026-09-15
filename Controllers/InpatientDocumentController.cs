@@ -1,15 +1,17 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class InpatientDocumentController : Controller
     {
+        private readonly ILogger<InpatientDocumentController> _logger;
 
 private readonly IInpatientDocument _repository;
             private readonly IWebHostEnvironment _environment;
@@ -18,9 +20,10 @@ private readonly IInpatientDocument _repository;
             public InpatientDocumentController(
                 IInpatientDocument repository,
                 IIPDAdmission ipdRepo,
-                IWebHostEnvironment environment)
+                IWebHostEnvironment environment, ILogger<InpatientDocumentController> logger)
             {
                 _repository = repository;
+                _logger = logger;
                 _ipdRepo = ipdRepo;
                 _environment = environment;
             }
@@ -105,6 +108,7 @@ private readonly IInpatientDocument _repository;
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error in Upload");
                     TempData["Error"] = ex.Message;
 
                     return RedirectToAction("Index", new
@@ -146,6 +150,7 @@ private readonly IInpatientDocument _repository;
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error in Delete");
                     TempData["Error"] = ex.Message;
                 }
 

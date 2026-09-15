@@ -1,20 +1,23 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class CounterController : Controller
     {
+        private readonly ILogger<CounterController> _logger;
         private readonly ICounter _counterRepo;
 
-        public CounterController(ICounter counterRepo)
+        public CounterController(ICounter counterRepo, ILogger<CounterController> logger)
         {
             _counterRepo = counterRepo;
+            _logger = logger;
         }
 
         // ─── MAIN COUNTER PAGE ─────────────────────────────────────────
@@ -84,6 +87,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CreateCustomer");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -134,6 +138,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in SaveBill");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -205,6 +210,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CollectPayment");
                 return Json(new { success = false, message = ex.Message });
             }
         }

@@ -78,33 +78,14 @@
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label" readonly>
-                        Admission Number
-                        @if (isUpdate)
-                        {
-                            <span class="badge bg-secondary ms-1">Locked</span>
-                        }
-                    </label>
-                    <input asp-for="AdmissionNumber" class="form-control"/>
-                </div>
-
+<div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Admission Type</label>
-                  
                     <select asp-for="AdmissionType" class="form-control">
                         <option value="Regular">Regular</option>
                         <option value="Emergency">Emergency</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="row mb-3">
-                @* <div class="col-md-6">
-                    <label class="form-label">Admission Source</label>
-                    <input asp-for="AdmissionSource" class="form-control" />
-                </div> *@
 
                 <div class="col-md-6">
                     <label class="form-label">
@@ -123,14 +104,14 @@
                         <input asp-for="AdmissionDateTime" type="date" class="form-control" min="@admDateMin" />
                     }
                 </div>
+            </div>
+
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Expected Discharge Date</label>
                     <input asp-for="ExpectedDischargeDateTime" type="date"
                            min="@admDateMin" class="form-control" />
                 </div>
-            </div>
-
-            <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Status</label>
                     <select asp-for="Status" class="form-control" id="StatusSelect">
@@ -146,7 +127,9 @@
                         }
                     </select>
                 </div>
+            </div>
 
+<div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Active Admission</label>
                     <select asp-for="IsActiveAdmission" id="IsActive" class="form-select">
@@ -154,20 +137,20 @@
                         <option value="false">Inactive</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="row mb-3">
                 <div class="col-md-6">
                     <label>Reference Doctor</label>
                     <select id="ReferenceDoctorId" name="ReferringDoctorId" class="form-control">
                         <option value="">-- Select Reference Doctor --</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Reason For Admission</label>
                     <textarea asp-for="ReasonForAdmission" class="form-control" rows="3"></textarea>
                 </div>
-              
             </div>
 
             @* <div class="row mb-3">

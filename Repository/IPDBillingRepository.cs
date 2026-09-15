@@ -44,9 +44,10 @@ namespace WebApplicationSampleTest2.Repository
                 using var reader = cmd.ExecuteReader();
 
                 // RS1 — Patient + admission info
-                if (reader.Read())
+if (reader.Read())
                 {
                     vm.IPDId = Convert.ToInt32(reader["IPDId"]);
+                    vm.PatientId = reader["PatientId"] == DBNull.Value ? 0 : Convert.ToInt32(reader["PatientId"]);
                     vm.AdmissionNumber = reader["AdmissionNumber"]?.ToString();
                     vm.AdmissionDateTime = Convert.ToDateTime(reader["AdmissionDateTime"]);
                     vm.ActualDischargeDateTime = reader["ActualDischargeDateTime"] == DBNull.Value

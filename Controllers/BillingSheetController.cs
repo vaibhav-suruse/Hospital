@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
@@ -16,6 +17,7 @@ namespace WebApplicationSampleTest2.Controllers
     // ─────────────────────────────────────────────────────────────────────
     public class BillingSheetController : Controller
     {
+        private readonly ILogger<BillingSheetController> _logger;
         [HttpGet]
         public IActionResult Index(int ipdId)
         {

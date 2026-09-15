@@ -1,4 +1,4 @@
-﻿// Controllers/LabInvestigationController.cs
+// Controllers/LabInvestigationController.cs
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,19 +7,22 @@ using System.IO;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class LabInvestigationController : Controller
     {
+        private readonly ILogger<LabInvestigationController> _logger;
         private readonly ILabInvestigation _labRepo;
         private readonly IWebHostEnvironment _env;
 
         public LabInvestigationController(
             ILabInvestigation labRepo,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env, ILogger<LabInvestigationController> logger)
         {
             _labRepo = labRepo;
+            _logger = logger;
             _env = env;
         }
 
@@ -75,6 +78,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Index");
                 TempData["Error"] = ex.Message;
 
                 ViewBag.CurrentPage = 1;
@@ -139,6 +143,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Update");
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Index");
             }
@@ -200,6 +205,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Update");
                 TempData["Error"] = ex.Message;
                 return View(model);
             }

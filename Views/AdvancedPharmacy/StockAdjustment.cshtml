@@ -1,0 +1,136 @@
+@using WebApplicationSampleTest2.Models
+@{
+    ViewData["Title"] = "Stock Adjustment";
+    var inventory = ViewBag.Inventory as List<InventoryModel> ?? new List<InventoryModel>();
+    var log = ViewBag.Log as List<StockAdjustment> ?? new List<StockAdjustment>();
+}
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="pharm-hero d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <div class="pharm-hero-icon"><i class="bx bx-adjust"></i></div>
+        <div>
+            <h4>Stock Adjustment</h4>
+            <p>Correct discrepancies from damage, expiry, breakage or counting errors</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="pharm-alert success">
+        <i class="fas fa-check-circle alert-icon"></i>
+        <strong>@TempData["Success"]</strong>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="pharm-alert danger">
+        <i class="fas fa-exclamation-triangle alert-icon"></i>
+        <strong>@TempData["Error"]</strong>
+    </div>
+}
+
+<div class="row">
+    <!-- ══ LEFT: Adjustment form ══ -->
+    <div class="col-lg-5">
+        <div class="card pharm-card">
+            <div class="pharm-card-header grad-primary">
+                <h5><i class="bx bxs-star me-2"></i>New Adjustment</h5>
+            </div>
+            <div class="pharm-card-body">
+                <form method="post" asp-action="StockAdjustment">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Medicine</label>
+                        <select name="MedicineId" class="form-select" required>
+                            <option value="">-- Select Medicine --</option>
+                            @foreach (var item in inventory)
+                            {
+                                <option value="@item.MedicineId">@item.MedicineName (Stock: @item.Stock)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantity Change</label>
+                        <input type="number" name="QuantityChange" class="form-control" required placeholder="+5 or -3" />
+                        <small class="text-muted">+ to add stock, − to remove</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Reason</label>
+                        <select name="Reason" class="form-select" required>
+                            <option value="">-- Select Reason --</option>
+                            <option value="Damage">Damage</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Breakage">Breakage</option>
+                            <option value="Correction">Correction</option>
+                            <option value="Return">Return</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="Notes" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-grad-primary w-100">
+                        <i class="bx bx-check-circle me-1"></i> Apply Adjustment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT: Adjustment Log ══ -->
+    <div class="col-lg-7">
+        <div class="card pharm-card">
+            <div class="pharm-card-header">
+                <h5><i class="bx bx-history me-2" style="color:var(--pharm-primary)"></i>Adjustment Log</h5>
+                <span class="pharm-badge badge-soft-primary">@log.Count entries</span>
+            </div>
+            <div class="pharm-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table pharm-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Medicine</th>
+                                <th>Batch</th>
+                                <th class="text-center">Change</th>
+                                <th>Reason</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (log.Any())
+                            {
+                                foreach (var a in log)
+                                {
+                                    bool positive = a.QuantityChange > 0;
+                                    <tr>
+                                        <td><strong>@a.MedicineName</strong></td>
+                                        <td class="text-muted">@(a.BatchNumber ?? "—")</td>
+                                        <td class="text-center">
+                                            <span class="pharm-badge @(positive ? "badge-soft-success" : "badge-soft-danger")">
+                                                @(positive ? "+" : "")@a.QuantityChange
+                                            </span>
+                                        </td>
+                                        <td><span class="pharm-badge badge-soft-info">@a.Reason</span></td>
+                                        <td class="text-muted" style="font-size:12px;">@(a.Notes ?? "—")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-4">No adjustment records yet</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

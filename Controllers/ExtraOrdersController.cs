@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class ExtraOrdersController : Controller
     {
+        private readonly ILogger<ExtraOrdersController> _logger;
         private readonly IExtraOrders _extraOrdersRepo;
         private readonly IIPDAdmission _admissionRepo;
         private readonly IDoctor _doctorRepo;
@@ -20,9 +22,10 @@ namespace WebApplicationSampleTest2.Controllers
             IExtraOrders extraOrdersRepo,
             IIPDAdmission admissionRepo,
             IDoctor doctorRepo,
-            IDailyNotes dailyNotesRepo)
+            IDailyNotes dailyNotesRepo, ILogger<ExtraOrdersController> logger)
         {
             _extraOrdersRepo = extraOrdersRepo;
+            _logger = logger;
             _admissionRepo = admissionRepo;
             _doctorRepo = doctorRepo;
             _dailyNotesRepo = dailyNotesRepo;
@@ -138,6 +141,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddExtraMedication");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -156,6 +160,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditExtraMedication");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -171,6 +176,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteExtraMedication");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -210,6 +216,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddExtraOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -228,6 +235,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditExtraOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -243,6 +251,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteExtraOrder");
                 return Json(new { success = false, message = ex.Message });
             }
         }

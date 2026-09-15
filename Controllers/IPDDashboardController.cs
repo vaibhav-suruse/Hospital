@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
@@ -6,18 +6,21 @@ using System;
 using System.Data;
 using WebApplicationSampleTest2.Repository;
 using WebApplicationSampleTest2.Models;
+using Microsoft.Extensions.Logging;
 
 
 public class IPDDashboardController : Controller
 {
+    private readonly ILogger<IPDDashboardController> _logger;
     private readonly IIPDDashboardRepository _dashboardRepo;
     private readonly string _connectionString;
 
     public IPDDashboardController(
         IIPDDashboardRepository dashboardRepo,
-        IConfiguration configuration)
+        IConfiguration configuration, ILogger<IPDDashboardController> logger)
     {
         _dashboardRepo = dashboardRepo;
+        _logger = logger;
         _connectionString = configuration.GetConnectionString("MySqlConnection");
     }
 
@@ -106,6 +109,7 @@ public class IPDDashboardController : Controller
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error in Index");
             ViewBag.Error = ex.Message;
             return View(new IPDDashboardVM());
         }

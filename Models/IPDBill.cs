@@ -144,8 +144,9 @@ namespace WebApplicationSampleTest2.Models
     // Full bill VM for the GenerateBill view
     public class IPDBillVM
     {
-        // Patient info
+// Patient info
         public int IPDId { get; set; }
+        public int PatientId { get; set; }
         public string AdmissionNumber { get; set; }
         public string PatientName { get; set; }
         public int? Age { get; set; }

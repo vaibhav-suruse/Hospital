@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,19 +7,22 @@ using System.Collections.Generic;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class LabReportsController : Controller
     {
+        private readonly ILogger<LabReportsController> _logger;
         private readonly ILabReports _labRepo;
         private readonly IIPDAdmission _admissionRepo;
         private readonly IDoctor _doctorRepo;
         private readonly IHospital _hospitalRepo;
 
-        public LabReportsController(ILabReports labRepo, IIPDAdmission admissionRepo, IDoctor doctorRepo, IHospital hospitalRepo)
+        public LabReportsController(ILabReports labRepo, IIPDAdmission admissionRepo, IDoctor doctorRepo, IHospital hospitalRepo, ILogger<LabReportsController> logger)
         {
             _labRepo = labRepo;
+            _logger = logger;
             _admissionRepo = admissionRepo;
             _doctorRepo = doctorRepo;
             _hospitalRepo = hospitalRepo;
@@ -129,6 +132,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddCategory");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -144,6 +148,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteCategory");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -171,6 +176,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddParameter");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -189,6 +195,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in UpdateParameter");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -204,6 +211,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteParameter");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -252,6 +260,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddLabValues");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -271,6 +280,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in NotifyCritical");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -289,6 +299,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in EditLabValue");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -304,6 +315,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in DeleteLabValue");
                 return Json(new { success = false, message = ex.Message });
             }
         }

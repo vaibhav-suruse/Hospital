@@ -625,14 +625,14 @@
                         </div>
                     }
 
-                    @if (Model.PaidAmount == 0)
+@if (Model.PaidAmount == 0)
                     {
                         <button type="button" class="ipb-btn ipb-btn-red-outline mt-2" style="width:100%;" onclick="ipbCancelBill()">Cancel Bill</button>
                     }
                 }
 
                 <div style="display:flex;gap:8px;margin-top:12px;">
-                    <a class="ipb-btn ipb-btn-outline" style="flex:1;text-align:center;text-decoration:none;" href="@Url.Action("Details", "IPDAdmission", new { id = Model.IPDId })">← Back</a>
+                    <a class="ipb-btn ipb-btn-outline" style="flex:1;text-align:center;text-decoration:none;" href="@Url.Action("Index", "InpatientDocument", new { ipId = Model.IPDId, ipdId = Model.IPDId, patientId = Model.PatientId })">← Back</a>
                     @if (Model.BillId.HasValue)
                     {
                         <a class="ipb-btn ipb-btn-outline" style="flex:1;text-align:center;text-decoration:none;" target="_blank" href="@Url.Action("PrintBill", new { ipdId = Model.IPDId })">🖨 Print</a>

@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "Pharmacy Dashboard";
 
     int totalMedicines = ViewBag.TotalMedicines ?? 0;
@@ -22,223 +22,219 @@
 
 @if (ViewBag.Error != null)
 {
-    <div class="alert alert-danger">@ViewBag.Error</div>
+    <div class="pharm-alert danger"><i class="fas fa-exclamation-circle alert-icon"></i><div>@ViewBag.Error</div></div>
 }
 
-@* ===== ROW 1 — STOCK & SALES STATS ===== *@
+<!-- ═══════════════════ HERO BANNER ═══════════════════ -->
+<div class="pharm-hero d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <div class="pharm-hero-icon"><i class="bx bx-plus-medical"></i></div>
+        <div>
+            <h4>Pharmacy Dashboard</h4>
+            <p>Real-time overview of medicines, stock &amp; sales operations</p>
+        </div>
+    </div>
+    <div class="d-none d-md-flex gap-2">
+        <a asp-controller="PharmacyQueue" asp-action="Index" class="btn btn-light btn-sm"><i class="bx bx-user-check me-1"></i>OPD Queue</a>
+        <a asp-controller="Counter" asp-action="Index" class="btn btn-light btn-sm"><i class="bx bx-receipt me-1"></i>Counter</a>
+    </div>
+</div>
+
+<!-- Low stock alert banner -->
+@if (lowStockAlerts > 0)
+{
+    <div class="pharm-alert danger">
+        <i class="fas fa-exclamation-triangle alert-icon"></i>
+        <div><strong>@lowStockAlerts medicines</strong> are below their reorder level. <a asp-controller="Inventory" asp-action="Index" class="fw-bold text-decoration-underline" style="color:inherit">View inventory</a> to reorder immediately.</div>
+    </div>
+}
+
+<!-- ═══════════════════ ROW 1 — PRIMARY STATS ═══════════════════ -->
 <div class="row">
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Total Medicines</p>
-                    <h4 class="mb-0">@totalMedicines</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Total Medicines</div>
+                    <div class="pharm-stat-value">@totalMedicines</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
-                        <span class="avatar-title"><i class="bx bx-capsule"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-primary"><i class="bx bxs-capsule"></i></div>
             </div>
+            <div class="pharm-stat-foot">Active medicine formulations</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Low Stock Alerts</p>
-                    <h4 class="mb-0 @(lowStockAlerts > 0 ? "text-danger" : "")">@lowStockAlerts</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Low Stock</div>
+                    <div class="pharm-stat-value text-danger">@lowStockAlerts</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-danger">
-                        <span class="avatar-title"><i class="bx bx-error-circle"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-danger"><i class="bx bxs-error-circle"></i></div>
             </div>
+            <div class="pharm-stat-foot">Need reorder attention</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Today's Sales</p>
-                    <h4 class="mb-0 text-success">@todaysSales</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Today's Sales</div>
+                    <div class="pharm-stat-value" style="color:var(--pharm-success)">@todaysSales</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
-                        <span class="avatar-title"><i class="bx bx-rupee"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-success"><i class="bx bxs-rupee"></i></div>
             </div>
+            <div class="pharm-stat-foot">Counter sales collected</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Expiry in 30 Days</p>
-                    <h4 class="mb-0 @(expiryIn30Days > 0 ? "text-warning" : "")">@expiryIn30Days</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Expiring in 30 Days</div>
+                    <div class="pharm-stat-value text-warning">@expiryIn30Days</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
-                        <span class="avatar-title"><i class="bx bx-calendar-x"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-warning"><i class="bx bxs-calendar-exclamation"></i></div>
             </div>
+            <div class="pharm-stat-foot">Batches nearing expiry</div>
         </div>
     </div>
 
 </div>
 
-@* ===== ROW 2 — BILLING & OPERATIONS STATS ===== *@
+<!-- ═══════════════════ ROW 2 — OPERATIONS STATS ═══════════════════ -->
 <div class="row">
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Bills Generated Today</p>
-                    <h4 class="mb-0">@billsGenerated</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Bills Today</div>
+                    <div class="pharm-stat-value">@billsGenerated</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-info">
-                        <span class="avatar-title"><i class="bx bx-receipt"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-info"><i class="bx bxs-receipt"></i></div>
             </div>
+            <div class="pharm-stat-foot">Counter bills generated</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">Active Suppliers</p>
-                    <h4 class="mb-0">@activeSuppliers</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">Active Suppliers</div>
+                    <div class="pharm-stat-value">@activeSuppliers</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
-                        <span class="avatar-title"><i class="bx bx-store"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-dark"><i class="bx bxs-store"></i></div>
             </div>
+            <div class="pharm-stat-foot">Registered suppliers</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">OPD Patients Today</p>
-                    <h4 class="mb-0">@opdToday</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">OPD Patients</div>
+                    <div class="pharm-stat-value">@opdToday</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
-                        <span class="avatar-title"><i class="bx bx-user-plus"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-success"><i class="bx bxs-user-plus"></i></div>
             </div>
+            <div class="pharm-stat-foot">Prescriptions today</div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card mini-stats-wid">
-            <div class="card-body d-flex">
-                <div class="flex-grow-1">
-                    <p class="text-muted fw-medium">IPD Patients Today</p>
-                    <h4 class="mb-0">@ipdToday</h4>
+    <div class="col-xl-3 col-md-6">
+        <div class="card pharm-stat">
+            <div class="pharm-stat-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="pharm-stat-label">IPD Patients</div>
+                    <div class="pharm-stat-value">@ipdToday</div>
                 </div>
-                <div class="flex-shrink-0 align-self-center">
-                    <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
-                        <span class="avatar-title"><i class="bx bx-bed"></i></span>
-                    </div>
-                </div>
+                <div class="pharm-stat-icon pg-warning"><i class="bx bxs-bed"></i></div>
             </div>
+            <div class="pharm-stat-foot">IPD rounds today</div>
         </div>
     </div>
 
 </div>
 
-@* ===== ROW 3 — SALES CHART ===== *@
-<div class="row mt-2">
-    <div class="col-lg-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="card-title mb-0">Sales Overview — IPD / OPD / Counter</h4>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-primary" id="btnMonthly" onclick="switchChart('monthly')">Monthly</button>
-                        <button class="btn btn-sm btn-outline-secondary" id="btnWeekly" onclick="switchChart('weekly')">Weekly</button>
-                    </div>
-                </div>
-                <div style="position:relative;height:280px;">
-                    <canvas id="pharmSalesChart"></canvas>
-                </div>
-                <div class="d-flex gap-4 mt-3" style="font-size:12px;font-weight:600;color:#74788d;">
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#556ee6;margin-right:5px;"></span>IPD</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#34c38f;margin-right:5px;"></span>OPD</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f1b44c;margin-right:5px;"></span>Counter</span>
-                </div>
-            </div>
+<!-- ═══════════════════ SALES CHART ═══════════════════ -->
+<div class="card pharm-card mt-2">
+    <div class="pharm-card-header">
+        <h5><i class="bx bx-line-chart me-2" style="color:var(--pharm-primary)"></i>Sales Overview — IPD / OPD / Counter</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-grad-primary btn-sm" id="btnMonthly" onclick="switchChart('monthly')">Monthly</button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnWeekly" onclick="switchChart('weekly')">Weekly</button>
+        </div>
+    </div>
+    <div class="pharm-card-body">
+        <div style="position:relative;height:300px;">
+            <canvas id="pharmSalesChart"></canvas>
+        </div>
+        <div class="d-flex gap-4 mt-3" style="font-size:12px;font-weight:600;color:#74788d;">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#556ee6;margin-right:5px;"></span>IPD</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#34c38f;margin-right:5px;"></span>OPD</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f1b44c;margin-right:5px;"></span>Counter</span>
         </div>
     </div>
 </div>
 
-@* ===== ROW 4 — LOW STOCK + EXPIRY ===== *@
+<!-- ═══════════════════ LOW STOCK + EXPIRY ═══════════════════ -->
 <div class="row mt-2">
 
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Low Stock Alerts</h4>
-                <a asp-controller="Inventory" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+        <div class="card pharm-card">
+            <div class="pharm-card-header">
+                <h5><i class="bx bx-error-alt me-2 text-danger"></i>Low Stock Alerts</h5>
+                <a asp-controller="Inventory" asp-action="Index" class="btn btn-grad-primary btn-sm">View All</a>
             </div>
-            <div class="card-body">
+            <div class="pharm-card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
+                    <table class="table pharm-table table-hover mb-0">
+                        <thead>
                             <tr>
                                 <th>Medicine</th>
                                 <th>Category</th>
-                                @*<th class="text-center">Stock</th>*@
+                                <th class="text-center">Stock</th>
                                 <th class="text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if (lowStockItems.Count == 0)
                             {
-                                <tr>
-                                    <td colspan="4" class="text-center py-3 text-muted">✅ No low stock items</td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center py-4 text-muted"><i class="bx bx-check-circle text-success me-1"></i>No low stock items</td></tr>
                             }
                             @foreach (var item in lowStockItems)
                             {
+                                int pct = item.ReorderLevel > 0 ? (int)Math.Min((item.Quantity * 100) / item.ReorderLevel, 100) : 100;
                                 <tr>
                                     <td>
                                         <strong>@item.MedicineName</strong>
-                                        <div class="text-muted" style="font-size:11px;">@item.Unit</div>
+                                        <div class="text-muted fs-7">@item.Unit</div>
                                     </td>
-                                    <td class="text-muted">@item.CategoryName</td>
-                                    @*<td class="text-center">
-                                        <span class="fw-bold @(item.Quantity <= 5 ? "text-danger" : "text-warning")">@item.Quantity</span>
-                                        <div class="progress mt-1" style="height:4px;">
-                                            <div class="progress-bar @(item.Quantity <= 5 ? "bg-danger" : "bg-warning")"
-                                                 style="width:@(Math.Min((item.Quantity * 100 / (item.ReorderLevel > 0 ? item.ReorderLevel : 1)), 100))%">
-                                            </div>
+                                    <td><span class="pharm-badge badge-soft-info">@item.CategoryName</span></td>
+                                    <td style="width:140px">
+                                        <div class="d-flex justify-content-between fs-7 mb-1">
+                                            <span class="fw-bold @(item.Quantity == 0 ? "text-danger" : "text-warning")">@item.Quantity</span>
+                                            <span class="text-muted">/ @item.ReorderLevel</span>
                                         </div>
-                                    </td>*@
+                                        <div class="stock-progress">
+                                            <div class="bar @(item.Quantity == 0 ? "bg-danger" : "bg-warning")" style="width:@(pct)%"></div>
+                                        </div>
+                                    </td>
                                     <td class="text-center">
                                         @if (item.Quantity == 0)
                                         {
-                                            <span class="badge bg-danger">Out of Stock</span>
+                                            <span class="pharm-badge badge-soft-danger">Out of Stock</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning">Low Stock</span>
+                                            <span class="pharm-badge badge-soft-warning">Low Stock</span>
                                         }
                                     </td>
                                 </tr>
@@ -251,15 +247,15 @@
     </div>
 
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Expiry in 30 Days</h4>
-                <a asp-controller="Inventory" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+        <div class="card pharm-card">
+            <div class="pharm-card-header">
+                <h5><i class="bx bx-calendar-x me-2 text-warning"></i>Expiry in 30 Days</h5>
+                <a asp-controller="Inventory" asp-action="Index" class="btn btn-grad-primary btn-sm">View All</a>
             </div>
-            <div class="card-body">
+            <div class="pharm-card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
+                    <table class="table pharm-table table-hover mb-0">
+                        <thead>
                             <tr>
                                 <th>Medicine</th>
                                 <th>Batch</th>
@@ -270,21 +266,17 @@
                         <tbody>
                             @if (expiryItems.Count == 0)
                             {
-                                <tr>
-                                    <td colspan="4" class="text-center py-3 text-muted">✅ No medicines expiring soon</td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center py-4 text-muted"><i class="bx bx-check-circle text-success me-1"></i>No medicines expiring soon</td></tr>
                             }
                             @foreach (var item in expiryItems)
                             {
                                 int daysLeft = (int)(((DateTime)item.ExpiryDate) - DateTime.Today).TotalDays;
                                 <tr>
                                     <td><strong>@item.MedicineName</strong></td>
-                                    <td class="text-muted">@item.BatchNo</td>
-                                    <td class="text-center">@((DateTime)item.ExpiryDate)</td>
+                                    <td><span class="pharm-badge badge-soft-dark">@item.BatchNo</span></td>
+                                    <td class="text-center">@((DateTime)item.ExpiryDate).ToString("dd-MM-yyyy")</td>
                                     <td class="text-center">
-                                        <span class="badge @(daysLeft <= 7 ? "bg-danger" : daysLeft <= 15 ? "bg-warning" : "bg-info")">
-                                            @daysLeft days
-                                        </span>
+                                        <span class="pharm-badge @(daysLeft <= 7 ? "badge-soft-danger" : daysLeft <= 15 ? "badge-soft-warning" : "badge-soft-info")">@daysLeft days</span>
                                     </td>
                                 </tr>
                             }
@@ -297,63 +289,54 @@
 
 </div>
 
-@* ===== ROW 5 — RECENT BILLS ===== *@
-<div class="row mt-2">
-    <div class="col-lg-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Recent Bills</h4>
-                <a asp-controller="Counter" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Bill No</th>
-                                <th>Patient</th>
-                                <th>Type</th>
-                                <th>Date &amp; Time</th>
-                                <th class="text-end">Amount</th>
-                                <th class="text-center">Mode</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (recentBills.Count == 0)
-                            {
-                                <tr>
-                                    <td colspan="6" class="text-center py-3 text-muted">No bills generated today</td>
-                                </tr>
-                            }
-                            @foreach (var bill in recentBills)
-                            {
-                                string billNo = bill.BillNumber?.ToString() ?? "";
-                                string badgeCls = billNo.StartsWith("IPD") ? "bg-danger"
-                                : billNo.StartsWith("PHARM") ? "bg-info"
-                                : "bg-success";
-                                string typeLabel = billNo.StartsWith("IPD") ? "IPD"
-                                : billNo.StartsWith("PHARM") ? "OPD"
-                                : "Counter";
-                                <tr>
-                                    <td><span class="fw-bold text-primary" style="font-size:12px;">@bill.BillNumber</span></td>
-                                    <td class="fw-semibold">@bill.CustomerName</td>
-                                    <td><span class="badge @badgeCls">@typeLabel</span></td>
-                                    <td class="text-muted" style="font-size:12px;">@((DateTime)bill.CreatedAt)</td>
-                                    <td class="text-end fw-bold">₹@bill.TotalAmount.ToString("F0")</td>
-                                    <td class="text-center">
-                                        <span class="badge @(bill.PaymentMode == "Cash"    ? "bg-success"
-                                                                                                         : bill.PaymentMode == "UPI" ? "bg-primary"
-                                                                                                         : bill.PaymentMode == "Pending" ? "bg-warning"
-                                                                                                         : "bg-secondary")">
-                                        @bill.PaymentMode
-                                    </span>
-                                </td>
-                            </tr>
-                                                        }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- ═══════════════════ RECENT BILLS ═══════════════════ -->
+<div class="card pharm-card mt-2">
+    <div class="pharm-card-header">
+        <h5><i class="bx bx-receipt me-2" style="color:var(--pharm-primary)"></i>Recent Bills</h5>
+        <a asp-controller="Counter" asp-action="Index" class="btn btn-grad-primary btn-sm">View All</a>
+    </div>
+    <div class="pharm-card-body p-0">
+        <div class="table-responsive">
+            <table class="table pharm-table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Bill No</th>
+                        <th>Patient / Customer</th>
+                        <th>Type</th>
+                        <th>Date &amp; Time</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-center">Mode</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (recentBills.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center py-4 text-muted">No bills generated yet</td></tr>
+                    }
+                    @foreach (var bill in recentBills)
+                    {
+                        string billNo = bill.BillNumber?.ToString() ?? "";
+                        string badgeCls = billNo.StartsWith("IPD") ? "badge-soft-danger"
+                        : billNo.StartsWith("PHARM") ? "badge-soft-info"
+                        : "badge-soft-success";
+                        string typeLabel = billNo.StartsWith("IPD") ? "IPD"
+                        : billNo.StartsWith("PHARM") ? "OPD"
+                        : "Counter";
+                        string modeCls = bill.PaymentMode == "Cash" ? "badge-soft-success"
+                        : bill.PaymentMode == "UPI" ? "badge-soft-primary"
+                        : bill.PaymentMode == "Pending" ? "badge-soft-warning"
+                        : "badge-soft-dark";
+                        <tr>
+                            <td><span class="fw-bold" style="color:var(--pharm-primary);font-size:12px;">@bill.BillNumber</span></td>
+                            <td class="fw-semibold">@bill.CustomerName</td>
+                            <td><span class="pharm-badge @badgeCls">@typeLabel</span></td>
+                            <td class="text-muted fs-7">@((DateTime)bill.CreatedAt).ToString("dd-MM-yyyy hh:mm tt")</td>
+                            <td class="text-end fw-bold">₹@bill.TotalAmount.ToString("F0")</td>
+                            <td class="text-center"><span class="pharm-badge @modeCls">@bill.PaymentMode</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -410,8 +393,8 @@
 
         function switchChart(mode) {
             var isMonthly = mode === 'monthly';
-            document.getElementById('btnMonthly').className = isMonthly ? 'btn btn-sm btn-primary'           : 'btn btn-sm btn-outline-secondary';
-            document.getElementById('btnWeekly').className  = isMonthly ? 'btn btn-sm btn-outline-secondary' : 'btn btn-sm btn-primary';
+            document.getElementById('btnMonthly').className = isMonthly ? 'btn btn-grad-primary btn-sm' : 'btn btn-outline-secondary btn-sm';
+            document.getElementById('btnWeekly').className  = isMonthly ? 'btn btn-outline-secondary btn-sm' : 'btn btn-grad-primary btn-sm';
             buildChart(
                 isMonthly ? monthlyLabels : weeklyLabels,
                 isMonthly ? monthlyIPD    : weeklyIPD,
@@ -423,5 +406,4 @@
         buildChart(monthlyLabels, monthlyIPD, monthlyOPD, monthlyCTR);
     </script>
 }
-
 

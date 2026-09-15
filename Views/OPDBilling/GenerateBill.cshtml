@@ -1044,9 +1044,16 @@
     }
     else if (!isCancelled)
     {
-                <text>
+<text>
                 // Fresh bill — seed with Consultation (suggested fee) + any medicines
                 // prescribed during the OPD visit, so nothing has to be typed from scratch.
+                //
+                // MODEL A (single billing path): prescribed medicines are billed
+                // ONLY at the Pharmacy Queue. Each seeded medicine line is tagged
+                // 'MedicineReference' — it is shown for the front desk's awareness
+                // (with a "Billed separately at Pharmacy" label) but is EXCLUDED
+                // from every total. This stops the same prescription from being
+                // charged both here and again at the pharmacy.
                 var suggestedFee = @Model.SuggestedConsultationFee;
                 billItems.push({ uid: uidCounter++, itemType: 'Consultation', billingMasterId: null, itemName: 'Consultation', qty: 1, price: suggestedFee, discVal: 0, discIsPct: true, gstPct: 0 });
                 var rxMedicines = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Medicines, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
@@ -1054,7 +1061,7 @@
                     // Use the real dispensed quantity from the prescription, not
                     // the number of days it was prescribed for.
                     var qty = (m.dispensedQuantity && m.dispensedQuantity > 0) ? m.dispensedQuantity : (m.days || 1);
-                    billItems.push({ uid: uidCounter++, itemType: 'Medicine', billingMasterId: null, itemName: m.medicineName, qty: qty, price: m.unitPrice, discVal: 0, discIsPct: true, gstPct: 0 });
+                    billItems.push({ uid: uidCounter++, itemType: 'MedicineReference', billingMasterId: null, itemName: m.medicineName, qty: qty, price: m.unitPrice, discVal: 0, discIsPct: true, gstPct: 0 });
                 });
                 </text>
     }
@@ -1222,6 +1229,21 @@ if (it._editing) {
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"></path></svg>Cancel</button>' +
                         '</td></tr>';
                 }
+if (isReference(it)) {
+                    // MODEL A: prescribed medicines are reference-only on the OPD
+                    // bill. Show them for awareness with a clear label, but display
+                    // ₹0.00 (excluded from totals) and no edit/delete actions.
+                    return '<tr style="background:#F9FAFB;">' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td>' + escapeHtml(it.itemName) +
+                        '<div style="font-size:11px;font-weight:600;color:var(--clr-warning);">Billed separately at Pharmacy</div></td>' +
+                        '<td class="opb-cell-center">' + it.qty + '</td>' +
+                        '<td class="opb-cell-right">' + Number(it.price).toFixed(2) + '</td>' +
+                        '<td class="opb-cell-right">—</td>' +
+                        '<td class="opb-cell-center">—</td>' +
+                        '<td class="opb-cell-right"><strong>₹0.00</strong></td>' +
+                        '<td style="color:var(--clr-muted);font-size:11px;">Reference</td></tr>';
+                }
                 return '<tr>' +
                     '<td>' + (idx + 1) + '</td>' +
                     '<td>' + escapeHtml(it.itemName) + '<div style="font-size:11px;color:var(--clr-muted);">' + it.itemType + '</div></td>' +
@@ -1239,7 +1261,7 @@ if (it._editing) {
             }).join('');
         }
 
-        document.getElementById('totalItemsCount').textContent = billItems.length;
+document.getElementById('totalItemsCount').textContent = billItems.filter(function (it) { return !isReference(it); }).length;
         recalcTotals();
     }
 
@@ -1268,9 +1290,10 @@ function startRowEdit(uid) {
             cancelRowEdit(uid);
         }
     }
-    function saveRowEdit(uid) {
+function saveRowEdit(uid) {
         var it = billItems.find(function (x) { return x.uid === uid; });
         if (!it) return;
+        if (isReference(it)) { return; } // reference lines can't be edited
         it.qty = parseInt(document.getElementById('e_qty_' + uid).value, 10) || 1;
         it.price = parseFloat(document.getElementById('e_price_' + uid).value) || 0;
         it.discVal = parseFloat(document.getElementById('e_disc_' + uid).value) || 0;
@@ -1280,16 +1303,29 @@ function startRowEdit(uid) {
         renderGrid();
     }
     function deleteRow(uid) {
+        var it = billItems.find(function (x) { return x.uid === uid; });
+        if (it && isReference(it)) { toast('Medicine is billed separately at the Pharmacy.', false); return; }
         if (!confirm('Remove this item from the bill?')) return;
-        billItems = billItems.filter(function (it) { return it.uid !== uid; });
+        billItems = billItems.filter(function (it2) { return it2.uid !== uid; });
         dirty = true;
         renderGrid();
     }
 
+// ── helper: is this a reference-only line (prescribed medicine)? ─────
+    // MODEL A: prescribed medicines are billed ONLY at the Pharmacy Queue.
+    // MedicineReference lines are shown for awareness but NEVER included in
+    // any total, so the same prescription can't be charged here AND again
+    // at the pharmacy.
+    function isReference(it) {
+        return it.itemType === 'MedicineReference';
+    }
+
     // ── Totals ──────────────────────────────────────────────────────────
+    // Only billable (non-reference) items contribute to the totals.
     function recalcTotals() {
         var subtotal = 0, discountTotal = 0, gstTotal = 0, grand = 0;
         billItems.forEach(function (it) {
+            if (isReference(it)) return; // reference lines are excluded
             var m = rowAmount(it);
             subtotal += m.base;
             discountTotal += m.disc;
@@ -1312,15 +1348,17 @@ function startRowEdit(uid) {
 
     function collectPayload() {
         var subtotal = 0, discountTotal = 0, gstTotal = 0, grand = 0;
-        var items = billItems.map(function (it) {
-            var m = rowAmount(it);
-            subtotal += m.base; discountTotal += m.disc; gstTotal += m.gst; grand += m.total;
-            return {
-                itemType: it.itemType, billingMasterId: it.billingMasterId, itemName: it.itemName,
-                quantity: it.qty, unitPrice: it.price, discountValue: it.discVal, discountIsPercent: it.discIsPct,
-                gstPercent: it.gstPct, totalPrice: m.total
-            };
-        });
+        var items = billItems
+            .filter(function (it) { return !isReference(it); }) // never submit reference lines as billable
+            .map(function (it) {
+                var m = rowAmount(it);
+                subtotal += m.base; discountTotal += m.disc; gstTotal += m.gst; grand += m.total;
+                return {
+                    itemType: it.itemType, billingMasterId: it.billingMasterId, itemName: it.itemName,
+                    quantity: it.qty, unitPrice: it.price, discountValue: it.discVal, discountIsPercent: it.discIsPct,
+                    gstPercent: it.gstPct, totalPrice: m.total
+                };
+            });
         return {
             appointmentId: appointmentId, opdId: opdId, patientId: patientId,
             billDate: document.getElementById('billDate').value,

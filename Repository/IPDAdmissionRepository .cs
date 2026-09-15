@@ -43,8 +43,8 @@ namespace WebApplicationSampleTest2.Repository
                         cmd.Parameters.AddWithValue("@p_ActualDischargeDateTime", model.ActualDischargeDateTime.HasValue ? model.ActualDischargeDateTime.Value : (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@p_DischargeType", model.DischargeType ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@p_Status", model.Status);
-                        cmd.Parameters.AddWithValue("@p_ReasonForAdmission", model.ReasonForAdmission);
-                        cmd.Parameters.AddWithValue("@p_CancellationReason", model.CancellationReason ?? (object)DBNull.Value);
+cmd.Parameters.AddWithValue("@p_ReasonForAdmission", model.ReasonForAdmission);
+cmd.Parameters.AddWithValue("@p_CancellationReason", model.CancellationReason ?? (object)DBNull.Value);
 
                         conn.Open();
                        cmd.ExecuteNonQuery();
@@ -95,9 +95,9 @@ namespace WebApplicationSampleTest2.Repository
                         cmd.Parameters.AddWithValue("@p_ActualDischargeDateTime",
                             model.ActualDischargeDateTime ?? (object)DBNull.Value);
 
-                        cmd.Parameters.AddWithValue("@p_DischargeType", model.DischargeType);
+cmd.Parameters.AddWithValue("@p_DischargeType", model.DischargeType);
                         cmd.Parameters.AddWithValue("@p_Status", model.Status);
-                        cmd.Parameters.AddWithValue("@p_ReasonForAdmission", model.ReasonForAdmission);
+cmd.Parameters.AddWithValue("@p_ReasonForAdmission", model.ReasonForAdmission);
                         cmd.Parameters.AddWithValue("@p_CancellationReason", model.CancellationReason);
 
 

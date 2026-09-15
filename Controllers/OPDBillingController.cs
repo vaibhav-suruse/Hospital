@@ -197,17 +197,26 @@ namespace WebApplicationSampleTest2.Controllers
                 int? subHospitalId = HttpContext.Session.GetInt32("SubHospitalId");
                 int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
 
-                // Consultation / Medicine / Procedure charge subtotals are
-                // derived from the items actually submitted, not trusted as
-                // separate numbers from the client (that split is only used
-                // for the summary panel's category rows).
+// Consultation / Procedure charge subtotals are derived from
+                // the items actually submitted, not trusted as separate numbers
+                // from the client (that split is only used for the summary
+                // panel's category rows).
+                //
+                // MODEL A (single billing path): prescribed medicines are
+                // billed ONLY at the Pharmacy Queue. Medicine lines that get
+                // seeded into this OPD bill are reference-only (itemType =
+                // "MedicineReference") — they are shown for the front desk's
+                // awareness but are EXCLUDED from MedicineCharges and from the
+                // payable total, so the same prescription can never be charged
+                // here AND again at the pharmacy.
                 var itemDtos = request.Items ?? new List<SaveOPDBillItemDto>();
                 decimal consultationFee = itemDtos.Where(i => string.Equals(i.ItemType, "Consultation", StringComparison.OrdinalIgnoreCase)).Sum(i => i.TotalPrice);
-                decimal medicineCharges = itemDtos.Where(i => string.Equals(i.ItemType, "Medicine", StringComparison.OrdinalIgnoreCase)).Sum(i => i.TotalPrice);
+                decimal medicineCharges = 0m; // never charged on OPD bill (Model A)
                 decimal procedureCharges = itemDtos.Where(i => string.Equals(i.ItemType, "Procedure", StringComparison.OrdinalIgnoreCase)).Sum(i => i.TotalPrice);
                 decimal otherCharges = itemDtos.Where(i =>
                         !string.Equals(i.ItemType, "Consultation", StringComparison.OrdinalIgnoreCase) &&
                         !string.Equals(i.ItemType, "Medicine", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(i.ItemType, "MedicineReference", StringComparison.OrdinalIgnoreCase) &&
                         !string.Equals(i.ItemType, "Procedure", StringComparison.OrdinalIgnoreCase))
                     .Sum(i => i.TotalPrice);
 

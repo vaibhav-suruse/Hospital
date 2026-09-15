@@ -1,8 +1,35 @@
-﻿
-
-
- @using Microsoft.AspNetCore.Http
+﻿@using Microsoft.AspNetCore.Http
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var role = HttpContextAccessor.HttpContext.Session.GetString("UserRole") ?? "User";
+}
+<style>
+    /* Fix: .vertical-menu (the sidebar) needs a high z-index of its own
+           to support its hover-flyout submenus when collapsed, which means
+           it sits above #page-topbar in the stacking order. Setting a high
+           z-index on a *descendant* dropdown-menu doesn't help if its
+           ancestor (#page-topbar) itself has a lower/equal z-index than the
+           sidebar — the child z-index is trapped inside the parent's
+           stacking context. So raise the topbar header itself. */
+    #page-topbar {
+        z-index: 1090 !important;
+    }
+
+        #page-topbar .top-menu-item .dropdown-menu {
+            z-index: 99999 !important;
+            position: absolute !important;
+        }
+
+    /* Fully hides the sidebar (not just the icon-only collapse) and gives
+           the main content the full width back, toggled by the button below. */
+    body.sidebar-hidden .vertical-menu {
+        display: none !important;
+    }
+
+    body.sidebar-hidden .main-content {
+        margin-left: 0 !important;
+    }
+</style>
 <header id="page-topbar">
     <div class="navbar-header">
         <div class="d-flex">
@@ -31,6 +58,99 @@
                 <i class="fa fa-fw fa-bars"></i>
             </button>
 
+        </div>
+
+        <!-- ========== Top menu (mirrors sidebar) Start ========== -->
+        <ul class="navbar-nav d-none d-lg-flex flex-row align-items-center mb-0 mx-auto" style="list-style:none;">
+
+            <!-- CONFIGURATION -->
+            <li class="nav-item dropdown top-menu-item ms-1">
+                <a class="btn header-item waves-effect dropdown-toggle" href="javascript:void(0);"
+                   id="topbar-configuration-dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="bx bx-cog me-1"></i> Configuration
+                </a>
+                <div class="dropdown-menu" aria-labelledby="topbar-configuration-dropdown">
+                    @if (role != "SuperAdmin")
+                    {
+                        <a class="dropdown-item" asp-action="Index" asp-controller="WalkInConsultation">WalkInConsult</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="OPDAppointment">Appointment</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Symptom">Symptom</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Medicine">Medicine</a>
+                        <a class="dropdown-item" asp-action="PatientList" asp-controller="Patient">Patient List</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="BillingMaster">Billing</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Doctor">Doctor</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="ReferenceDoctor">Reference Doctor</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Nurse">Nurse</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="NursingChargesMaster">Nurse Charges</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="OperationMaster">Operations</a>
+                    }
+                    @if (role == "SuperAdmin")
+                    {
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Hospital">Hospital</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="User">User</a>
+                    }
+                </div>
+            </li>
+
+            <!-- IPD -->
+            @if (role != "SuperAdmin")
+            {
+                <li class="nav-item dropdown top-menu-item ms-1">
+                    <a class="btn header-item waves-effect dropdown-toggle" href="javascript:void(0);"
+                       id="topbar-ipd-dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="bx bx-bed me-1"></i> IPD
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="topbar-ipd-dropdown">
+                        <a class="dropdown-item" asp-action="Index" asp-controller="IPDDashboard">IPD Dashboard</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Ward">Ward</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Room">Room</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Bed">Bed</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="IPDAdmission">IPD List</a>
+                    </div>
+                </li>
+            }
+
+            <!-- MEDICAL / INVENTORY -->
+            @if (role != "SuperAdmin")
+            {
+                <li class="nav-item dropdown top-menu-item ms-1">
+                    <a class="btn header-item waves-effect dropdown-toggle" href="javascript:void(0);"
+                       id="topbar-medical-dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="bx bx-box me-1"></i> Medical
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="topbar-medical-dropdown">
+                        <a class="dropdown-item" asp-action="Index" asp-controller="PharmacyDashboard">Pharmacy Dashboard</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="PharmacyQueue">OPD Queue</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="IPDPharmacyQueue">IPD Queue</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Counter">Pharmacy Counter</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Inventory">Inventory</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Supplier">Supplier Master</a>
+                        <a class="dropdown-item" asp-action="Index" asp-controller="Category">Category Master</a>
+                    </div>
+                </li>
+            }
+
+            <!-- LAB -->
+            @if (role == "LabStaff" || role == "Admin")
+            {
+                <li class="nav-item ms-1">
+                    <a class="btn header-item waves-effect" asp-action="Index" asp-controller="LabInvestigation">
+                        <i class="bx bx-test-tube me-1"></i> Lab Investigations
+                    </a>
+                </li>
+            }
+
+            <!-- LOGOUT -->
+            <li class="nav-item ms-1">
+                <a class="btn header-item waves-effect" asp-action="Login" asp-controller="User">
+                    <i class="bx bx-log-out me-1"></i> Log Out
+                </a>
+            </li>
+        </ul>
+        <!-- ========== Top menu End ========== -->
+
+        <div class="d-flex">
+
             <!-- App Search-->
             @* <form class="app-search d-none d-lg-block">
                     <div class="position-relative">
@@ -38,10 +158,6 @@
                         <span class="bx bx-search-alt"></span>
                     </div>
                 </form> *@
-
-        </div>
-
-        <div class="d-flex">
 
             <div class="dropdown d-inline-block d-lg-none ms-2">
                 <button type="button" class="btn header-item noti-icon waves-effect" id="page-header-search-dropdown"
@@ -72,26 +188,26 @@
                 </button>
             </div>
 
-             <div class="dropdown d-inline-block">
+            <div class="dropdown d-inline-block">
                 <button type="button" class="btn header-item noti-icon waves-effect" id="page-header-notifications-dropdown"
                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="bx bx-bell bx-tada"></i>
                     <span class="badge bg-danger rounded-pill">3</span>
                 </button>
-            </div> 
+            </div>
 
-          
+
 
             <div class="dropdown d-inline-block">
                 <!--<button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
-                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        aria-haspopup="true" aria-expanded="false">
                     <img class="rounded-circle header-profile-user" src="~/assets/images/User555.jpg" alt="Header Avatar">
                     <span class="d-none d-xl-inline-block ms-1" key="t-henry">ABC</span>
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">-->
-                    <!-- item-->
-                    <!--<a class="dropdown-item" href="#"><i class="bx bx-user font-size-16 align-middle me-1"></i> <span key="t-profile">Pesonal Details</span></a>
+                <!-- item-->
+                <!--<a class="dropdown-item" href="#"><i class="bx bx-user font-size-16 align-middle me-1"></i> <span key="t-profile">Pesonal Details</span></a>
                     <a class="dropdown-item" href="#"><i class="bx bx-wallet font-size-16 align-middle me-1"></i> <span key="t-my-wallet">Manage 2FA</span></a>
                     <a class="dropdown-item d-block" href="#"><i class="bx bx-wrench font-size-16 align-middle me-1"></i> <span key="t-settings">Change Password</span></a>
                     <a class="dropdown-item" href="#"><i class="bx bx-lock-open font-size-16 align-middle me-1"></i> <span key="t-lock-screen">License Info</span></a>
@@ -101,12 +217,79 @@
             </div>
 
             <div class="dropdown d-inline-block">
-                    <button type="button" class="btn header-item noti-icon right-bar-toggle waves-effect">
-                        <i class="bx bx-cog bx-spin"></i>
-                    </button>
-                </div>
+                <button type="button" class="btn header-item noti-icon right-bar-toggle waves-effect">
+                    <i class="bx bx-cog bx-spin"></i>
+                </button>
+            </div>
+
+            <div class="dropdown d-inline-block">
+                <button type="button" class="btn header-item noti-icon waves-effect" id="sidebar-visibility-toggle" title="Show/Hide sidebar">
+                    <i class="bx bx-sidebar"></i>
+                </button>
+            </div>
 
 
         </div>
     </div>
-</header> 
+    <script>
+        // Manual open/close for the Configuration/IPD/Medical topbar menus.
+        // Deliberately NOT using Bootstrap's data-bs-toggle="dropdown" JS here —
+        // this page loads Bootstrap's JS bundle twice (once via _Layout.cshtml,
+        // once again in the page's own script block), and that double-load was
+        // preventing Bootstrap's dropdown module from opening the menu. This
+        // still relies on Bootstrap's CSS (.dropdown-menu / .show), just not its
+        // JS, so it can't be broken by that conflict.
+        document.addEventListener('click', function (e) {
+            var toggle = e.target.closest('#page-topbar .top-menu-item > a.dropdown-toggle');
+
+            // Close every other open menu in this group first
+            document.querySelectorAll('#page-topbar .top-menu-item > .dropdown-menu.show').forEach(function (menu) {
+                if (!toggle || menu !== toggle.nextElementSibling) {
+                    menu.classList.remove('show');
+                }
+            });
+
+            if (toggle) {
+                e.preventDefault();
+                var menu = toggle.nextElementSibling;
+                if (menu && menu.classList.contains('dropdown-menu')) {
+                    menu.classList.toggle('show');
+                }
+                return;
+            }
+
+            // Clicked outside any of these three menus entirely — close them all
+            if (!e.target.closest('#page-topbar .top-menu-item')) {
+                document.querySelectorAll('#page-topbar .top-menu-item > .dropdown-menu.show').forEach(function (menu) {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+    </script>
+
+    <script>
+        // Full sidebar show/hide toggle (separate from the existing icon-only
+        // collapse). State is remembered in localStorage since this is a normal
+        // MVC app doing full page reloads on navigation.
+        (function () {
+            var STORAGE_KEY = 'hms-sidebar-hidden';
+
+            function apply(hidden) {
+                document.body.classList.toggle('sidebar-hidden', hidden);
+            }
+
+            // Apply saved state immediately on this page load
+            apply(localStorage.getItem(STORAGE_KEY) === '1');
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('sidebar-visibility-toggle');
+                if (!btn) return;
+                btn.addEventListener('click', function () {
+                    var nowHidden = !document.body.classList.contains('sidebar-hidden');
+                    apply(nowHidden);
+                    localStorage.setItem(STORAGE_KEY, nowHidden ? '1' : '0');
+                });
+            });
+        })();
+    </script>
+</header>

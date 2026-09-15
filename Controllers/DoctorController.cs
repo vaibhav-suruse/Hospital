@@ -1,19 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DoctorController : Controller
     {
+        private readonly ILogger<DoctorController> _logger;
         private readonly IDoctor _doctorRepo;
 
-        public DoctorController(IDoctor doctorRepo)
+        public DoctorController(IDoctor doctorRepo, ILogger<DoctorController> logger)
         {
             _doctorRepo = doctorRepo;
+            _logger = logger;
         }
         public IActionResult Index(string search, int page = 1)
         {
@@ -56,6 +59,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Index");
                 TempData["Error"] = "Something went wrong while loading doctors.";
                 return RedirectToAction("Index", "Home");
             }
@@ -106,6 +110,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 TempData["Error"] = "Error while saving doctor data.";
                 return View("Create", model);
             }
@@ -133,6 +138,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 TempData["Error"] = "Error while loading doctor data.";
                 return RedirectToAction("Index");
             }
@@ -168,6 +174,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 TempData["Error"] = "Error while deleting doctor.";
                 return RedirectToAction("Index");
             }

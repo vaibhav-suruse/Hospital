@@ -1,23 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Models.Classs;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class LoginController : Controller
     {
+        private readonly ILogger<LoginController> _logger;
         private readonly Ipatient _patientRepo;
         private readonly IEmailService _emailService;
 
         public LoginController(
             Ipatient patientRepo,
-            IEmailService emailService)
+            IEmailService emailService, ILogger<LoginController> logger)
         {
             _patientRepo = patientRepo;
+            _logger = logger;
             _emailService = emailService;
         }
 
@@ -88,6 +91,7 @@ try
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PatientLogin");
                 // Security: never surface DB/exception details or echo the
                 // user's credentials back to the browser.
                 ViewBag.Error =
@@ -249,6 +253,7 @@ try
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PatientRegister");
                 ViewBag.Error =
                     "Failed to send OTP: " + ex.Message;
                 return View(model);
@@ -410,6 +415,7 @@ try
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in ForgotPassword");
                 ViewBag.Error =
                     "Failed to send OTP: " + ex.Message;
                 return View();
@@ -619,6 +625,7 @@ try
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in AddFamilyMember");
                 TempData["Error"] =
                     "Error: " + ex.Message;
                 return View();

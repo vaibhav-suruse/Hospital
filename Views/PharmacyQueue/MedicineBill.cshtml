@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewData["Title"] = "Medicine Billing";
 
     var notif = ViewBag.Notification as MedicineNotificationModel;
@@ -6,82 +6,74 @@
                     ?? new List<PharmacyMedicineLineVM>();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <a asp-controller="PharmacyQueue" asp-action="Index"
-           class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Queue
-        </a>
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="pharm-hero d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <div class="pharm-hero-icon"><i class="bx bx-receipt"></i></div>
+        <div>
+            <h4>Medicine Billing</h4>
+            <p>Prescription from Dr. @(notif?.DoctorName ?? "—")</p>
+        </div>
     </div>
+    <a asp-controller="PharmacyQueue" asp-action="Index" class="btn btn-light btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back to Queue
+    </a>
 </div>
 
 <div class="row">
     <!-- ══ LEFT: Bill Form ══ -->
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body">
-                <!-- Removed the problematic line referencing 'med' outside of a loop -->
-                <h4 class="card-title">Medicine Bill</h4>
-                <p class="card-title-desc">
-                    Prescription from Dr. @(notif?.DoctorName ?? "—")
-                </p>
+        <div class="card pharm-card">
+            <div class="pharm-card-header grad-primary">
+                <h5><i class="fas fa-file-invoice-dollar me-2"></i>Bill Items</h5>
+            </div>
+            <div class="pharm-card-body">
 
                 <!-- Patient info -->
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Patient Name</label>
-                        <input type="text" class="form-control" id="patientName"
-                               value="@(notif?.PatientName ?? "")" readonly />
+                        <label class="form-label fw-semibold">Patient Name</label>
+                        <input type="text" class="form-control" id="patientName" value="@(notif?.PatientName ?? "")" readonly />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Mobile Number</label>
-                        <input type="text" class="form-control" id="mobileNumber"
-                               value="@(ViewBag.MobileNumber ?? "")"
-                               placeholder="Enter mobile number" maxlength="10" />
+                        <label class="form-label fw-semibold">Mobile Number</label>
+                        <input type="text" class="form-control" id="mobileNumber" value="@(ViewBag.MobileNumber ?? "")" placeholder="Enter mobile number" maxlength="10" />
                     </div>
                 </div>
 
-                <!-- Stock warning banner — shown if any medicine has stock issues -->
+                <!-- Stock warning banner -->
                 @if (medicines.Any(m => m.StockStatus == "partial" || m.StockStatus == "outofstock"))
                 {
-                    <div class="alert alert-warning d-flex align-items-start mb-3" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                    <div class="pharm-alert warn">
+                        <i class="fas fa-exclamation-triangle alert-icon"></i>
                         <div>
                             <strong>Stock Alert</strong> — Some medicines have insufficient stock.<br />
-                            <small>
-                                Bill quantities have been auto-adjusted to available stock.
-                                Out-of-stock items are set to <strong>0</strong> and will not be billed.
-                                Please inform the patient about pending medicines.
-                            </small>
+                            <small>Bill quantities have been auto-adjusted to available stock. Out-of-stock items are set to <strong>0</strong> and will not be billed.</small>
                         </div>
                     </div>
                 }
 
                 <!-- Medicine lines table -->
                 <div class="table-responsive mb-3">
-                    <table class="table table-bordered" id="medicineTable">
-                        <thead class="table-light">
+                    <table class="table pharm-table align-middle">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Medicine</th>
                                 <th>Type</th>
                                 <th class="text-center">M/A/E</th>
                                 <th class="text-center">Days</th>
-                                <th class="text-center">Prescribed</th>
+                                <th class="text-center">Rx</th>
                                 <th class="text-center">Stock</th>
                                 <th class="text-center" style="width:100px">Bill Qty</th>
-                                <th style="width:120px">Rate (₹)</th>
+                                <th class="text-end">Rate (₹)</th>
                                 <th class="text-end">Total (₹)</th>
                             </tr>
                         </thead>
                         <tbody id="medicineLines">
                             @if (!medicines.Any())
                             {
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted py-3">
-                                        No medicines in this prescription
-                                    </td>
-                                </tr>
+                                <tr><td colspan="10" class="text-center text-muted py-3">No medicines in this prescription</td></tr>
                             }
                             @foreach (var (med, i) in medicines.Select((m, i) => (m, i)))
                             {
@@ -90,15 +82,13 @@
                                 if (med.Afternoon) schedule.Add("A");
                                 if (med.Evening) schedule.Add("E");
 
-                                // Stock badge values
-                                var stockBadgeClass = med.StockStatus == "outofstock" ? "bg-danger"
-                                : med.StockStatus == "partial" ? "bg-warning text-dark"
-                                : "bg-success";
+                                var stockBadgeClass = med.StockStatus == "outofstock" ? "badge-soft-danger"
+                                : med.StockStatus == "partial" ? "badge-soft-warning"
+                                : "badge-soft-success";
                                 var stockLabel = med.StockStatus == "outofstock" ? "Out of Stock"
                                 : med.StockStatus == "partial" ? "Only " + med.AvailableStock
                                 : med.AvailableStock.ToString();
 
-                                // Bill qty = min(prescribed, available stock). If OOS, set to 0
                                 var billQty = med.AvailableStock <= 0 ? 0
                                 : med.AvailableStock < med.TotalQty ? med.AvailableStock
                                 : med.TotalQty;
@@ -118,58 +108,37 @@
                                         <input type="hidden" class="med-id" value="@med.MedicineId" />
                                         <input type="hidden" class="med-name" value="@med.MedicineName" />
                                     </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border">
-                                            @(med.MedicineType ?? "Tablet")
-                                        </span>
-                                    </td>
+                                    <td><span class="pharm-badge badge-soft-dark">@(med.MedicineType ?? "Tablet")</span></td>
                                     <td class="text-center">
                                         <small class="fw-bold">@string.Join("/", schedule)</small>
                                         <br /><small class="text-muted">×@med.Days days</small>
                                     </td>
                                     <td class="text-center">@med.Days</td>
-                                    <td class="text-center">
-                                        <span class="fw-bold">@med.TotalQty</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge @stockBadgeClass">@stockLabel</span>
-                                    </td>
+                                    <td class="text-center"><span class="fw-bold">@med.TotalQty</span></td>
+                                    <td class="text-center"><span class="pharm-badge @stockBadgeClass">@stockLabel</span></td>
                                     <td class="text-center">
                                         <input type="number"
                                                class="form-control form-control-sm qty-input text-center @(med.StockStatus == "outofstock" ? "border-danger" : med.StockStatus == "partial" ? "border-warning" : "")"
-                                               value="@billQty"
-                                               min="0"
-                                               max="@med.AvailableStock"
-                                               data-prescribed="@med.TotalQty"
-                                               data-stock="@med.AvailableStock"
+                                               value="@billQty" min="0" max="@med.AvailableStock"
+                                               data-prescribed="@med.TotalQty" data-stock="@med.AvailableStock"
                                                style="width:75px;margin:auto"
                                                oninput="validateQty(this)" onchange="recalc()" />
-                                        @if (med.StockStatus == "partial")
-                                        {
-                                            <small class="text-danger d-block mt-1" style="font-size:10px;">
-                                                Rx: @med.TotalQty
-                                            </small>
-                                        }
                                     </td>
                                     <td>
                                         <input type="number" class="form-control form-control-sm rate-input text-end"
-                                               value="@med.SellingPrice.ToString("F2")"
-                                               min="0" step="0.01"
-                                               onchange="recalc()" />
+                                               value="@med.SellingPrice.ToString("F2")" min="0" step="0.01" onchange="recalc()" />
                                     </td>
-                                    <td class="text-end fw-bold line-total">
-                                        ₹@((billQty * med.SellingPrice).ToString("F2"))
-                                    </td>
+                                    <td class="text-end fw-bold line-total">₹@((billQty * med.SellingPrice).ToString("F2"))</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Totals section -->
+                <!-- Totals -->
                 <div class="row justify-content-end">
                     <div class="col-md-5">
-                        <table class="table table-borderless table-sm mb-0">
+                        <table class="table table-borderless table-sm pharm-totals mb-0">
                             <tr>
                                 <td class="text-muted">Sub Total</td>
                                 <td class="text-end fw-bold" id="subTotal">₹0.00</td>
@@ -177,10 +146,7 @@
                             <tr>
                                 <td class="text-muted">Discount (%)</td>
                                 <td class="text-end">
-                                    <input type="number" class="form-control form-control-sm text-end"
-                                           id="discountPct" value="0" min="0" max="100"
-                                           style="width:80px;float:right"
-                                           onchange="recalc()" />
+                                    <input type="number" class="form-control form-control-sm text-end" id="discountPct" value="0" min="0" max="100" style="width:80px;float:right" onchange="recalc()" />
                                 </td>
                             </tr>
                             <tr>
@@ -189,7 +155,7 @@
                             </tr>
                             <tr class="border-top">
                                 <td class="fw-bold fs-5">Total</td>
-                                <td class="text-end fw-bold fs-5 text-primary" id="grandTotal">₹0.00</td>
+                                <td class="text-end grand" id="grandTotal">₹0.00</td>
                             </tr>
                         </table>
                     </div>
@@ -201,13 +167,14 @@
 
     <!-- ══ RIGHT: Payment Panel ══ -->
     <div class="col-lg-4">
-        <div class="card">
-            <div class="card-body">
-
-                <h5 class="card-title">Payment</h5>
+        <div class="card pharm-card">
+            <div class="pharm-card-header grad-success">
+                <h5><i class="fas fa-credit-card me-2"></i>Payment</h5>
+            </div>
+            <div class="pharm-card-body">
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Payment Mode</label>
+                    <label class="form-label fw-semibold">Payment Mode</label>
                     <select class="form-select" id="paymentMode">
                         <option value="Cash">Cash</option>
                         <option value="UPI">UPI</option>
@@ -217,44 +184,36 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Amount Paid (₹)</label>
-                    <input type="number" class="form-control" id="paidAmount"
-                           placeholder="0.00" min="0" step="0.01"
-                           onchange="calcDue()" />
+                    <label class="form-label fw-semibold">Amount Paid (₹)</label>
+                    <input type="number" class="form-control" id="paidAmount" placeholder="0.00" min="0" step="0.01" onchange="calcDue()" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Due Amount (₹)</label>
-                    <input type="text" class="form-control bg-light" id="dueAmount"
-                           value="0.00" readonly />
+                    <label class="form-label fw-semibold">Due Amount (₹)</label>
+                    <input type="text" class="form-control bg-light" id="dueAmount" value="0.00" readonly />
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button class="btn btn-primary btn-lg" id="btnSaveBill"
-                            onclick="saveBill()">
-                        <i class="fas fa-file-invoice-dollar me-2"></i>
-                        Save &amp; Print Bill
+                    <button class="btn btn-grad-primary btn-lg" id="btnSaveBill" onclick="saveBill()">
+                        <i class="fas fa-file-invoice-dollar me-2"></i> Save &amp; Print Bill
                     </button>
-                    <a asp-controller="PharmacyQueue" asp-action="Index"
-                       class="btn btn-outline-secondary">
-                        Cancel
-                    </a>
+                    <a asp-controller="PharmacyQueue" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
                 </div>
 
-                <!-- Bill summary card (shown after save) -->
-                <div id="billSuccessCard" class="alert alert-success mt-3 d-none">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <strong>Bill saved!</strong><br />
-                    Bill No: <span id="savedBillNo"></span>
+                <div id="billSuccessCard" class="pharm-alert success mt-3 d-none">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <div><strong>Bill saved!</strong><br />Bill No: <span id="savedBillNo"></span></div>
                 </div>
 
             </div>
         </div>
 
         <!-- Prescription summary -->
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6 class="card-title text-muted">Prescription Info</h6>
+        <div class="card pharm-card mt-3">
+            <div class="pharm-card-header">
+                <h5><i class="bx bxs-file-doc me-2" style="color:var(--pharm-primary)"></i>Prescription Info</h5>
+            </div>
+            <div class="pharm-card-body">
                 <table class="table table-borderless table-sm mb-0">
                     <tr>
                         <td class="text-muted">Patient</td>
@@ -270,7 +229,7 @@
                     </tr>
                     <tr>
                         <td class="text-muted">Medicines</td>
-                        <td><span class="badge bg-info text-dark">@(notif?.MedicineCount ?? 0)</span></td>
+                        <td><span class="pharm-badge badge-soft-info">@(notif?.MedicineCount ?? 0)</span></td>
                     </tr>
                 </table>
             </div>
@@ -282,14 +241,12 @@
     <script>
         var notificationId = @(notif?.NotificationId ?? 0);
 
-        // ── VALIDATE QTY INPUT — cap at available stock, min 0 ───
         function validateQty(input) {
             var val       = parseInt(input.value) || 0;
             var maxStock  = parseInt(input.getAttribute('data-stock'))  || 0;
             var prescribed = parseInt(input.getAttribute('data-prescribed')) || 0;
             var row       = input.closest('tr');
 
-            // Hard cap: cannot exceed available stock
             if (val > maxStock) {
                 input.value = maxStock;
                 val = maxStock;
@@ -297,7 +254,6 @@
             }
             if (val < 0) { input.value = 0; val = 0; }
 
-            // Warn if below prescribed (partial dispense)
             var hint = row.querySelector('.partial-hint');
             if (val < prescribed && val > 0) {
                 input.classList.add('border-warning');
@@ -320,15 +276,13 @@
             recalc();
         }
 
-        // ── SIMPLE TOAST FOR QTY ERRORS ──────────────────────────
         function showQtyToast(msg) {
             if (typeof toastr !== 'undefined') { toastr.warning(msg); return; }
             var t = document.getElementById('qtyToast');
             if (!t) {
                 t = document.createElement('div');
                 t.id = 'qtyToast';
-                t.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;' +
-                    'background:#f1b44c;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;';
+                t.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#f1b44c;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;';
                 document.body.appendChild(t);
             }
             t.textContent = msg;
@@ -336,7 +290,6 @@
             setTimeout(function() { t.style.display = 'none'; }, 3000);
         }
 
-        // ── RECALCULATE TOTALS ────────────────────────────────────
         function recalc() {
             var subTotal = 0;
             document.querySelectorAll('#medicineLines tr[data-medicine-id]').forEach(function(row) {
@@ -366,10 +319,9 @@
             document.getElementById('dueAmount').value = Math.max(0, total - paid).toFixed(2);
         }
 
-        // ── SAVE BILL ─────────────────────────────────────────────
         function saveBill() {
-            var items        = [];
-            var hasPartial   = false;
+            var items         = [];
+            var hasPartial    = false;
             var hasOutOfStock = false;
 
             document.querySelectorAll('#medicineLines tr[data-medicine-id]').forEach(function(row) {
@@ -380,17 +332,11 @@
                 var prescribed = parseInt(row.getAttribute('data-prescribed-qty') || 0);
                 var stock      = parseInt(row.getAttribute('data-available-stock') || 0);
 
-                if (stock <= 0) { hasOutOfStock = true; return; } // skip OOS items
+                if (stock <= 0) { hasOutOfStock = true; return; }
                 if (qty < prescribed) hasPartial = true;
-                if (qty <= 0) return; // skip zero-qty rows
+                if (qty <= 0) return;
 
-                items.push({
-                    medicineId:   medId,
-                    medicineName: medName,
-                    quantity:     qty,
-                    unitPrice:    rate,
-                    totalPrice:   qty * rate
-                });
+                items.push({ medicineId: medId, medicineName: medName, quantity: qty, unitPrice: rate, totalPrice: qty * rate });
             });
 
             if (items.length === 0) {
@@ -398,7 +344,6 @@
                 return;
             }
 
-            // Confirm partial dispense
             if (hasPartial || hasOutOfStock) {
                 var msg = 'Some medicines could not be fully dispensed due to insufficient stock.\n\n';
                 if (hasOutOfStock) msg += '• Out-of-stock items will NOT be included in this bill.\n';
@@ -445,9 +390,8 @@
                         document.getElementById('billSuccessCard').classList.remove('d-none');
                         document.getElementById('savedBillNo').textContent = 'PHARM-' + res.billId;
                         btn.innerHTML = '<i class="fas fa-check me-2"></i>Bill Saved!';
-                        btn.classList.replace('btn-primary','btn-success');
-                        if (typeof toastr !== 'undefined')
-                            toastr.success('Medicine bill saved successfully!');
+                        btn.classList.replace('btn-grad-primary','btn-grad-success');
+                        if (typeof toastr !== 'undefined') toastr.success('Medicine bill saved successfully!');
                         setTimeout(function() { window.location.href = '/PharmacyQueue/Index'; }, 2000);
                     } else {
                         btn.disabled  = false;
@@ -463,7 +407,6 @@
             });
         }
 
-        // ── INIT ──────────────────────────────────────────────────
         $(document).ready(function() { recalc(); });
     </script>
 

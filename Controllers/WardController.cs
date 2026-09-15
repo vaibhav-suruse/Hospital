@@ -1,20 +1,23 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class WardController : Controller
     {
+        private readonly ILogger<WardController> _logger;
         private readonly IWard _wardService;
 
-        public WardController(IWard wardService)
+        public WardController(IWard wardService, ILogger<WardController> logger)
         {
             _wardService = wardService;
+            _logger = logger;
         }
 
         // GET: Index
@@ -34,6 +37,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Index");
                 ViewBag.Error = ex.Message;
                 return View();
             }
@@ -68,6 +72,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Create");
                 ViewBag.Error = ex.Message;
                 PopulateDropdowns(model);
                 return View(model);
@@ -90,6 +95,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 ViewBag.Error = ex.Message;
                 return RedirectToAction("Index");
             }
@@ -120,6 +126,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Edit");
                 ViewBag.Error = ex.Message;
                 PopulateDropdowns(model);
                 return View(model);
@@ -145,6 +152,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 ViewBag.Error = ex.Message;
                 return RedirectToAction("Index");
             }

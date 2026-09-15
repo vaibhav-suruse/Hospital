@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
@@ -11,11 +11,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class PatientController : Controller
     {
+        private readonly ILogger<PatientController> _logger;
         public static List<Patient> lstPatient = new List<Patient>();
         public static List<Symptom> _PreAuthSymTomsList = new List<Symptom> { };
         public static List<tablet> _MedicinesList = new List<tablet> { };
@@ -31,9 +33,10 @@ namespace WebApplicationSampleTest2.Controllers
         private readonly IHospital _IHospital;
         private readonly INotification _notifRepo;
 
-        public PatientController(IHospital Hospital, IBillingMaster billingMaster, IOPD OPD, IOPDAppointment appointmentRepo, Ipatient patientRepo, ISymptom symptom, IMedicine medicine, IDoctor doctor, INotification notifRepo)
+        public PatientController(IHospital Hospital, IBillingMaster billingMaster, IOPD OPD, IOPDAppointment appointmentRepo, Ipatient patientRepo, ISymptom symptom, IMedicine medicine, IDoctor doctor, INotification notifRepo, ILogger<PatientController> logger)
         {
             _patientRepo = patientRepo;
+            _logger = logger;
             _medicineRepo = medicine;
             _symptomRepo = symptom;
             _doctorService = doctor;
@@ -884,6 +887,7 @@ namespace WebApplicationSampleTest2.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in Delete");
                 TempData["ErrorMessage"] = ex.Message;
             }
 
@@ -1072,6 +1076,7 @@ public IActionResult PatientList(string search = "", int page = 1)
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in CreatePatientDetailsAjax");
                 return Json(new { success = false, message = ex.Message });
             }
         }

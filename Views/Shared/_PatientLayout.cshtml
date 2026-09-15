@@ -96,13 +96,68 @@
             align-items: center;
         }
 
-        @@media (max-width: 768px) {
+        @@media (max-width: 991.98px) {
             .patient-sidebar {
                 display: none;
             }
 
             .patient-main {
                 margin-left: 0;
+            }
+        }
+
+        /* ── Mobile toggle button (hamburger) ── */
+        .patient-menu-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: #fff;
+            color: #2c3e50;
+            cursor: pointer;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        @@media (max-width: 991.98px) {
+            .patient-menu-toggle {
+                display: inline-flex;
+            }
+
+            .patient-topbar {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+
+        /* Slide-in sidebar behaviour on mobile */
+        @@media (max-width: 991.98px) {
+            .patient-sidebar {
+                display: block;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1050;
+                box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+                width: 260px;
+            }
+
+            body.patient-sidebar-open .patient-sidebar {
+                transform: translateX(0);
+            }
+
+            .patient-sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1049;
+            }
+
+            body.patient-sidebar-open .patient-sidebar-overlay {
+                display: block;
             }
         }
     </style>
@@ -185,11 +240,18 @@
         </ul>
     </div>
 
+    <!-- Mobile sidebar overlay -->
+    <div class="patient-sidebar-overlay" id="patientSidebarOverlay"></div>
+
     <!-- Main Content -->
     <div class="patient-main">
 
+
         <!-- Top Bar -->
         <div class="patient-topbar">
+            <button type="button" class="patient-menu-toggle" id="patientMenuToggle" aria-label="Toggle navigation">
+                <i class="bx bx-menu"></i>
+            </button>
             <span class="text-muted small">
                 <i class="bx bx-chevron-right me-1"></i>@ViewData["Title"]
             </span>
@@ -214,6 +276,43 @@
     <script src="~/assets/libs/jquery/jquery.min.js"></script>
     <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/js/app.js"></script>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('patientMenuToggle');
+            var overlay = document.getElementById('patientSidebarOverlay');
+
+            function openSidebar() {
+                document.body.classList.add('patient-sidebar-open');
+            }
+
+            function closeSidebar() {
+                document.body.classList.remove('patient-sidebar-open');
+            }
+
+            if (toggle) {
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    document.body.classList.contains('patient-sidebar-open') ? closeSidebar() : openSidebar();
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+
+            // Close sidebar when clicking a nav link (for smooth UX)
+            document.querySelectorAll('.patient-sidebar .nav-link').forEach(function (link) {
+                link.addEventListener('click', closeSidebar);
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeSidebar();
+            });
+        })();
+    </script>
 
     @RenderSection("Scripts", required: false)
 </body>

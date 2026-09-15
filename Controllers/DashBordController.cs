@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -7,20 +7,23 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplicationSampleTest2.Models;
 using WebApplicationSampleTest2.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationSampleTest2.Controllers
 {
     public class DashBordController : Controller
     {
+        private readonly ILogger<DashBordController> _logger;
         private readonly Ipatient _patientRepo;
         private readonly IOPDAppointment _appointmentRepo;
         private readonly IDoctor _docotrRepo;
         private readonly IHospital _hospitalRepo;
         private readonly IUser _userRepo;
         private readonly IDashboardRepository _dashboardRepo;
-        public DashBordController(Ipatient ipatient, IOPDAppointment oPDAppointment, IDoctor docotrRepo, IHospital hospitalRepo, IUser userRepo, IDashboardRepository dashboardRepo)
+        public DashBordController(Ipatient ipatient, IOPDAppointment oPDAppointment, IDoctor docotrRepo, IHospital hospitalRepo, IUser userRepo, IDashboardRepository dashboardRepo, ILogger<DashBordController> logger)
         {
             _patientRepo = ipatient;
+            _logger = logger;
             _appointmentRepo = oPDAppointment;
             _docotrRepo = docotrRepo;
             _hospitalRepo = hospitalRepo;
